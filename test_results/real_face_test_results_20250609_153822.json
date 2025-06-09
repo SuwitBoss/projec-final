@@ -1,0 +1,191 @@
+{
+  "timestamp": "20250609_153822",
+  "total_images": 23,
+  "successful_tests": 0,
+  "results": [
+    {
+      "image_path": "D:\\projec-final\\test_images\\boss_01.jpg",
+      "success": false,
+      "processing_time": 0.05404067039489746,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "AnalysisConfig.__init__() got an unexpected keyword argument 'enable_face_detection'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\boss_02.jpg",
+      "success": false,
+      "processing_time": 0.05528759956359863,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "AnalysisConfig.__init__() got an unexpected keyword argument 'enable_face_detection'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\boss_03.jpg",
+      "success": false,
+      "processing_time": 0.0570833683013916,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "AnalysisConfig.__init__() got an unexpected keyword argument 'enable_face_detection'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\boss_04.jpg",
+      "success": false,
+      "processing_time": 0.05423307418823242,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "AnalysisConfig.__init__() got an unexpected keyword argument 'enable_face_detection'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\boss_05.jpg",
+      "success": false,
+      "processing_time": 0.05547809600830078,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "AnalysisConfig.__init__() got an unexpected keyword argument 'enable_face_detection'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\boss_glass01.jpg",
+      "success": false,
+      "processing_time": 0.00553131103515625,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "AnalysisConfig.__init__() got an unexpected keyword argument 'enable_face_detection'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\boss_glass02.jpg",
+      "success": false,
+      "processing_time": 0.006051301956176758,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "AnalysisConfig.__init__() got an unexpected keyword argument 'enable_face_detection'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\boss_glass03.jpg",
+      "success": false,
+      "processing_time": 0.005033254623413086,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "AnalysisConfig.__init__() got an unexpected keyword argument 'enable_face_detection'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\boss_group01.jpg",
+      "success": false,
+      "processing_time": 0.09649920463562012,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "AnalysisConfig.__init__() got an unexpected keyword argument 'enable_face_detection'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\boss_group02.jpg",
+      "success": false,
+      "processing_time": 0.10376143455505371,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "AnalysisConfig.__init__() got an unexpected keyword argument 'enable_face_detection'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\boss_group03.jpg",
+      "success": false,
+      "processing_time": 0.0907585620880127,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "AnalysisConfig.__init__() got an unexpected keyword argument 'enable_face_detection'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\face-swap01.png",
+      "success": false,
+      "processing_time": 0.013635396957397461,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "AnalysisConfig.__init__() got an unexpected keyword argument 'enable_face_detection'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\face-swap02.png",
+      "success": false,
+      "processing_time": 0.03660988807678223,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "AnalysisConfig.__init__() got an unexpected keyword argument 'enable_face_detection'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\face-swap03.png",
+      "success": false,
+      "processing_time": 0.01453089714050293,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "AnalysisConfig.__init__() got an unexpected keyword argument 'enable_face_detection'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\night_01.jpg",
+      "success": false,
+      "processing_time": 0.008514404296875,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "AnalysisConfig.__init__() got an unexpected keyword argument 'enable_face_detection'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\night_02.jpg",
+      "success": false,
+      "processing_time": 0.013658523559570312,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "AnalysisConfig.__init__() got an unexpected keyword argument 'enable_face_detection'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\night_03.jpg",
+      "success": false,
+      "processing_time": 0.006509304046630859,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "AnalysisConfig.__init__() got an unexpected keyword argument 'enable_face_detection'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\night_group01.jpg",
+      "success": false,
+      "processing_time": 0.01907205581665039,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "AnalysisConfig.__init__() got an unexpected keyword argument 'enable_face_detection'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\night_group02.jpg",
+      "success": false,
+      "processing_time": 0.01854848861694336,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "AnalysisConfig.__init__() got an unexpected keyword argument 'enable_face_detection'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\spoofing_01.jpg",
+      "success": false,
+      "processing_time": 0.07917952537536621,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "AnalysisConfig.__init__() got an unexpected keyword argument 'enable_face_detection'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\spoofing_02.jpg",
+      "success": false,
+      "processing_time": 0.07656073570251465,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "AnalysisConfig.__init__() got an unexpected keyword argument 'enable_face_detection'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\spoofing_03.jpg",
+      "success": false,
+      "processing_time": 0.07531571388244629,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "AnalysisConfig.__init__() got an unexpected keyword argument 'enable_face_detection'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\spoofing_04.jpg",
+      "success": false,
+      "processing_time": 0.07584667205810547,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "AnalysisConfig.__init__() got an unexpected keyword argument 'enable_face_detection'"
+    }
+  ]
+}

@@ -1,0 +1,433 @@
+{
+  "timestamp": "2025-06-09T14:44:56.892560",
+  "system_info": {
+    "platform": "Windows-10-10.0.26100-SP0",
+    "python_version": "3.11.13",
+    "project_root": "D:\\projec-final",
+    "test_images_available": 23,
+    "torch_version": "2.5.1",
+    "cuda_available": true,
+    "cuda_version": "12.1",
+    "cuda_device_count": 1,
+    "onnx_runtime_version": "1.22.0",
+    "onnx_providers": [
+      "TensorrtExecutionProvider",
+      "CUDAExecutionProvider",
+      "CPUExecutionProvider"
+    ]
+  },
+  "gpu_info": [
+    {
+      "device_id": 0,
+      "name": "NVIDIA GeForce RTX 3060 Laptop GPU",
+      "total_memory_gb": 5.99951171875,
+      "compute_capability": "8.6",
+      "multi_processor_count": 30
+    }
+  ],
+  "model_availability": {
+    "categories": {
+      "face_detection": {
+        "yolov9c-face-lindevs.onnx": {
+          "available": true,
+          "path": "model\\face-detection\\yolov9c-face-lindevs.onnx",
+          "size_mb": 80.98
+        },
+        "yolov9e-face-lindevs.onnx": {
+          "available": true,
+          "path": "model\\face-detection\\yolov9e-face-lindevs.onnx",
+          "size_mb": 203.39
+        },
+        "yolov11m-face.pt": {
+          "available": true,
+          "path": "model\\face-detection\\yolov11m-face.pt",
+          "size_mb": 38.62
+        }
+      },
+      "face_recognition": {
+        "adaface_ir101.onnx": {
+          "available": true,
+          "path": "model\\face-recognition\\adaface_ir101.onnx",
+          "size_mb": 248.62
+        },
+        "arcface_r100.onnx": {
+          "available": true,
+          "path": "model\\face-recognition\\arcface_r100.onnx",
+          "size_mb": 248.62
+        },
+        "facenet_vggface2.onnx": {
+          "available": true,
+          "path": "model\\face-recognition\\facenet_vggface2.onnx",
+          "size_mb": 89.61
+        }
+      },
+      "anti_spoofing": {
+        "AntiSpoofing_bin_1.5_128.onnx": {
+          "available": true,
+          "path": "model\\anti-spoofing\\AntiSpoofing_bin_1.5_128.onnx",
+          "size_mb": 1.81
+        },
+        "AntiSpoofing_print-replay_1.5_128.onnx": {
+          "available": true,
+          "path": "model\\anti-spoofing\\AntiSpoofing_print-replay_1.5_128.onnx",
+          "size_mb": 1.81
+        }
+      },
+      "deepfake_detection": {
+        "model.onnx": {
+          "available": true,
+          "path": "model\\deepfake-detection\\model.onnx",
+          "size_mb": 44.22
+        }
+      },
+      "gender_age": {
+        "genderage.onnx": {
+          "available": true,
+          "path": "model\\gender-age\\genderage.onnx",
+          "size_mb": 1.26
+        }
+      }
+    },
+    "summary": {
+      "total_models": 10,
+      "available_models": 10,
+      "availability_rate": 1.0
+    }
+  },
+  "ai_services_tests": {
+    "vram_manager": {
+      "initialization": "success",
+      "status": {
+        "total_vram": 6441926656,
+        "allocated_vram": 0,
+        "available_vram": 6441926656,
+        "model_allocations": {}
+      }
+    },
+    "face_recognition_service": {
+      "initialization": "success",
+      "config": {
+        "similarity_threshold": 0.6,
+        "max_faces": 10,
+        "auto_model_selection": true
+      }
+    }
+  },
+  "performance_metrics": {},
+  "errors": [],
+  "gpu_capabilities": {
+    "memory_info": {
+      "allocated_mb": 0.0,
+      "reserved_mb": 0.0,
+      "total_mb": 6143.5,
+      "free_mb": 6143.5
+    },
+    "performance_test": {
+      "matrix_multiply_time": 0.1222844123840332,
+      "success": true
+    },
+    "onnx_providers": [
+      "TensorrtExecutionProvider",
+      "CUDAExecutionProvider",
+      "CPUExecutionProvider"
+    ],
+    "onnx_cuda_available": true
+  },
+  "vram_management_tests": {
+    "allocations": {
+      "model_1": {
+        "success": true,
+        "location": "gpu",
+        "vram_allocated": 104857600
+      },
+      "model_2": {
+        "success": true,
+        "location": "gpu",
+        "vram_allocated": 209715200
+      }
+    },
+    "status": {
+      "total_vram": 6441926656,
+      "allocated_vram": 314572800,
+      "available_vram": 6127353856,
+      "model_allocations": {
+        "TEST_MODEL_1": {
+          "service": "test_service_1",
+          "priority": "high",
+          "location": "gpu",
+          "vram": 104857600,
+          "status": "allocated_on_gpu"
+        },
+        "TEST_MODEL_2": {
+          "service": "test_service_2",
+          "priority": "medium",
+          "location": "gpu",
+          "vram": 209715200,
+          "status": "allocated_on_gpu"
+        }
+      }
+    },
+    "deallocations": {
+      "model_1": true,
+      "model_2": true
+    }
+  },
+  "performance_tests": {
+    "boss_01.jpg": {
+      "original_size": [
+        3392,
+        2544,
+        3
+      ],
+      "processing_time": 0.010870218276977539,
+      "success": true
+    },
+    "night_01.jpg": {
+      "original_size": [
+        1136,
+        1136,
+        3
+      ],
+      "processing_time": 0.0009989738464355469,
+      "success": true
+    },
+    "boss_group01.jpg": {
+      "original_size": [
+        4480,
+        6720,
+        3
+      ],
+      "processing_time": 0.007000923156738281,
+      "success": true
+    }
+  },
+  "image_processing_tests": {
+    "boss_single": {
+      "boss_01.jpg": {
+        "loaded": true,
+        "dimensions": [
+          2544,
+          3392,
+          3
+        ],
+        "file_size_mb": 5.75
+      },
+      "boss_02.jpg": {
+        "loaded": true,
+        "dimensions": [
+          2544,
+          3392,
+          3
+        ],
+        "file_size_mb": 6.53
+      },
+      "boss_03.jpg": {
+        "loaded": true,
+        "dimensions": [
+          2544,
+          3392,
+          3
+        ],
+        "file_size_mb": 6.73
+      },
+      "boss_04.jpg": {
+        "loaded": true,
+        "dimensions": [
+          2544,
+          3392,
+          3
+        ],
+        "file_size_mb": 6.2
+      },
+      "boss_05.jpg": {
+        "loaded": true,
+        "dimensions": [
+          2544,
+          3392,
+          3
+        ],
+        "file_size_mb": 4.61
+      }
+    },
+    "boss_glasses": {
+      "boss_glass01.jpg": {
+        "loaded": true,
+        "dimensions": [
+          1108,
+          1477,
+          3
+        ],
+        "file_size_mb": 0.13
+      },
+      "boss_glass02.jpg": {
+        "loaded": true,
+        "dimensions": [
+          1108,
+          1477,
+          3
+        ],
+        "file_size_mb": 0.15
+      },
+      "boss_glass03.jpg": {
+        "loaded": true,
+        "dimensions": [
+          1108,
+          1477,
+          3
+        ],
+        "file_size_mb": 0.17
+      }
+    },
+    "boss_group": {
+      "boss_group01.jpg": {
+        "loaded": true,
+        "dimensions": [
+          6720,
+          4480,
+          3
+        ],
+        "file_size_mb": 1.22
+      },
+      "boss_group02.jpg": {
+        "loaded": true,
+        "dimensions": [
+          6720,
+          4480,
+          3
+        ],
+        "file_size_mb": 2.02
+      },
+      "boss_group03.jpg": {
+        "loaded": true,
+        "dimensions": [
+          6201,
+          4134,
+          3
+        ],
+        "file_size_mb": 1.9
+      }
+    },
+    "night_single": {
+      "night_01.jpg": {
+        "loaded": true,
+        "dimensions": [
+          1136,
+          1136,
+          3
+        ],
+        "file_size_mb": 0.06
+      },
+      "night_02.jpg": {
+        "loaded": true,
+        "dimensions": [
+          1365,
+          1706,
+          3
+        ],
+        "file_size_mb": 0.09
+      },
+      "night_03.jpg": {
+        "loaded": true,
+        "dimensions": [
+          960,
+          959,
+          3
+        ],
+        "file_size_mb": 0.07
+      }
+    },
+    "night_group": {
+      "night_group01.jpg": {
+        "loaded": true,
+        "dimensions": [
+          2048,
+          1365,
+          3
+        ],
+        "file_size_mb": 0.2
+      },
+      "night_group02.jpg": {
+        "loaded": true,
+        "dimensions": [
+          2048,
+          1365,
+          3
+        ],
+        "file_size_mb": 0.19
+      }
+    },
+    "spoofing": {
+      "spoofing_01.jpg": {
+        "loaded": true,
+        "dimensions": [
+          3000,
+          4000,
+          3
+        ],
+        "file_size_mb": 2.84
+      },
+      "spoofing_02.jpg": {
+        "loaded": true,
+        "dimensions": [
+          3000,
+          4000,
+          3
+        ],
+        "file_size_mb": 2.47
+      },
+      "spoofing_03.jpg": {
+        "loaded": true,
+        "dimensions": [
+          3000,
+          4000,
+          3
+        ],
+        "file_size_mb": 2.17
+      },
+      "spoofing_04.jpg": {
+        "loaded": true,
+        "dimensions": [
+          3000,
+          4000,
+          3
+        ],
+        "file_size_mb": 2.52
+      }
+    },
+    "face_swap": {
+      "face-swap01.png": {
+        "loaded": true,
+        "dimensions": [
+          1136,
+          1136,
+          3
+        ],
+        "file_size_mb": 0.72
+      },
+      "face-swap02.png": {
+        "loaded": true,
+        "dimensions": [
+          1536,
+          2048,
+          3
+        ],
+        "file_size_mb": 2.18
+      },
+      "face-swap03.png": {
+        "loaded": true,
+        "dimensions": [
+          960,
+          959,
+          3
+        ],
+        "file_size_mb": 0.96
+      }
+    },
+    "summary": {
+      "total_images": 23,
+      "successful_images": 23,
+      "success_rate": 1.0
+    }
+  },
+  "total_execution_time": 1.3641767501831055
+}

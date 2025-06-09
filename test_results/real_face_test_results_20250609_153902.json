@@ -1,0 +1,191 @@
+{
+  "timestamp": "20250609_153902",
+  "total_images": 23,
+  "successful_tests": 0,
+  "results": [
+    {
+      "image_path": "D:\\projec-final\\test_images\\boss_01.jpg",
+      "success": false,
+      "processing_time": 0.053856611251831055,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "FaceDetectionService.detect_faces() got an unexpected keyword argument 'min_face_size'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\boss_02.jpg",
+      "success": false,
+      "processing_time": 0.054509639739990234,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "FaceDetectionService.detect_faces() got an unexpected keyword argument 'min_face_size'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\boss_03.jpg",
+      "success": false,
+      "processing_time": 0.05419182777404785,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "FaceDetectionService.detect_faces() got an unexpected keyword argument 'min_face_size'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\boss_04.jpg",
+      "success": false,
+      "processing_time": 0.05715012550354004,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "FaceDetectionService.detect_faces() got an unexpected keyword argument 'min_face_size'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\boss_05.jpg",
+      "success": false,
+      "processing_time": 0.05457496643066406,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "FaceDetectionService.detect_faces() got an unexpected keyword argument 'min_face_size'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\boss_glass01.jpg",
+      "success": false,
+      "processing_time": 0.005765438079833984,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "FaceDetectionService.detect_faces() got an unexpected keyword argument 'min_face_size'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\boss_glass02.jpg",
+      "success": false,
+      "processing_time": 0.006010770797729492,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "FaceDetectionService.detect_faces() got an unexpected keyword argument 'min_face_size'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\boss_glass03.jpg",
+      "success": false,
+      "processing_time": 0.006371259689331055,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "FaceDetectionService.detect_faces() got an unexpected keyword argument 'min_face_size'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\boss_group01.jpg",
+      "success": false,
+      "processing_time": 0.0975961685180664,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "FaceDetectionService.detect_faces() got an unexpected keyword argument 'min_face_size'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\boss_group02.jpg",
+      "success": false,
+      "processing_time": 0.10063457489013672,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "FaceDetectionService.detect_faces() got an unexpected keyword argument 'min_face_size'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\boss_group03.jpg",
+      "success": false,
+      "processing_time": 0.08996248245239258,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "FaceDetectionService.detect_faces() got an unexpected keyword argument 'min_face_size'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\face-swap01.png",
+      "success": false,
+      "processing_time": 0.013917207717895508,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "FaceDetectionService.detect_faces() got an unexpected keyword argument 'min_face_size'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\face-swap02.png",
+      "success": false,
+      "processing_time": 0.03481626510620117,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "FaceDetectionService.detect_faces() got an unexpected keyword argument 'min_face_size'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\face-swap03.png",
+      "success": false,
+      "processing_time": 0.015876293182373047,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "FaceDetectionService.detect_faces() got an unexpected keyword argument 'min_face_size'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\night_01.jpg",
+      "success": false,
+      "processing_time": 0.00852346420288086,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "FaceDetectionService.detect_faces() got an unexpected keyword argument 'min_face_size'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\night_02.jpg",
+      "success": false,
+      "processing_time": 0.015275716781616211,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "FaceDetectionService.detect_faces() got an unexpected keyword argument 'min_face_size'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\night_03.jpg",
+      "success": false,
+      "processing_time": 0.0065212249755859375,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "FaceDetectionService.detect_faces() got an unexpected keyword argument 'min_face_size'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\night_group01.jpg",
+      "success": false,
+      "processing_time": 0.019088268280029297,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "FaceDetectionService.detect_faces() got an unexpected keyword argument 'min_face_size'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\night_group02.jpg",
+      "success": false,
+      "processing_time": 0.020346403121948242,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "FaceDetectionService.detect_faces() got an unexpected keyword argument 'min_face_size'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\spoofing_01.jpg",
+      "success": false,
+      "processing_time": 0.08196854591369629,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "FaceDetectionService.detect_faces() got an unexpected keyword argument 'min_face_size'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\spoofing_02.jpg",
+      "success": false,
+      "processing_time": 0.07773303985595703,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "FaceDetectionService.detect_faces() got an unexpected keyword argument 'min_face_size'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\spoofing_03.jpg",
+      "success": false,
+      "processing_time": 0.07464027404785156,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "FaceDetectionService.detect_faces() got an unexpected keyword argument 'min_face_size'"
+    },
+    {
+      "image_path": "D:\\projec-final\\test_images\\spoofing_04.jpg",
+      "success": false,
+      "processing_time": 0.07607555389404297,
+      "faces_detected": 0,
+      "recognized_faces": [],
+      "error_message": "FaceDetectionService.detect_faces() got an unexpected keyword argument 'min_face_size'"
+    }
+  ]
+}

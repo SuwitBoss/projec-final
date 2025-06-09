@@ -1,0 +1,1809 @@
+{
+  "boss_01.jpg": {
+    "faces_detected": 1,
+    "faces_recognized": 1,
+    "recognized_persons": [
+      "night"
+    ],
+    "processing_time": 0.6690709590911865,
+    "detection_model": "yolov9e",
+    "faces": [
+      {
+        "face_id": "face_00",
+        "bbox": {
+          "x1": 0.0,
+          "y1": 0.0,
+          "x2": 2544.0,
+          "y2": 3392.0
+        },
+        "confidence": 35.451820373535156,
+        "quality_score": 789.0364074707031,
+        "recognition": {
+          "best_match": "night",
+          "confidence": 0.5275341123342514,
+          "all_matches": [
+            {
+              "person_id": "night",
+              "confidence": 0.5275341123342514
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "boss_02.jpg": {
+    "faces_detected": 1,
+    "faces_recognized": 1,
+    "recognized_persons": [
+      "boss"
+    ],
+    "processing_time": 0.6208438873291016,
+    "detection_model": "yolov9e",
+    "faces": [
+      {
+        "face_id": "face_00",
+        "bbox": {
+          "x1": 0.0,
+          "y1": 0.0,
+          "x2": 2544.0,
+          "y2": 3392.0
+        },
+        "confidence": 35.3272590637207,
+        "quality_score": 786.5451812744141,
+        "recognition": {
+          "best_match": "boss",
+          "confidence": 0.5448902547359467,
+          "all_matches": [
+            {
+              "person_id": "boss",
+              "confidence": 0.5448902547359467
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "boss_03.jpg": {
+    "faces_detected": 1,
+    "faces_recognized": 1,
+    "recognized_persons": [
+      "night"
+    ],
+    "processing_time": 0.732353687286377,
+    "detection_model": "yolov11m",
+    "faces": [
+      {
+        "face_id": "face_00",
+        "bbox": {
+          "x1": 528.0803833007812,
+          "y1": 1377.011962890625,
+          "x2": 1876.8756103515625,
+          "y2": 3054.22119140625
+        },
+        "confidence": 0.9079256057739258,
+        "quality_score": 95.15851211547852,
+        "recognition": {
+          "best_match": "night",
+          "confidence": 0.5446045100688934,
+          "all_matches": [
+            {
+              "person_id": "night",
+              "confidence": 0.5446045100688934
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "boss_04.jpg": {
+    "faces_detected": 1,
+    "faces_recognized": 1,
+    "recognized_persons": [
+      "night"
+    ],
+    "processing_time": 0.7611150741577148,
+    "detection_model": "yolov11m",
+    "faces": [
+      {
+        "face_id": "face_00",
+        "bbox": {
+          "x1": 690.8289794921875,
+          "y1": 1475.647216796875,
+          "x2": 1810.857177734375,
+          "y2": 2787.29296875
+        },
+        "confidence": 0.8934959173202515,
+        "quality_score": 94.86991834640503,
+        "recognition": {
+          "best_match": "night",
+          "confidence": 0.5742256790399551,
+          "all_matches": [
+            {
+              "person_id": "night",
+              "confidence": 0.5742256790399551
+            },
+            {
+              "person_id": "boss",
+              "confidence": 0.567164696753025
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "boss_05.jpg": {
+    "faces_detected": 1,
+    "faces_recognized": 1,
+    "recognized_persons": [
+      "boss"
+    ],
+    "processing_time": 0.8100223541259766,
+    "detection_model": "yolov11m",
+    "faces": [
+      {
+        "face_id": "face_00",
+        "bbox": {
+          "x1": 708.0338134765625,
+          "y1": 1028.6883544921875,
+          "x2": 2226.938720703125,
+          "y2": 2924.562744140625
+        },
+        "confidence": 0.9134261608123779,
+        "quality_score": 98.26852321624756,
+        "recognition": {
+          "best_match": "boss",
+          "confidence": 0.5414718613028526,
+          "all_matches": [
+            {
+              "person_id": "boss",
+              "confidence": 0.5414718613028526
+            },
+            {
+              "person_id": "night",
+              "confidence": 0.5282078199088573
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "boss_glass01.jpg": {
+    "faces_detected": 1,
+    "faces_recognized": 0,
+    "recognized_persons": [],
+    "processing_time": 0.6055128574371338,
+    "detection_model": "yolov9e",
+    "faces": [
+      {
+        "face_id": "face_00",
+        "bbox": {
+          "x1": 0.0,
+          "y1": 0.0,
+          "x2": 1108.0,
+          "y2": 1477.0
+        },
+        "confidence": 35.04514694213867,
+        "quality_score": 780.9029388427734,
+        "recognition": {
+          "best_match": null,
+          "confidence": 0.0,
+          "all_matches": []
+        }
+      }
+    ]
+  },
+  "boss_glass02.jpg": {
+    "faces_detected": 1,
+    "faces_recognized": 1,
+    "recognized_persons": [
+      "boss"
+    ],
+    "processing_time": 0.6218008995056152,
+    "detection_model": "yolov11m",
+    "faces": [
+      {
+        "face_id": "face_00",
+        "bbox": {
+          "x1": 237.50900268554688,
+          "y1": 195.587646484375,
+          "x2": 1010.468994140625,
+          "y2": 1147.3028564453125
+        },
+        "confidence": 0.9124188423156738,
+        "quality_score": 98.24837684631348,
+        "recognition": {
+          "best_match": "boss",
+          "confidence": 0.5241670608520508,
+          "all_matches": [
+            {
+              "person_id": "boss",
+              "confidence": 0.5241670608520508
+            },
+            {
+              "person_id": "night",
+              "confidence": 0.5076758991926908
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "boss_glass03.jpg": {
+    "faces_detected": 1,
+    "faces_recognized": 1,
+    "recognized_persons": [
+      "night"
+    ],
+    "processing_time": 0.5895559787750244,
+    "detection_model": "yolov9e",
+    "faces": [
+      {
+        "face_id": "face_00",
+        "bbox": {
+          "x1": 0.0,
+          "y1": 0.0,
+          "x2": 1108.0,
+          "y2": 1477.0
+        },
+        "confidence": 35.229896545410156,
+        "quality_score": 784.5979309082031,
+        "recognition": {
+          "best_match": "night",
+          "confidence": 0.5649303644895554,
+          "all_matches": [
+            {
+              "person_id": "night",
+              "confidence": 0.5649303644895554
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "boss_group01.jpg": {
+    "faces_detected": 4,
+    "faces_recognized": 4,
+    "recognized_persons": [
+      "night",
+      "boss"
+    ],
+    "processing_time": 1.131472110748291,
+    "detection_model": "yolov11m",
+    "faces": [
+      {
+        "face_id": "face_00",
+        "bbox": {
+          "x1": 5892.10205078125,
+          "y1": 701.0287475585938,
+          "x2": 6720.0,
+          "y2": 1982.90869140625
+        },
+        "confidence": 0.8547929525375366,
+        "quality_score": 80.09585905075073,
+        "recognition": {
+          "best_match": "boss",
+          "confidence": 0.5374868474900723,
+          "all_matches": [
+            {
+              "person_id": "boss",
+              "confidence": 0.5374868474900723
+            },
+            {
+              "person_id": "night",
+              "confidence": 0.5308162812143564
+            }
+          ]
+        }
+      },
+      {
+        "face_id": "face_01",
+        "bbox": {
+          "x1": 2570.859130859375,
+          "y1": 823.2463989257812,
+          "x2": 3575.943359375,
+          "y2": 2135.03857421875
+        },
+        "confidence": 0.8249910473823547,
+        "quality_score": 81.4998209476471,
+        "recognition": {
+          "best_match": "night",
+          "confidence": 0.5433652922511101,
+          "all_matches": [
+            {
+              "person_id": "night",
+              "confidence": 0.5433652922511101
+            },
+            {
+              "person_id": "boss",
+              "confidence": 0.542058601975441
+            }
+          ]
+        }
+      },
+      {
+        "face_id": "face_02",
+        "bbox": {
+          "x1": 481.5995788574219,
+          "y1": 496.45660400390625,
+          "x2": 1165.8568115234375,
+          "y2": 1261.4044189453125
+        },
+        "confidence": 0.8098999857902527,
+        "quality_score": 81.19799971580505,
+        "recognition": {
+          "best_match": "boss",
+          "confidence": 0.5642494559288025,
+          "all_matches": [
+            {
+              "person_id": "boss",
+              "confidence": 0.5642494559288025
+            },
+            {
+              "person_id": "night",
+              "confidence": 0.5184583086520433
+            }
+          ]
+        }
+      },
+      {
+        "face_id": "face_03",
+        "bbox": {
+          "x1": 3680.108642578125,
+          "y1": 529.5157470703125,
+          "x2": 4283.89501953125,
+          "y2": 1326.6048583984375
+        },
+        "confidence": 0.8025063276290894,
+        "quality_score": 81.05012655258179,
+        "recognition": {
+          "best_match": "night",
+          "confidence": 0.5271875131875277,
+          "all_matches": [
+            {
+              "person_id": "night",
+              "confidence": 0.5271875131875277
+            },
+            {
+              "person_id": "boss",
+              "confidence": 0.5157969407737255
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "boss_group02.jpg": {
+    "faces_detected": 42,
+    "faces_recognized": 28,
+    "recognized_persons": [
+      "boss",
+      "night"
+    ],
+    "processing_time": 3.0588982105255127,
+    "detection_model": "yolov11m",
+    "faces": [
+      {
+        "face_id": "face_00",
+        "bbox": {
+          "x1": 877.795166015625,
+          "y1": 2396.7431640625,
+          "x2": 1045.2208251953125,
+          "y2": 2583.102783203125
+        },
+        "confidence": 0.8559287190437317,
+        "quality_score": 74.61857438087463,
+        "recognition": {
+          "best_match": "night",
+          "confidence": 0.550220537930727,
+          "all_matches": [
+            {
+              "person_id": "night",
+              "confidence": 0.550220537930727
+            },
+            {
+              "person_id": "boss",
+              "confidence": 0.5104608871042728
+            }
+          ]
+        }
+      },
+      {
+        "face_id": "face_01",
+        "bbox": {
+          "x1": 4113.91845703125,
+          "y1": 2396.3779296875,
+          "x2": 4254.69482421875,
+          "y2": 2572.20556640625
+        },
+        "confidence": 0.8522361516952515,
+        "quality_score": 74.54472303390503,
+        "recognition": {
+          "best_match": null,
+          "confidence": 0.0,
+          "all_matches": []
+        }
+      },
+      {
+        "face_id": "face_02",
+        "bbox": {
+          "x1": 4915.00927734375,
+          "y1": 2259.6630859375,
+          "x2": 5083.77197265625,
+          "y2": 2470.577880859375
+        },
+        "confidence": 0.843686580657959,
+        "quality_score": 74.37373161315918,
+        "recognition": {
+          "best_match": "night",
+          "confidence": 0.5008175764232874,
+          "all_matches": [
+            {
+              "person_id": "night",
+              "confidence": 0.5008175764232874
+            }
+          ]
+        }
+      },
+      {
+        "face_id": "face_03",
+        "bbox": {
+          "x1": 5333.8974609375,
+          "y1": 2205.998779296875,
+          "x2": 5494.509765625,
+          "y2": 2390.507568359375
+        },
+        "confidence": 0.8398097157478333,
+        "quality_score": 74.29619431495667,
+        "recognition": {
+          "best_match": null,
+          "confidence": 0.0,
+          "all_matches": []
+        }
+      },
+      {
+        "face_id": "face_04",
+        "bbox": {
+          "x1": 3020.76904296875,
+          "y1": 2382.9619140625,
+          "x2": 3153.277099609375,
+          "y2": 2579.84619140625
+        },
+        "confidence": 0.8371509313583374,
+        "quality_score": 72.24301862716675,
+        "recognition": {
+          "best_match": "boss",
+          "confidence": 0.5272720661014318,
+          "all_matches": [
+            {
+              "person_id": "boss",
+              "confidence": 0.5272720661014318
+            }
+          ]
+        }
+      },
+      {
+        "face_id": "face_05",
+        "bbox": {
+          "x1": 3423.20703125,
+          "y1": 2439.69140625,
+          "x2": 3569.1982421875,
+          "y2": 2631.61572265625
+        },
+        "confidence": 0.8359910249710083,
+        "quality_score": 74.21982049942017,
+        "recognition": {
+          "best_match": null,
+          "confidence": 0.0,
+          "all_matches": []
+        }
+      },
+      {
+        "face_id": "face_06",
+        "bbox": {
+          "x1": 1723.499755859375,
+          "y1": 2267.52294921875,
+          "x2": 1872.771728515625,
+          "y2": 2456.610595703125
+        },
+        "confidence": 0.8348239064216614,
+        "quality_score": 74.19647812843323,
+        "recognition": {
+          "best_match": "boss",
+          "confidence": 0.5188131555914879,
+          "all_matches": [
+            {
+              "person_id": "boss",
+              "confidence": 0.5188131555914879
+            },
+            {
+              "person_id": "night",
+              "confidence": 0.51507768034935
+            }
+          ]
+        }
+      },
+      {
+        "face_id": "face_07",
+        "bbox": {
+          "x1": 4520.37646484375,
+          "y1": 2427.869873046875,
+          "x2": 4670.52783203125,
+          "y2": 2613.0927734375
+        },
+        "confidence": 0.8345794081687927,
+        "quality_score": 74.19158816337585,
+        "recognition": {
+          "best_match": "boss",
+          "confidence": 0.5773175656795502,
+          "all_matches": [
+            {
+              "person_id": "boss",
+              "confidence": 0.5773175656795502
+            },
+            {
+              "person_id": "night",
+              "confidence": 0.507650310639292
+            }
+          ]
+        }
+      },
+      {
+        "face_id": "face_08",
+        "bbox": {
+          "x1": 536.8104858398438,
+          "y1": 2330.058349609375,
+          "x2": 677.7584228515625,
+          "y2": 2496.21728515625
+        },
+        "confidence": 0.8338851928710938,
+        "quality_score": 74.17770385742188,
+        "recognition": {
+          "best_match": null,
+          "confidence": 0.0,
+          "all_matches": []
+        }
+      },
+      {
+        "face_id": "face_09",
+        "bbox": {
+          "x1": 3795.27001953125,
+          "y1": 2419.377197265625,
+          "x2": 3935.329345703125,
+          "y2": 2600.64697265625
+        },
+        "confidence": 0.8284498453140259,
+        "quality_score": 74.06899690628052,
+        "recognition": {
+          "best_match": null,
+          "confidence": 0.0,
+          "all_matches": []
+        }
+      },
+      {
+        "face_id": "face_10",
+        "bbox": {
+          "x1": 2126.354248046875,
+          "y1": 2375.609375,
+          "x2": 2286.819091796875,
+          "y2": 2584.476806640625
+        },
+        "confidence": 0.8257724046707153,
+        "quality_score": 74.0154480934143,
+        "recognition": {
+          "best_match": "boss",
+          "confidence": 0.5757564306259155,
+          "all_matches": [
+            {
+              "person_id": "boss",
+              "confidence": 0.5757564306259155
+            }
+          ]
+        }
+      },
+      {
+        "face_id": "face_11",
+        "bbox": {
+          "x1": 2441.396728515625,
+          "y1": 2095.755859375,
+          "x2": 2569.58544921875,
+          "y2": 2285.21923828125
+        },
+        "confidence": 0.8220759630203247,
+        "quality_score": 71.9415192604065,
+        "recognition": {
+          "best_match": null,
+          "confidence": 0.0,
+          "all_matches": []
+        }
+      },
+      {
+        "face_id": "face_12",
+        "bbox": {
+          "x1": 5870.31005859375,
+          "y1": 2432.6103515625,
+          "x2": 6044.27783203125,
+          "y2": 2622.517333984375
+        },
+        "confidence": 0.8197546005249023,
+        "quality_score": 71.89509201049805,
+        "recognition": {
+          "best_match": "boss",
+          "confidence": 0.5729885473847389,
+          "all_matches": [
+            {
+              "person_id": "boss",
+              "confidence": 0.5729885473847389
+            },
+            {
+              "person_id": "night",
+              "confidence": 0.5346284657716751
+            }
+          ]
+        }
+      },
+      {
+        "face_id": "face_13",
+        "bbox": {
+          "x1": 1272.367919921875,
+          "y1": 2213.942138671875,
+          "x2": 1435.728759765625,
+          "y2": 2411.543701171875
+        },
+        "confidence": 0.8194900751113892,
+        "quality_score": 73.88980150222778,
+        "recognition": {
+          "best_match": "boss",
+          "confidence": 0.5457833670079708,
+          "all_matches": [
+            {
+              "person_id": "boss",
+              "confidence": 0.5457833670079708
+            }
+          ]
+        }
+      },
+      {
+        "face_id": "face_14",
+        "bbox": {
+          "x1": 2568.08642578125,
+          "y1": 2371.0234375,
+          "x2": 2711.41357421875,
+          "y2": 2550.163818359375
+        },
+        "confidence": 0.8162600994110107,
+        "quality_score": 73.82520198822021,
+        "recognition": {
+          "best_match": "boss",
+          "confidence": 0.5312588885426521,
+          "all_matches": [
+            {
+              "person_id": "boss",
+              "confidence": 0.5312588885426521
+            }
+          ]
+        }
+      },
+      {
+        "face_id": "face_15",
+        "bbox": {
+          "x1": 5106.39990234375,
+          "y1": 2066.564697265625,
+          "x2": 5236.76171875,
+          "y2": 2222.368896484375
+        },
+        "confidence": 0.8152204155921936,
+        "quality_score": 73.80440831184387,
+        "recognition": {
+          "best_match": "boss",
+          "confidence": 0.5033682798966765,
+          "all_matches": [
+            {
+              "person_id": "boss",
+              "confidence": 0.5033682798966765
+            }
+          ]
+        }
+      },
+      {
+        "face_id": "face_16",
+        "bbox": {
+          "x1": 2694.30224609375,
+          "y1": 1891.28564453125,
+          "x2": 2819.091064453125,
+          "y2": 2063.3486328125
+        },
+        "confidence": 0.8148327469825745,
+        "quality_score": 73.79665493965149,
+        "recognition": {
+          "best_match": "boss",
+          "confidence": 0.5362200625240803,
+          "all_matches": [
+            {
+              "person_id": "boss",
+              "confidence": 0.5362200625240803
+            }
+          ]
+        }
+      },
+      {
+        "face_id": "face_17",
+        "bbox": {
+          "x1": 5799.3515625,
+          "y1": 2123.25439453125,
+          "x2": 5961.8798828125,
+          "y2": 2312.09228515625
+        },
+        "confidence": 0.8143839836120605,
+        "quality_score": 73.78767967224121,
+        "recognition": {
+          "best_match": "boss",
+          "confidence": 0.5265414249151945,
+          "all_matches": [
+            {
+              "person_id": "boss",
+              "confidence": 0.5265414249151945
+            }
+          ]
+        }
+      },
+      {
+        "face_id": "face_18",
+        "bbox": {
+          "x1": 5439.8359375,
+          "y1": 2434.147216796875,
+          "x2": 5616.884765625,
+          "y2": 2635.552001953125
+        },
+        "confidence": 0.8141842484474182,
+        "quality_score": 73.78368496894836,
+        "recognition": {
+          "best_match": null,
+          "confidence": 0.0,
+          "all_matches": []
+        }
+      },
+      {
+        "face_id": "face_19",
+        "bbox": {
+          "x1": 4744.9189453125,
+          "y1": 1967.4642333984375,
+          "x2": 4885.11669921875,
+          "y2": 2143.74365234375
+        },
+        "confidence": 0.8125799894332886,
+        "quality_score": 73.75159978866577,
+        "recognition": {
+          "best_match": "night",
+          "confidence": 0.5126682184636593,
+          "all_matches": [
+            {
+              "person_id": "night",
+              "confidence": 0.5126682184636593
+            }
+          ]
+        }
+      },
+      {
+        "face_id": "face_20",
+        "bbox": {
+          "x1": 3760.528076171875,
+          "y1": 1962.189453125,
+          "x2": 3867.894287109375,
+          "y2": 2101.04052734375
+        },
+        "confidence": 0.8107373118400574,
+        "quality_score": 73.71474623680115,
+        "recognition": {
+          "best_match": "night",
+          "confidence": 0.5428182929754257,
+          "all_matches": [
+            {
+              "person_id": "night",
+              "confidence": 0.5428182929754257
+            },
+            {
+              "person_id": "boss",
+              "confidence": 0.5423061065375805
+            }
+          ]
+        }
+      },
+      {
+        "face_id": "face_21",
+        "bbox": {
+          "x1": 4439.57177734375,
+          "y1": 1953.5142822265625,
+          "x2": 4572.60693359375,
+          "y2": 2133.037109375
+        },
+        "confidence": 0.8105499148368835,
+        "quality_score": 73.71099829673767,
+        "recognition": {
+          "best_match": "night",
+          "confidence": 0.5597029700875282,
+          "all_matches": [
+            {
+              "person_id": "night",
+              "confidence": 0.5597029700875282
+            }
+          ]
+        }
+      },
+      {
+        "face_id": "face_22",
+        "bbox": {
+          "x1": 5487.55078125,
+          "y1": 2016.7193603515625,
+          "x2": 5614.26220703125,
+          "y2": 2172.24609375
+        },
+        "confidence": 0.8100752830505371,
+        "quality_score": 73.70150566101074,
+        "recognition": {
+          "best_match": "boss",
+          "confidence": 0.5289673954248428,
+          "all_matches": [
+            {
+              "person_id": "boss",
+              "confidence": 0.5289673954248428
+            }
+          ]
+        }
+      },
+      {
+        "face_id": "face_23",
+        "bbox": {
+          "x1": 3101.13623046875,
+          "y1": 1978.343017578125,
+          "x2": 3238.359130859375,
+          "y2": 2136.85546875
+        },
+        "confidence": 0.8077660799026489,
+        "quality_score": 73.65532159805298,
+        "recognition": {
+          "best_match": null,
+          "confidence": 0.0,
+          "all_matches": []
+        }
+      },
+      {
+        "face_id": "face_24",
+        "bbox": {
+          "x1": 1883.9788818359375,
+          "y1": 1969.677978515625,
+          "x2": 2021.4149169921875,
+          "y2": 2130.12158203125
+        },
+        "confidence": 0.8065905570983887,
+        "quality_score": 73.63181114196777,
+        "recognition": {
+          "best_match": "night",
+          "confidence": 0.5824476182460785,
+          "all_matches": [
+            {
+              "person_id": "night",
+              "confidence": 0.5824476182460785
+            },
+            {
+              "person_id": "boss",
+              "confidence": 0.5637140274047852
+            }
+          ]
+        }
+      },
+      {
+        "face_id": "face_25",
+        "bbox": {
+          "x1": 1344.866455078125,
+          "y1": 1948.08837890625,
+          "x2": 1485.074462890625,
+          "y2": 2104.769287109375
+        },
+        "confidence": 0.8026710748672485,
+        "quality_score": 73.55342149734497,
+        "recognition": {
+          "best_match": null,
+          "confidence": 0.0,
+          "all_matches": []
+        }
+      },
+      {
+        "face_id": "face_26",
+        "bbox": {
+          "x1": 2002.9320068359375,
+          "y1": 2196.94775390625,
+          "x2": 2152.28076171875,
+          "y2": 2382.658935546875
+        },
+        "confidence": 0.7976767420768738,
+        "quality_score": 73.45353484153748,
+        "recognition": {
+          "best_match": "night",
+          "confidence": 0.571462370455265,
+          "all_matches": [
+            {
+              "person_id": "night",
+              "confidence": 0.571462370455265
+            }
+          ]
+        }
+      },
+      {
+        "face_id": "face_27",
+        "bbox": {
+          "x1": 2963.111083984375,
+          "y1": 1944.3486328125,
+          "x2": 3083.49560546875,
+          "y2": 2097.581298828125
+        },
+        "confidence": 0.7952605485916138,
+        "quality_score": 73.40521097183228,
+        "recognition": {
+          "best_match": null,
+          "confidence": 0.0,
+          "all_matches": []
+        }
+      },
+      {
+        "face_id": "face_28",
+        "bbox": {
+          "x1": 3545.678955078125,
+          "y1": 1914.8302001953125,
+          "x2": 3678.74267578125,
+          "y2": 2088.792724609375
+        },
+        "confidence": 0.7918839454650879,
+        "quality_score": 73.33767890930176,
+        "recognition": {
+          "best_match": "boss",
+          "confidence": 0.5340740978717804,
+          "all_matches": [
+            {
+              "person_id": "boss",
+              "confidence": 0.5340740978717804
+            },
+            {
+              "person_id": "night",
+              "confidence": 0.5125438943505287
+            }
+          ]
+        }
+      },
+      {
+        "face_id": "face_29",
+        "bbox": {
+          "x1": 3952.66357421875,
+          "y1": 1925.675537109375,
+          "x2": 4088.785400390625,
+          "y2": 2086.80419921875
+        },
+        "confidence": 0.790762186050415,
+        "quality_score": 73.3152437210083,
+        "recognition": {
+          "best_match": null,
+          "confidence": 0.0,
+          "all_matches": []
+        }
+      },
+      {
+        "face_id": "face_30",
+        "bbox": {
+          "x1": 4137.2509765625,
+          "y1": 1964.1536865234375,
+          "x2": 4249.56494140625,
+          "y2": 2113.655029296875
+        },
+        "confidence": 0.7881025671958923,
+        "quality_score": 73.26205134391785,
+        "recognition": {
+          "best_match": "night",
+          "confidence": 0.5119659453630447,
+          "all_matches": [
+            {
+              "person_id": "night",
+              "confidence": 0.5119659453630447
+            },
+            {
+              "person_id": "boss",
+              "confidence": 0.5023638089187443
+            }
+          ]
+        }
+      },
+      {
+        "face_id": "face_31",
+        "bbox": {
+          "x1": 862.4176025390625,
+          "y1": 2082.52978515625,
+          "x2": 1020.2847900390625,
+          "y2": 2247.4794921875
+        },
+        "confidence": 0.7738345265388489,
+        "quality_score": 70.97669053077698,
+        "recognition": {
+          "best_match": "night",
+          "confidence": 0.5504061654210091,
+          "all_matches": [
+            {
+              "person_id": "night",
+              "confidence": 0.5504061654210091
+            }
+          ]
+        }
+      },
+      {
+        "face_id": "face_32",
+        "bbox": {
+          "x1": 3390.895751953125,
+          "y1": 1989.49072265625,
+          "x2": 3514.822998046875,
+          "y2": 2131.147216796875
+        },
+        "confidence": 0.7569298148155212,
+        "quality_score": 72.63859629631042,
+        "recognition": {
+          "best_match": null,
+          "confidence": 0.0,
+          "all_matches": []
+        }
+      },
+      {
+        "face_id": "face_33",
+        "bbox": {
+          "x1": 1263.2039794921875,
+          "y1": 2014.578857421875,
+          "x2": 1360.12646484375,
+          "y2": 2154.3447265625
+        },
+        "confidence": 0.7490653395652771,
+        "quality_score": 62.48130679130554,
+        "recognition": {
+          "best_match": "night",
+          "confidence": 0.52434959448874,
+          "all_matches": [
+            {
+              "person_id": "night",
+              "confidence": 0.52434959448874
+            }
+          ]
+        }
+      },
+      {
+        "face_id": "face_34",
+        "bbox": {
+          "x1": 1760.11181640625,
+          "y1": 1999.934814453125,
+          "x2": 1873.64697265625,
+          "y2": 2141.658203125
+        },
+        "confidence": 0.7478118538856506,
+        "quality_score": 72.45623707771301,
+        "recognition": {
+          "best_match": "boss",
+          "confidence": 0.5097077861428261,
+          "all_matches": [
+            {
+              "person_id": "boss",
+              "confidence": 0.5097077861428261
+            }
+          ]
+        }
+      },
+      {
+        "face_id": "face_35",
+        "bbox": {
+          "x1": 4915.6962890625,
+          "y1": 1995.4737548828125,
+          "x2": 5024.9775390625,
+          "y2": 2127.19287109375
+        },
+        "confidence": 0.7385598421096802,
+        "quality_score": 72.2711968421936,
+        "recognition": {
+          "best_match": "boss",
+          "confidence": 0.5521819293498993,
+          "all_matches": [
+            {
+              "person_id": "boss",
+              "confidence": 0.5521819293498993
+            }
+          ]
+        }
+      },
+      {
+        "face_id": "face_36",
+        "bbox": {
+          "x1": 2349.291015625,
+          "y1": 1936.5584716796875,
+          "x2": 2475.96533203125,
+          "y2": 2100.0234375
+        },
+        "confidence": 0.7307806015014648,
+        "quality_score": 72.1156120300293,
+        "recognition": {
+          "best_match": "boss",
+          "confidence": 0.527454674243927,
+          "all_matches": [
+            {
+              "person_id": "boss",
+              "confidence": 0.527454674243927
+            }
+          ]
+        }
+      },
+      {
+        "face_id": "face_37",
+        "bbox": {
+          "x1": 4379.04296875,
+          "y1": 1969.7994384765625,
+          "x2": 4463.60693359375,
+          "y2": 2113.4892578125
+        },
+        "confidence": 0.7213655710220337,
+        "quality_score": 59.927311420440674,
+        "recognition": {
+          "best_match": "boss",
+          "confidence": 0.5920053049921989,
+          "all_matches": [
+            {
+              "person_id": "boss",
+              "confidence": 0.5920053049921989
+            }
+          ]
+        }
+      },
+      {
+        "face_id": "face_38",
+        "bbox": {
+          "x1": 5314.064453125,
+          "y1": 2086.0419921875,
+          "x2": 5418.6904296875,
+          "y2": 2213.2568359375
+        },
+        "confidence": 0.7019898891448975,
+        "quality_score": 71.53979778289795,
+        "recognition": {
+          "best_match": "night",
+          "confidence": 0.5956754386425018,
+          "all_matches": [
+            {
+              "person_id": "night",
+              "confidence": 0.5956754386425018
+            },
+            {
+              "person_id": "boss",
+              "confidence": 0.5331594049930573
+            }
+          ]
+        }
+      },
+      {
+        "face_id": "face_39",
+        "bbox": {
+          "x1": 5874.1103515625,
+          "y1": 2053.3798828125,
+          "x2": 5991.599609375,
+          "y2": 2197.50048828125
+        },
+        "confidence": 0.5748742818832397,
+        "quality_score": 68.9974856376648,
+        "recognition": {
+          "best_match": "night",
+          "confidence": 0.518348004668951,
+          "all_matches": [
+            {
+              "person_id": "night",
+              "confidence": 0.518348004668951
+            }
+          ]
+        }
+      },
+      {
+        "face_id": "face_40",
+        "bbox": {
+          "x1": 785.2649536132812,
+          "y1": 2110.89599609375,
+          "x2": 892.478515625,
+          "y2": 2257.295654296875
+        },
+        "confidence": 0.48701468110084534,
+        "quality_score": 67.2402936220169,
+        "recognition": {
+          "best_match": null,
+          "confidence": 0.0,
+          "all_matches": []
+        }
+      },
+      {
+        "face_id": "face_41",
+        "bbox": {
+          "x1": 1616.383544921875,
+          "y1": 2111.4677734375,
+          "x2": 1699.31640625,
+          "y2": 2219.3037109375
+        },
+        "confidence": 0.44959548115730286,
+        "quality_score": 58.49190962314606,
+        "recognition": {
+          "best_match": null,
+          "confidence": 0.0,
+          "all_matches": []
+        }
+      }
+    ]
+  },
+  "boss_group03.jpg": {
+    "faces_detected": 3,
+    "faces_recognized": 2,
+    "recognized_persons": [
+      "night"
+    ],
+    "processing_time": 0.6545109748840332,
+    "detection_model": "yolov11m",
+    "faces": [
+      {
+        "face_id": "face_00",
+        "bbox": {
+          "x1": 3870.89111328125,
+          "y1": 1785.30908203125,
+          "x2": 4062.93798828125,
+          "y2": 2060.257568359375
+        },
+        "confidence": 0.8242294788360596,
+        "quality_score": 71.98458957672119,
+        "recognition": {
+          "best_match": "night",
+          "confidence": 0.5462305843830109,
+          "all_matches": [
+            {
+              "person_id": "night",
+              "confidence": 0.5462305843830109
+            }
+          ]
+        }
+      },
+      {
+        "face_id": "face_01",
+        "bbox": {
+          "x1": 2384.359619140625,
+          "y1": 1960.7335205078125,
+          "x2": 2573.852783203125,
+          "y2": 2212.509033203125
+        },
+        "confidence": 0.8217095136642456,
+        "quality_score": 73.93419027328491,
+        "recognition": {
+          "best_match": null,
+          "confidence": 0.0,
+          "all_matches": []
+        }
+      },
+      {
+        "face_id": "face_02",
+        "bbox": {
+          "x1": 3227.903564453125,
+          "y1": 1763.698486328125,
+          "x2": 3431.283935546875,
+          "y2": 2032.2352294921875
+        },
+        "confidence": 0.8170254826545715,
+        "quality_score": 73.84050965309143,
+        "recognition": {
+          "best_match": "night",
+          "confidence": 0.5485229380428791,
+          "all_matches": [
+            {
+              "person_id": "night",
+              "confidence": 0.5485229380428791
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "face-swap01.png": {
+    "faces_detected": 1,
+    "faces_recognized": 1,
+    "recognized_persons": [
+      "boss"
+    ],
+    "processing_time": 0.29517292976379395,
+    "detection_model": "yolov11m",
+    "faces": [
+      {
+        "face_id": "face_00",
+        "bbox": {
+          "x1": 423.7616882324219,
+          "y1": 181.63865661621094,
+          "x2": 678.37451171875,
+          "y2": 500.9026794433594
+        },
+        "confidence": 0.8884503841400146,
+        "quality_score": 90.2690076828003,
+        "recognition": {
+          "best_match": "boss",
+          "confidence": 0.5341733247041702,
+          "all_matches": [
+            {
+              "person_id": "boss",
+              "confidence": 0.5341733247041702
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "face-swap02.png": {
+    "faces_detected": 1,
+    "faces_recognized": 1,
+    "recognized_persons": [
+      "night"
+    ],
+    "processing_time": 0.6675047874450684,
+    "detection_model": "yolov9e",
+    "faces": [
+      {
+        "face_id": "face_00",
+        "bbox": {
+          "x1": 0.0,
+          "y1": 0.0,
+          "x2": 1536.0,
+          "y2": 2048.0
+        },
+        "confidence": 35.22932434082031,
+        "quality_score": 784.5864868164062,
+        "recognition": {
+          "best_match": "night",
+          "confidence": 0.5015281587839127,
+          "all_matches": [
+            {
+              "person_id": "night",
+              "confidence": 0.5015281587839127
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "face-swap03.png": {
+    "faces_detected": 2,
+    "faces_recognized": 1,
+    "recognized_persons": [
+      "boss"
+    ],
+    "processing_time": 0.26366472244262695,
+    "detection_model": "yolov11m",
+    "faces": [
+      {
+        "face_id": "face_00",
+        "bbox": {
+          "x1": 350.94598388671875,
+          "y1": 111.43519592285156,
+          "x2": 692.5523071289062,
+          "y2": 524.100830078125
+        },
+        "confidence": 0.9001418948173523,
+        "quality_score": 95.00283789634705,
+        "recognition": {
+          "best_match": null,
+          "confidence": 0.0,
+          "all_matches": []
+        }
+      },
+      {
+        "face_id": "face_01",
+        "bbox": {
+          "x1": 48.904014587402344,
+          "y1": 650.7042846679688,
+          "x2": 90.32887268066406,
+          "y2": 702.5410766601562
+        },
+        "confidence": 0.7925987243652344,
+        "quality_score": 53.35197448730469,
+        "recognition": {
+          "best_match": "boss",
+          "confidence": 0.5230577662587166,
+          "all_matches": [
+            {
+              "person_id": "boss",
+              "confidence": 0.5230577662587166
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "night_01.jpg": {
+    "faces_detected": 1,
+    "faces_recognized": 1,
+    "recognized_persons": [
+      "night"
+    ],
+    "processing_time": 0.20221281051635742,
+    "detection_model": "yolov11m",
+    "faces": [
+      {
+        "face_id": "face_00",
+        "bbox": {
+          "x1": 422.64764404296875,
+          "y1": 204.4883575439453,
+          "x2": 677.13818359375,
+          "y2": 502.7822265625
+        },
+        "confidence": 0.8900836110115051,
+        "quality_score": 90.3016722202301,
+        "recognition": {
+          "best_match": "night",
+          "confidence": 0.5779706686735153,
+          "all_matches": [
+            {
+              "person_id": "night",
+              "confidence": 0.5779706686735153
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "night_02.jpg": {
+    "faces_detected": 1,
+    "faces_recognized": 1,
+    "recognized_persons": [
+      "night"
+    ],
+    "processing_time": 0.6378378868103027,
+    "detection_model": "yolov11m",
+    "faces": [
+      {
+        "face_id": "face_00",
+        "bbox": {
+          "x1": 571.3109741210938,
+          "y1": 515.5303344726562,
+          "x2": 1025.3739013671875,
+          "y2": 1093.272705078125
+        },
+        "confidence": 0.8920423984527588,
+        "quality_score": 90.34084796905518,
+        "recognition": {
+          "best_match": "night",
+          "confidence": 0.5927201360464096,
+          "all_matches": [
+            {
+              "person_id": "night",
+              "confidence": 0.5927201360464096
+            },
+            {
+              "person_id": "boss",
+              "confidence": 0.5131670124828815
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "night_03.jpg": {
+    "faces_detected": 2,
+    "faces_recognized": 1,
+    "recognized_persons": [
+      "night"
+    ],
+    "processing_time": 0.24980711936950684,
+    "detection_model": "yolov11m",
+    "faces": [
+      {
+        "face_id": "face_00",
+        "bbox": {
+          "x1": 354.0546875,
+          "y1": 114.56240844726562,
+          "x2": 687.4508666992188,
+          "y2": 522.39697265625
+        },
+        "confidence": 0.9010788798332214,
+        "quality_score": 90.52157759666443,
+        "recognition": {
+          "best_match": null,
+          "confidence": 0.0,
+          "all_matches": []
+        }
+      },
+      {
+        "face_id": "face_01",
+        "bbox": {
+          "x1": 50.31818389892578,
+          "y1": 651.6707763671875,
+          "x2": 90.06717681884766,
+          "y2": 701.3607788085938
+        },
+        "confidence": 0.7805348634719849,
+        "quality_score": 53.1106972694397,
+        "recognition": {
+          "best_match": "night",
+          "confidence": 0.5047148000448942,
+          "all_matches": [
+            {
+              "person_id": "night",
+              "confidence": 0.5047148000448942
+            },
+            {
+              "person_id": "boss",
+              "confidence": 0.5029487609863281
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "night_group01.jpg": {
+    "faces_detected": 4,
+    "faces_recognized": 3,
+    "recognized_persons": [
+      "night",
+      "boss"
+    ],
+    "processing_time": 0.4040086269378662,
+    "detection_model": "yolov11m",
+    "faces": [
+      {
+        "face_id": "face_00",
+        "bbox": {
+          "x1": 1008.37890625,
+          "y1": 464.31396484375,
+          "x2": 1286.0072021484375,
+          "y2": 832.87841796875
+        },
+        "confidence": 0.869210422039032,
+        "quality_score": 82.38420844078064,
+        "recognition": {
+          "best_match": null,
+          "confidence": 0.0,
+          "all_matches": []
+        }
+      },
+      {
+        "face_id": "face_01",
+        "bbox": {
+          "x1": 682.0126953125,
+          "y1": 337.7087097167969,
+          "x2": 920.1752319335938,
+          "y2": 619.4234619140625
+        },
+        "confidence": 0.8532194495201111,
+        "quality_score": 82.06438899040222,
+        "recognition": {
+          "best_match": "boss",
+          "confidence": 0.5283337496221066,
+          "all_matches": [
+            {
+              "person_id": "boss",
+              "confidence": 0.5283337496221066
+            },
+            {
+              "person_id": "night",
+              "confidence": 0.505980733782053
+            }
+          ]
+        }
+      },
+      {
+        "face_id": "face_02",
+        "bbox": {
+          "x1": 396.5703430175781,
+          "y1": 371.28277587890625,
+          "x2": 559.482421875,
+          "y2": 603.8685913085938
+        },
+        "confidence": 0.842420220375061,
+        "quality_score": 81.84840440750122,
+        "recognition": {
+          "best_match": "night",
+          "confidence": 0.5038928464055061,
+          "all_matches": [
+            {
+              "person_id": "night",
+              "confidence": 0.5038928464055061
+            }
+          ]
+        }
+      },
+      {
+        "face_id": "face_03",
+        "bbox": {
+          "x1": 1403.408203125,
+          "y1": 344.61968994140625,
+          "x2": 1597.8994140625,
+          "y2": 557.246337890625
+        },
+        "confidence": 0.8254004716873169,
+        "quality_score": 79.50800943374634,
+        "recognition": {
+          "best_match": "night",
+          "confidence": 0.5636557713150978,
+          "all_matches": [
+            {
+              "person_id": "night",
+              "confidence": 0.5636557713150978
+            },
+            {
+              "person_id": "boss",
+              "confidence": 0.5043537588790059
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "night_group02.jpg": {
+    "faces_detected": 2,
+    "faces_recognized": 2,
+    "recognized_persons": [
+      "night"
+    ],
+    "processing_time": 0.28234314918518066,
+    "detection_model": "yolov11m",
+    "faces": [
+      {
+        "face_id": "face_00",
+        "bbox": {
+          "x1": 975.0406494140625,
+          "y1": 427.0322265625,
+          "x2": 1265.0230712890625,
+          "y2": 839.74609375
+        },
+        "confidence": 0.8782742619514465,
+        "quality_score": 82.56548523902893,
+        "recognition": {
+          "best_match": "night",
+          "confidence": 0.5195062160491943,
+          "all_matches": [
+            {
+              "person_id": "night",
+              "confidence": 0.5195062160491943
+            }
+          ]
+        }
+      },
+      {
+        "face_id": "face_01",
+        "bbox": {
+          "x1": 675.9542236328125,
+          "y1": 331.22015380859375,
+          "x2": 905.64404296875,
+          "y2": 627.0299072265625
+        },
+        "confidence": 0.8521610498428345,
+        "quality_score": 82.04322099685669,
+        "recognition": {
+          "best_match": "night",
+          "confidence": 0.5628464594483376,
+          "all_matches": [
+            {
+              "person_id": "night",
+              "confidence": 0.5628464594483376
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "spoofing_01.jpg": {
+    "faces_detected": 1,
+    "faces_recognized": 0,
+    "recognized_persons": [],
+    "processing_time": 0.652230978012085,
+    "detection_model": "yolov9e",
+    "faces": [
+      {
+        "face_id": "face_00",
+        "bbox": {
+          "x1": 0.0,
+          "y1": 0.0,
+          "x2": 3000.0,
+          "y2": 4000.0
+        },
+        "confidence": 33.616477966308594,
+        "quality_score": 752.3295593261719,
+        "recognition": {
+          "best_match": null,
+          "confidence": 0.0,
+          "all_matches": []
+        }
+      }
+    ]
+  },
+  "spoofing_02.jpg": {
+    "faces_detected": 1,
+    "faces_recognized": 1,
+    "recognized_persons": [
+      "boss"
+    ],
+    "processing_time": 0.6521787643432617,
+    "detection_model": "yolov9e",
+    "faces": [
+      {
+        "face_id": "face_00",
+        "bbox": {
+          "x1": 0.0,
+          "y1": 0.0,
+          "x2": 3000.0,
+          "y2": 4000.0
+        },
+        "confidence": 35.43306350708008,
+        "quality_score": 788.6612701416016,
+        "recognition": {
+          "best_match": "boss",
+          "confidence": 0.5441854149103165,
+          "all_matches": [
+            {
+              "person_id": "boss",
+              "confidence": 0.5441854149103165
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "spoofing_03.jpg": {
+    "faces_detected": 1,
+    "faces_recognized": 1,
+    "recognized_persons": [
+      "boss"
+    ],
+    "processing_time": 0.6547775268554688,
+    "detection_model": "yolov9e",
+    "faces": [
+      {
+        "face_id": "face_00",
+        "bbox": {
+          "x1": 0.0,
+          "y1": 0.0,
+          "x2": 3000.0,
+          "y2": 4000.0
+        },
+        "confidence": 35.429012298583984,
+        "quality_score": 788.5802459716797,
+        "recognition": {
+          "best_match": "boss",
+          "confidence": 0.5641227066516876,
+          "all_matches": [
+            {
+              "person_id": "boss",
+              "confidence": 0.5641227066516876
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "spoofing_04.jpg": {
+    "faces_detected": 1,
+    "faces_recognized": 1,
+    "recognized_persons": [
+      "boss"
+    ],
+    "processing_time": 0.6386978626251221,
+    "detection_model": "yolov9e",
+    "faces": [
+      {
+        "face_id": "face_00",
+        "bbox": {
+          "x1": 0.0,
+          "y1": 0.0,
+          "x2": 3000.0,
+          "y2": 4000.0
+        },
+        "confidence": 35.554046630859375,
+        "quality_score": 791.0809326171875,
+        "recognition": {
+          "best_match": "boss",
+          "confidence": 0.551202803850174,
+          "all_matches": [
+            {
+              "person_id": "boss",
+              "confidence": 0.551202803850174
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

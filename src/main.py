@@ -7,18 +7,23 @@ import os
 import sys
 import logging
 
+# เพิ่มเส้นทางโครงการเข้าไปใน sys.path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# นำเข้า modules
+from src.ai_services.common.vram_manager import VRAMManager  # type: ignore
+from src.ai_services.face_detection.face_detection_service import FaceDetectionService  # type: ignore
+from src.ai_services.face_recognition.face_recognition_service import FaceRecognitionService  # type: ignore
+from src.ai_services.face_analysis.face_analysis_service import FaceAnalysisService  # type: ignore
+from src.api.face_detection_api import router as face_detection_router, init_face_detection_api  # type: ignore
+from src.api.face_recognition_api import router as face_recognition_router  # type: ignore
+from src.api.face_analysis_api import router as face_analysis_router  # type: ignore
+
 import uvicorn  # type: ignore
 from fastapi import FastAPI  # type: ignore
 from fastapi.middleware.cors import CORSMiddleware  # type: ignore
 from fastapi.staticfiles import StaticFiles  # type: ignore
 from pydantic import BaseModel  # type: ignore
-
-# เพิ่มโฟลเดอร์หลักไปยัง Python path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from src.ai_services.common.vram_manager import VRAMManager
-from src.ai_services.face_detection.face_detection_service import FaceDetectionService
-from src.api.face_detection_api import router as face_detection_router, init_face_detection_api
 
 # ตั้งค่า logging
 logging.basicConfig(
@@ -63,8 +68,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ตัวแปรสำหรับเก็บบริการตรวจจับใบหน้า
+# ตัวแปรสำหรับเก็บบริการ AI
 face_detection_service = None
+face_recognition_service = None
+face_analysis_service = None
 vram_manager = None
 
 
@@ -73,7 +80,7 @@ async def startup_event():
     """
     ฟังก์ชันที่ทำงานเมื่อเริ่มต้นแอปพลิเคชัน
     """
-    global face_detection_service, vram_manager
+    global face_detection_service, face_recognition_service, face_analysis_service, vram_manager
     
     try:
         # โหลดการตั้งค่า
@@ -82,15 +89,21 @@ async def startup_event():
         # สร้างโฟลเดอร์สำหรับเก็บผลลัพธ์
         os.makedirs("output", exist_ok=True)
         os.makedirs("output/face-detection", exist_ok=True)
-          # ตั้งค่า VRAM Manager
+        
+        # ตั้งค่า VRAM Manager
         vram_manager_config = {
             "reserved_vram_mb": 512,
             "model_vram_estimates": {
+                # Face Detection Models
                 "yolov9c-face": 512 * 1024 * 1024,  # 512MB
                 "yolov9e-face": 2048 * 1024 * 1024,  # 2GB สำหรับ YOLOv9e (เพิ่มจาก 1GB)
                 "yolov11m-face": 2 * 1024 * 1024 * 1024,  # 2GB
-            }
-        }
+                
+                # Face Recognition Models  
+                "adaface": 89 * 1024 * 1024,   # 89MB - AdaFace IR101
+                "arcface": 249 * 1024 * 1024,  # 249MB - ArcFace R100
+                "facenet": 249 * 1024 * 1024,  # 249MB - FaceNet VGGFace2
+            }        }
         
         vram_manager = VRAMManager(vram_manager_config)
         
@@ -109,15 +122,51 @@ async def startup_event():
         
         face_detection_service = FaceDetectionService(vram_manager, face_detection_config)
         
-        # โหลดโมเดล
+        # โหลดโมเดล Face Detection
         init_success = await face_detection_service.initialize()
         
         if not init_success:
             logger.error("ไม่สามารถโหลดโมเดลตรวจจับใบหน้าได้")
             # ไม่หยุดแอปพลิเคชัน แต่อาจจะมีข้อจำกัดในการใช้งาน
         
-        # ตั้งค่า API
+        # ตั้งค่าบริการ Face Recognition
+        face_recognition_config = {
+            "model_path": "model/face-recognition"
+        }
+        
+        face_recognition_service = FaceRecognitionService(vram_manager, face_recognition_config)
+        
+        # โหลดโมเดล Face Recognition
+        recognition_init = await face_recognition_service.initialize()
+        
+        if not recognition_init:
+            logger.error("ไม่สามารถโหลดโมเดล Face Recognition ได้")
+        
+        # ตั้งค่าบริการ Face Analysis (Integration Service)
+        face_analysis_config = {
+            "detection": face_detection_config,
+            "recognition": face_recognition_config
+        }
+        
+        face_analysis_service = FaceAnalysisService(vram_manager, face_analysis_config)
+        
+        # โหลดโมเดล Face Analysis
+        analysis_init = await face_analysis_service.initialize()
+        
+        if not analysis_init:
+            logger.error("ไม่สามารถโหลดบริการ Face Analysis ได้")
+          # ตั้งค่า API
         init_face_detection_api(face_detection_service)
+        
+        # Initialize Face Recognition API
+        from src.api import face_recognition_api
+        face_recognition_api.face_recognition_service = face_recognition_service
+        face_recognition_api.vram_manager = vram_manager
+        
+        # Initialize Face Analysis API
+        from src.api import face_analysis_api
+        face_analysis_api.face_analysis_service = face_analysis_service
+        face_analysis_api.vram_manager = vram_manager
         
         logger.info(f"เริ่มต้น {settings.app_name} เรียบร้อยแล้ว")
     
@@ -130,9 +179,15 @@ async def shutdown_event():
     """
     ฟังก์ชันที่ทำงานเมื่อปิดแอปพลิเคชัน
     """
-    global face_detection_service
+    global face_detection_service, face_recognition_service, face_analysis_service
     
     try:
+        if face_analysis_service:
+            await face_analysis_service.cleanup()
+        
+        if face_recognition_service:
+            await face_recognition_service.cleanup()
+            
         if face_detection_service:
             await face_detection_service.cleanup()
         
@@ -148,6 +203,8 @@ os.makedirs("output/face-detection", exist_ok=True)
 
 # เพิ่ม router
 app.include_router(face_detection_router)
+app.include_router(face_recognition_router)
+app.include_router(face_analysis_router)
 
 # เพิ่ม static files
 app.mount("/output", StaticFiles(directory="output"), name="output")

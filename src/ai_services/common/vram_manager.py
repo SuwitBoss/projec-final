@@ -190,3 +190,53 @@ class VRAMManager:
                     for model_id, allocation in self.model_allocations.items()
                 }
             }
+    
+    async def get_available_memory(self) -> int:
+        """
+        ได้รับหน่วยความจำ VRAM ที่ใช้ได้ (bytes)
+        """
+        async with self.lock:
+            return self.total_vram - self.allocated_vram
+    
+    async def get_memory_stats(self) -> Dict[str, Any]:
+        """
+        ได้รับสถิติการใช้หน่วยความจำ GPU
+        """
+        async with self.lock:
+            available = self.total_vram - self.allocated_vram
+            usage_percent = (self.allocated_vram / self.total_vram * 100) if self.total_vram > 0 else 0
+            
+            return {
+                "total_memory_mb": self.total_vram / (1024 * 1024),
+                "allocated_memory_mb": self.allocated_vram / (1024 * 1024), 
+                "available_memory_mb": available / (1024 * 1024),
+                "usage_percent": usage_percent,
+                "active_models": list(self.model_allocations.keys()),
+                "gpu_available": self.total_vram > 0
+            }
+            
+    async def free_memory(self, model_id: str, service_id: str) -> bool:
+        """
+        คืนหน่วยความจำที่จัดสรรให้กับโมเดล
+        
+        Args:
+            model_id: ID ของโมเดลที่ต้องการคืนหน่วยความจำ
+            service_id: ID ของบริการที่ใช้โมเดล
+            
+        Returns:
+            bool: True ถ้าสำเร็จ, False ถ้าไม่พบการจัดสรร
+        """
+        # ตรวจสอบว่ามีการจัดสรรหน่วยความจำให้กับโมเดลนี้หรือไม่
+        for alloc_id, allocation in self.model_allocations.items():
+            if allocation.model_id == model_id and allocation.service_id == service_id:
+                # ลดจำนวน VRAM ที่ใช้อยู่
+                if allocation.location.value == "gpu":
+                    self.allocated_vram -= allocation.vram_allocated
+                    logger.info(f"คืน {allocation.vram_allocated/1024/1024:.1f}MB VRAM จากโมเดล {model_id}")
+                
+                # ลบการจัดสรร
+                del self.model_allocations[alloc_id]
+                return True
+                
+        logger.warning(f"ไม่พบการจัดสรร VRAM สำหรับโมเดล {model_id} จากบริการ {service_id}")
+        return False
