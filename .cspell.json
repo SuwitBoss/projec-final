@@ -1,0 +1,36 @@
+{
+    "version": "0.2",
+    "language": "en,th",
+    "ignorePaths": [
+        "src/ai_services/face_detection/face_detection_service.py",
+        "src/ai_services/common/vram_manager.py",
+        "src/ai_services/face_detection/utils.py",
+        "src/ai_services/face_detection/yolo_models.py",
+        "src/api/face_detection_api.py",
+        "src/main.py",
+        "src/test_face_detection.py",
+        "**/*.th.js",
+        "**/*.th.md",
+        "**/*.th.json",
+        "model/**",
+        "output/**"
+    ],
+    "words": [
+        "yolov",
+        "onnx",
+        "ndarray",
+        "lindevs",
+        "antispoof",
+        "arcface",
+        "adaface",
+        "vggface",
+        "genderage",
+        "VRAM",
+        "uvicorn",
+        "fastapi",
+        "imwrite",
+        "numpy",
+        "asyncio",
+        "ultralytics"
+    ]
+}

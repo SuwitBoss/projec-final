@@ -1,0 +1,30 @@
+# Ignore model files and directories
+model/
+*.onnx
+*.pt
+
+# Ignore images
+test_images/
+output/
+*.jpg
+*.jpeg
+*.png
+*.gif
+
+# Ignore Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+.mypy_cache/
+
+# Ignore logs
+*.log
+
+# Ignore virtual environment
+venv/
+env/
+.env/
+
+# Ignore IDE specific files
+.vscode/
+.idea/
