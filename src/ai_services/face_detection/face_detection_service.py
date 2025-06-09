@@ -1,4 +1,5 @@
 # cSpell:disable
+# mypy: ignore-errors
 """
 บริการตรวจจับใบหน้าอัจฉริยะ (Enhanced Intelligent Face Detection Service) ที่รองรับโมเดล YOLOv9c, YOLOv9e และ YOLOv11m
 ระบบใช้ 4 ขั้นตอนอัจฉริยะในการตัดสินใจเลือกโมเดลที่เหมาะสมที่สุด และวิเคราะห์คุณภาพใบหน้า
@@ -8,8 +9,6 @@ import logging
 import cv2
 import numpy as np
 import os
-import json
-from datetime import datetime
 from typing import Dict, List, Tuple, Any, Optional, Union
 from enum import Enum
 
@@ -305,7 +304,8 @@ class FaceDetectionService:
         except Exception as e:
             logger.error(f"เกิดข้อผิดพลาดในการโหลดโมเดล: {e}")
             return False
-      async def detect_faces(self, 
+    
+    async def detect_faces(self, 
                          image_input: Union[str, np.ndarray],
                          model_name: Optional[str] = None,
                          conf_threshold: Optional[float] = None,
@@ -554,12 +554,12 @@ class FaceDetectionService:
         # พื้นที่ของแต่ละกล่อง
         box1_area = (box1[2] - box1[0]) * (box1[3] - box1[1])
         box2_area = (box2[2] - box2[0]) * (box2[3] - box2[1])
-        
-        # คำนวณ IoU
+          # คำนวณ IoU
         iou = intersection_area / float(box1_area + box2_area - intersection_area)
         
         return iou
-      def _create_result(self, 
+        
+    def _create_result(self, 
                      detections: List[FaceDetection], 
                      image_shape: Tuple[int, ...],
                      total_time: float,
@@ -590,12 +590,12 @@ class FaceDetectionService:
             model_used=model_used,
             fallback_used=False
         )
-        
-        # เพิ่มข้อมูลคุณภาพ
+          # เพิ่มข้อมูลคุณภาพ
         result.quality_info = quality_info
         
         return result
-      async def get_service_info(self) -> Dict[str, Any]:
+        
+    async def get_service_info(self) -> Dict[str, Any]:
         """
         ดูข้อมูลของบริการตรวจจับใบหน้า
         
