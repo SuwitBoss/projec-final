@@ -29,13 +29,12 @@ logger = logging.getLogger(__name__)
 async def test_face_detection():
     """
     ทดสอบบริการตรวจจับใบหน้า
-    """
-    # ตั้งค่า VRAM Manager
+    """    # ตั้งค่า VRAM Manager
     vram_manager_config = {
         "reserved_vram_mb": 512,
         "model_vram_estimates": {
-            "yolov9c-face": 500 * 1024 * 1024,  # 500MB
-            "yolov9e-face": 1024 * 1024 * 1024,  # 1GB
+            "yolov9c-face": 512 * 1024 * 1024,  # 512MB
+            "yolov9e-face": 2048 * 1024 * 1024,  # 2GB สำหรับ YOLOv9e (เพิ่มจาก 1GB)
             "yolov11m-face": 2 * 1024 * 1024 * 1024,  # 2GB
         }
     }

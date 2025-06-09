@@ -94,7 +94,6 @@ class YOLOv9ONNXDetector(FaceDetector):
     """
     คลาสสำหรับโมเดล YOLO v9 แบบ ONNX (รองรับทั้ง YOLOv9c และ YOLOv9e)
     """
-    
     def __init__(self, model_path: str, model_name: str):
         super().__init__(model_path, model_name)
         self.session = None
@@ -109,28 +108,77 @@ class YOLOv9ONNXDetector(FaceDetector):
         try:
             session_options = ort.SessionOptions()
             session_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+            # เพิ่มการตั้งค่าเพื่อลดการใช้หน่วยความจำ
+            session_options.enable_mem_pattern = False
+            session_options.enable_cpu_mem_arena = False
             
             if device == "cuda" and torch.cuda.is_available():
-                # ตั้งค่า CUDA provider
-                cuda_options = {
-                    'device_id': 0,
-                    'arena_extend_strategy': 'kNextPowerOfTwo',
-                    'gpu_mem_limit': 512 * 1024 * 1024,  # 512MB limit
-                    'cudnn_conv_algo_search': 'EXHAUSTIVE',
-                    'do_copy_in_default_stream': True,
-                }
-                providers = [('CUDAExecutionProvider', cuda_options)]
-                logger.info(f"โหลดโมเดล {self.model_name} บน GPU")
+                try:
+                    # ตรวจสอบ VRAM ที่มี
+                    available_memory = torch.cuda.get_device_properties(0).total_memory
+                    allocated_memory = torch.cuda.memory_allocated(0)
+                    free_memory = available_memory - allocated_memory
+                    
+                    # กำหนดขีดจำกัด VRAM ตามชื่อโมเดล
+                    if "yolov9e" in self.model_name.lower():
+                        # YOLOv9e ต้องการหน่วยความจำมากกว่า
+                        memory_limit = min(2048 * 1024 * 1024, int(free_memory * 0.8))  # 2GB หรือ 80% ของหน่วยความจำที่ว่าง
+                    else:
+                        # YOLOv9c และโมเดลอื่นๆ
+                        memory_limit = min(1024 * 1024 * 1024, int(free_memory * 0.6))  # 1GB หรือ 60% ของหน่วยความจำที่ว่าง
+                    
+                    logger.info(f"กำลังจัดสรร {memory_limit/1024/1024:.1f}MB VRAM สำหรับ {self.model_name}")
+                    
+                    # ตั้งค่า CUDA provider สำหรับโมเดลขนาดใหญ่
+                    cuda_options = {
+                        'device_id': 0,
+                        'arena_extend_strategy': 'kSameAsRequested',  # เปลี่ยนจาก kNextPowerOfTwo
+                        'gpu_mem_limit': memory_limit,
+                        'cudnn_conv_algo_search': 'HEURISTIC',  # เปลี่ยนจาก EXHAUSTIVE เพื่อลดการใช้หน่วยความจำ
+                        'do_copy_in_default_stream': True,
+                        'enable_cuda_graph': False,  # ปิดเพื่อลดการใช้หน่วยความจำ
+                    }
+                    
+                    providers = [('CUDAExecutionProvider', cuda_options), 'CPUExecutionProvider']
+                    logger.info(f"โหลดโมเดล {self.model_name} บน GPU พร้อม fallback CPU")
+                    
+                except Exception as cuda_error:
+                    logger.warning(f"ไม่สามารถตั้งค่า CUDA สำหรับ {self.model_name}: {cuda_error}")
+                    providers = ['CPUExecutionProvider']
+                    device = "cpu"
+                    logger.info(f"โหลดโมเดล {self.model_name} บน CPU แทน")
             else:
                 providers = ['CPUExecutionProvider']
                 device = "cpu"
                 logger.info(f"โหลดโมเดล {self.model_name} บน CPU")
             
-            self.session = ort.InferenceSession(
-                self.model_path,
-                sess_options=session_options,
-                providers=providers
-            )
+            # พยายามโหลดโมเดล
+            try:
+                self.session = ort.InferenceSession(
+                    self.model_path,
+                    sess_options=session_options,
+                    providers=providers
+                )
+            except Exception as onnx_error:
+                # ถ้าโหลดด้วย GPU ไม่สำเร็จ ให้ลองใช้ CPU
+                if device == "cuda":
+                    logger.warning(f"โหลดโมเดล {self.model_name} บน GPU ไม่สำเร็จ: {onnx_error}")
+                    logger.info(f"กำลังลองโหลด {self.model_name} บน CPU...")
+                    
+                    # ตั้งค่าใหม่สำหรับ CPU
+                    session_options = ort.SessionOptions()
+                    session_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+                    session_options.enable_mem_pattern = False
+                    session_options.enable_cpu_mem_arena = False
+                    
+                    self.session = ort.InferenceSession(
+                        self.model_path,
+                        sess_options=session_options,
+                        providers=['CPUExecutionProvider']
+                    )
+                    device = "cpu"
+                else:
+                    raise onnx_error
             
             # เก็บข้อมูลของโมเดล
             self.input_name = self.session.get_inputs()[0].name
@@ -149,7 +197,7 @@ class YOLOv9ONNXDetector(FaceDetector):
     def get_input_size(self) -> Tuple[int, int]:
         """ขนาด input ของโมเดล"""
         return self.input_size
-    
+        
     def detect(self, image, conf_threshold: float = 0.5, iou_threshold: float = 0.4) -> List[np.ndarray]:
         """ตรวจจับใบหน้าในรูปภาพด้วย YOLO v9"""
         if not self.model_loaded:
@@ -159,9 +207,27 @@ class YOLOv9ONNXDetector(FaceDetector):
             # แปลงรูปภาพ
             input_tensor, scale_factors = self.preprocess_image(image)
             
+            # ล้างหน่วยความจำ GPU ก่อนรันโมเดล (ถ้าใช้ CUDA)
+            if self.device == "cuda":
+                torch.cuda.empty_cache()
+            
             # รันโมเดล
             start_time = time.time()
-            outputs = self.session.run(self.output_names, {self.input_name: input_tensor})
+            try:
+                outputs = self.session.run(self.output_names, {self.input_name: input_tensor})
+            except Exception as inference_error:
+                # ถ้ารันไม่สำเร็จเนื่องจากหน่วยความจำ ให้ลองล้างแคชและรันอีกครั้ง
+                if "memory" in str(inference_error).lower() or "allocation" in str(inference_error).lower():
+                    logger.warning(f"เกิดปัญหาหน่วยความจำในการรัน {self.model_name}, กำลังล้างแคชและลองใหม่...")
+                    if self.device == "cuda":
+                        torch.cuda.empty_cache()
+                        torch.cuda.synchronize()
+                    
+                    # ลองรันอีกครั้ง
+                    outputs = self.session.run(self.output_names, {self.input_name: input_tensor})
+                else:
+                    raise inference_error
+                    
             inference_time = time.time() - start_time
             
             # แปลงผลลัพธ์
@@ -169,11 +235,18 @@ class YOLOv9ONNXDetector(FaceDetector):
                 outputs, scale_factors, conf_threshold, iou_threshold
             )
             
+            # ล้างหน่วยความจำหลังการใช้งาน
+            if self.device == "cuda":
+                torch.cuda.empty_cache()
+            
             logger.debug(f"{self.model_name} ตรวจพบ {len(detections)} ใบหน้า ใช้เวลา {inference_time:.4f} วินาที")
             return detections
             
         except Exception as e:
             logger.error(f"เกิดข้อผิดพลาดในการตรวจจับด้วย {self.model_name}: {e}")
+            # ล้างหน่วยความจำในกรณีเกิดข้อผิดพลาด
+            if self.device == "cuda":
+                torch.cuda.empty_cache()
             return []
     
     def _postprocess_outputs(self, 
