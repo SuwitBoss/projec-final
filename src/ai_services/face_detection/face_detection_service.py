@@ -13,7 +13,7 @@ from typing import Dict, List, Tuple, Any, Optional, Union
 from enum import Enum
 
 from .yolo_models import YOLOv9ONNXDetector, YOLOv11Detector
-from .utils import BoundingBox, FaceDetection, DetectionResult, calculate_face_quality
+from .utils import BoundingBox, FaceDetection, DetectionResult, calculate_face_quality, filter_detection_results
 
 # ไม่ import VRAMManager แต่สร้าง stub class ขึ้นมาแทน
 class VRAMManager:
@@ -553,12 +553,11 @@ class FaceDetectionService:
         
         # พื้นที่ของแต่ละกล่อง
         box1_area = (box1[2] - box1[0]) * (box1[3] - box1[1])
-        box2_area = (box2[2] - box2[0]) * (box2[3] - box2[1])
-          # คำนวณ IoU
+        box2_area = (box2[2] - box2[0]) * (box2[3] - box2[1])        # คำนวณ IoU
         iou = intersection_area / float(box1_area + box2_area - intersection_area)
         
         return iou
-        
+
     def _create_result(self, 
                      detections: List[FaceDetection], 
                      image_shape: Tuple[int, ...],
@@ -579,18 +578,45 @@ class FaceDetectionService:
         # แปลง image_shape เป็น Tuple[int, int, int]
         shape = (image_shape[0], image_shape[1], image_shape[2] if len(image_shape) > 2 else 3)
         
+        # กรองและปรับปรุงบounding box ที่ผิดปกติ
+        logger.info(f"🔍 Validating {len(detections)} bounding boxes...")
+        filtered_detections = filter_detection_results(detections, (shape[0], shape[1]), min_quality=50.0)
+        
+        if len(filtered_detections) != len(detections):
+            logger.info(f"📊 Filtered out {len(detections) - len(filtered_detections)} invalid detections")
+        
         # วิเคราะห์คุณภาพใบหน้า
-        quality_info = self.quality_analyzer.analyze_detection_quality(detections)
+        quality_info = self.quality_analyzer.analyze_detection_quality(filtered_detections)
         
         # สร้างผลลัพธ์
         result = DetectionResult(
-            faces=detections,
+            faces=filtered_detections,
             image_shape=shape,
             total_processing_time=total_time,
             model_used=model_used,
             fallback_used=False
         )
-          # เพิ่มข้อมูลคุณภาพ
+        # เพิ่มข้อมูลคุณภาพ
+        result.quality_info = quality_info
+        
+        return result
+        filtered_detections = filter_detection_results(detections, (shape[0], shape[1]), min_quality=50.0)
+        
+        if len(filtered_detections) != len(detections):
+            logger.info(f"📊 Filtered out {len(detections) - len(filtered_detections)} invalid detections")
+        
+        # วิเคราะห์คุณภาพใบหน้า
+        quality_info = self.quality_analyzer.analyze_detection_quality(filtered_detections)
+        
+        # สร้างผลลัพธ์
+        result = DetectionResult(
+            faces=filtered_detections,
+            image_shape=shape,
+            total_processing_time=total_time,
+            model_used=model_used,
+            fallback_used=False
+        )
+        # เพิ่มข้อมูลคุณภาพ
         result.quality_info = quality_info
         
         return result

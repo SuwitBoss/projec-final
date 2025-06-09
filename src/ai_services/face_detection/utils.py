@@ -276,3 +276,116 @@ def save_detection_image(image: np.ndarray, detections: List[FaceDetection],
     cv2.imwrite(file_path, img_with_detections)
     
     return file_path
+
+
+def validate_bounding_box(bbox, image_shape: Tuple[int, int]) -> bool:
+    """
+    ตรวจสอบความถูกต้องของ bounding box
+    
+    Args:
+        bbox: BoundingBox object หรือ dict
+        image_shape: (height, width) ของรูปภาพ
+    
+    Returns:
+        True ถ้า bounding box ถูกต้อง False ถ้าผิดปกติ
+    """
+    try:
+        # Extract coordinates
+        if hasattr(bbox, 'x1'):
+            # BoundingBox object
+            x1, y1, x2, y2 = bbox.x1, bbox.y1, bbox.x2, bbox.y2
+        else:
+            # Dict format
+            x1 = bbox.get('x1', 0)
+            y1 = bbox.get('y1', 0)
+            x2 = bbox.get('x2', 0)
+            y2 = bbox.get('y2', 0)
+        
+        img_height, img_width = image_shape[:2]
+        
+        # ===== เกณฑ์การตรวจสอบ =====
+        
+        # 1. ตรวจสอบพิกัดไม่ติดลบ
+        if x1 < 0 or y1 < 0 or x2 < 0 or y2 < 0:
+            logger.error(f"❌ Negative coordinates: ({x1}, {y1}, {x2}, {y2})")
+            return False
+        
+        # 2. ตรวจสอบไม่เกินขอบเขตรูปภาพ
+        if x2 > img_width or y2 > img_height:
+            logger.warning(f"⚠️ Bbox exceeds image bounds: ({x1}, {y1}, {x2}, {y2}) vs ({img_width}, {img_height})")
+            return False
+        
+        # 3. ตรวจสอบ x2 > x1 และ y2 > y1
+        if x2 <= x1 or y2 <= y1:
+            logger.error(f"❌ Invalid bbox dimensions: width={x2-x1}, height={y2-y1}")
+            return False
+        
+        # 4. ตรวจสอบขนาดขั้นต่ำ (อย่างน้อย 16x16 พิกเซล)
+        width = x2 - x1
+        height = y2 - y1
+        if width < 16 or height < 16:
+            logger.debug(f"🔍 Bbox too small: {width}x{height}")
+            return False
+        
+        # 5. ตรวจสอบไม่ครอบคลุมทั้งภาพ (>90% ของพื้นที่)
+        bbox_area = width * height
+        image_area = img_width * img_height
+        area_ratio = bbox_area / image_area
+        
+        if area_ratio > 0.9:  # 90% ของภาพ
+            logger.warning(f"⚠️ Bbox covers too much area: {area_ratio:.1%}")
+            return False
+        
+        # 6. ตรวจสอบ aspect ratio สมเหตุสมผล (0.3 - 3.0)
+        aspect_ratio = width / height
+        if aspect_ratio < 0.3 or aspect_ratio > 3.0:
+            logger.debug(f"🔍 Unusual aspect ratio: {aspect_ratio:.2f}")
+            return False
+        
+        return True
+        
+    except Exception as e:
+        logger.error(f"❌ Bbox validation failed: {e}")
+        return False
+
+
+def filter_detection_results(faces: list, image_shape: Tuple[int, int], 
+                           min_quality: float = 50.0) -> list:
+    """
+    กรองผลลัพธ์การตรวจจับตามคุณภาพและความถูกต้อง
+    
+    Args:
+        faces: รายการใบหน้าที่ตรวจพบ
+        image_shape: (height, width) ของรูปภาพ
+        min_quality: คะแนนคุณภาพขั้นต่ำ
+    
+    Returns:
+        รายการใบหน้าที่ผ่านการกรอง
+    """
+    if not faces:
+        return faces
+    
+    filtered_faces = []
+    
+    for face in faces:
+        try:            # ตรวจสอบ bounding box
+            if not validate_bounding_box(face.bbox, image_shape):
+                logger.debug("🚫 Face filtered: invalid bbox")
+                continue
+            
+            # คำนวณคุณภาพใหม่ถ้าจำเป็น
+            if face.quality_score is None or face.quality_score > 100:
+                face.quality_score = calculate_face_quality(face.bbox, image_shape)
+            
+            # กรองตามคุณภาพ
+            if face.quality_score >= min_quality:
+                filtered_faces.append(face)
+            else:
+                logger.debug(f"🚫 Face filtered: quality {face.quality_score:.1f} < {min_quality}")
+                
+        except Exception as e:
+            logger.error(f"❌ Error filtering face: {e}")
+            continue
+    
+    logger.info(f"🎯 Filtered faces: {len(faces)} -> {len(filtered_faces)}")
+    return filtered_faces
