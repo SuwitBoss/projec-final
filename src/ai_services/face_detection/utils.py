@@ -3,69 +3,79 @@
 ฟังก์ชันช่วยเหลือสำหรับระบบตรวจจับใบหน้า
 """
 import cv2
-import numpy as np
-import os
-import logging
-from typing import Dict, List, Tuple, Any, Optional
-from dataclasses import dataclass
+from typing import List, Tuple, Optional, Dict, Any, Union # Ensure Union is imported
+import numpy as np # Ensure numpy is imported
+from dataclasses import dataclass # Ensure field is imported for default_factory if needed - REMOVED 'field'
+import logging # Ensure logging is imported
+import os # Add os import
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__) # Ensure logger is defined
 
 @dataclass
 class BoundingBox:
-    """
-    คลาสสำหรับเก็บข้อมูลกรอบรอบใบหน้า
-    """
+    """คลาสสำหรับเก็บข้อมูลกรอบรอบใบหน้า"""
     x1: float
     y1: float
     x2: float
     y2: float
     confidence: float
-    class_id: Optional[int] = None  # MODIFIED: Added class_id
-    
+    class_id: Optional[int] = None
+
     @property
     def width(self) -> float:
         return self.x2 - self.x1
-    
+
     @property
     def height(self) -> float:
         return self.y2 - self.y1
-    
+
     @property
     def area(self) -> float:
         return self.width * self.height
-    
+
     @property
     def center(self) -> Tuple[float, float]:
         return ((self.x1 + self.x2) / 2, (self.y1 + self.y2) / 2)
-    
+
     @property
     def aspect_ratio(self) -> float:
-        return self.width / max(self.height, 1e-5)
-    
+        return self.width / max(self.height, 1e-5) # Added max to prevent division by zero
+
     def to_array(self) -> np.ndarray:
         """แปลงเป็น numpy array"""
+        # If class_id is present and not None, include it. Otherwise, standard 5 elements.
+        if self.class_id is not None:
+            return np.array([self.x1, self.y1, self.x2, self.y2, self.confidence, self.class_id])
         return np.array([self.x1, self.y1, self.x2, self.y2, self.confidence])
-    
+
     @classmethod
-    def from_array(cls, arr: np.ndarray) -> 'BoundingBox':
-        """สร้างจาก numpy array"""
-        return cls(arr[0], arr[1], arr[2], arr[3], arr[4])
+    def from_array(cls, arr: Union[np.ndarray, 'BoundingBox']) -> 'BoundingBox':
+        """สร้างจาก numpy array หรือ BoundingBox object"""
+        if isinstance(arr, BoundingBox):
+            return arr
+
+        if isinstance(arr, np.ndarray):
+            if len(arr) == 5: # x1, y1, x2, y2, confidence
+                return cls(x1=float(arr[0]), y1=float(arr[1]), x2=float(arr[2]), y2=float(arr[3]), confidence=float(arr[4]))
+            elif len(arr) == 6: # x1, y1, x2, y2, confidence, class_id
+                return cls(x1=float(arr[0]), y1=float(arr[1]), x2=float(arr[2]), y2=float(arr[3]), confidence=float(arr[4]), class_id=int(arr[5]))
+            else:
+                raise ValueError(f"Array must have 5 or 6 elements, got {len(arr)}")
+        
+        raise TypeError(f"Expected numpy array or BoundingBox, got {type(arr)}")
 
 
 @dataclass
 class FaceDetection:
-    """
-    คลาสสำหรับเก็บข้อมูลใบหน้าที่ตรวจพบ
-    """
+    """คลาสสำหรับเก็บข้อมูลใบหน้าที่ตรวจพบ"""
     bbox: BoundingBox
-    quality_score: Optional[float] = None
-    model_used: str = ""
-    processing_time: float = 0.0
-    landmarks: Optional[np.ndarray] = None  # e.g., 5 keypoints (x,y)
-    embedding: Optional[np.ndarray] = None # Face embedding vector
-    meta: Optional[Dict[str, Any]] = None # Additional metadata
-    
+    quality_score: Optional[float] = None # Renamed from quality, made optional
+    model_used: str = "" # Added
+    processing_time: float = 0.0 # Added
+    landmarks: Optional[np.ndarray] = None # Made optional
+    embedding: Optional[np.ndarray] = None
+    meta: Optional[Dict[str, Any]] = None
+
     def to_dict(self) -> Dict[str, Any]:
         """แปลงเป็น dictionary สำหรับ JSON"""
         return {
@@ -90,17 +100,19 @@ class FaceDetection:
 
 @dataclass
 class DetectionResult:
-    """
-    คลาสสำหรับเก็บผลลัพธ์การตรวจจับใบหน้าทั้งหมด
-    """
-    faces: List[FaceDetection]
-    image_shape: Tuple[int, int, int]
-    total_processing_time: float
-    model_used: str
-    fallback_used: bool = False
-    error: Optional[str] = None
-    model_processing_time: Optional[float] = None # MODIFIED: Added model_processing_time
-    
+    """คลาสสำหรับเก็บผลลัพธ์การตรวจจับใบหน้าทั้งหมด"""
+    faces: List[FaceDetection] # Renamed from detections
+    image_shape: Tuple[int, int, int] # Type hint changed
+    total_processing_time: float # Renamed from processing_time
+    model_used: str # Added
+    fallback_used: bool = False # Added
+    error: Optional[str] = None # Added
+
+    @property
+    def num_faces(self) -> int:
+        """จำนวนใบหน้าที่พบ"""
+        return len(self.faces)
+
     def to_dict(self) -> Dict[str, Any]:
         """แปลงเป็น dictionary สำหรับ JSON"""
         return {
@@ -118,34 +130,26 @@ class DetectionResult:
         }
 
 
-def calculate_face_quality(detection: BoundingBox, image_shape: Tuple[int, int]) -> float:
+def calculate_face_quality(detection: BoundingBox, image_shape: Tuple[int, int]) -> float: # Signature changed
     """
-    คำนวณคุณภาพของใบหน้า - RELAXED VERSION
-    
-    Args:
-        detection: ข้อมูล BoundingBox ของใบหน้า
-        image_shape: ขนาดรูปภาพ (height, width)
-    
-    Returns:
-        คะแนนคุณภาพ 0-100 (ปรับให้ให้คะแนนสูงขึ้น)
+    คำนวณคุณภาพของใบหน้า - FIXED VERSION
+    เอา quality_weights parameter ออก
     """
-    # น้ำหนักของแต่ละเกณฑ์ (ปรับให้ไม่เข้มงวด)
     weights = {
-        'size_weight': 30,        # ลดจาก 40
-        'area_weight': 25,        # ลดจาก 30  
-        'confidence_weight': 30,  # เพิ่มจาก 20
-        'aspect_weight': 15       # เพิ่มจาก 10
+        'size_weight': 30,
+        'area_weight': 25,
+        'confidence_weight': 30,
+        'aspect_weight': 15
     }
     
-    # เกณฑ์ขนาด (หลวมขึ้น)
     size_thresholds = {
-        'excellent': (80, 80),    # ลดจาก (100, 100)
-        'good': (50, 50),         # ลดจาก (64, 64)
-        'acceptable': (25, 25),   # ลดจาก (32, 32)
-        'minimum': (10, 10)       # ลดจาก (16, 16)
+        'excellent': (80, 80),
+        'good': (50, 50),
+        'acceptable': (25, 25),
+        'minimum': (10, 10)
     }
     
-    # คะแนนตามขนาด (ให้คะแนนสูงขึ้น)
+    # คะแนนตามขนาด
     face_width = detection.width
     face_height = detection.height
     
@@ -153,49 +157,55 @@ def calculate_face_quality(detection: BoundingBox, image_shape: Tuple[int, int])
     if face_width >= size_thresholds['excellent'][0] and face_height >= size_thresholds['excellent'][1]:
         size_score = 100
     elif face_width >= size_thresholds['good'][0] and face_height >= size_thresholds['good'][1]:
-        size_score = 85  # เพิ่มจาก 80
+        size_score = 85
     elif face_width >= size_thresholds['acceptable'][0] and face_height >= size_thresholds['acceptable'][1]:
-        size_score = 65  # เพิ่มจาก 50
+        size_score = 65
     elif face_width >= size_thresholds['minimum'][0] and face_height >= size_thresholds['minimum'][1]:
-        size_score = 45  # เพิ่มจาก 30
+        size_score = 45
     else:
-        size_score = 25  # เพิ่มจาก 10
+        size_score = 25
     
-    # คะแนนตามสัดส่วนพื้นที่ (ให้คะแนนสูงขึ้น)
-    image_area = image_shape[0] * image_shape[1]
+    # คะแนนตามสัดส่วนพื้นที่
+    # Ensure image_shape has at least 2 elements for area calculation
+    if len(image_shape) < 2:
+        logger.warning(f"image_shape too short for area calculation: {image_shape}")
+        image_area = 1 # Avoid division by zero, though this indicates an issue
+    else:
+        image_area = image_shape[0] * image_shape[1]
+
     face_area = detection.area
-    area_ratio = min(face_area / image_area * 100, 100)
+    area_ratio = min(face_area / max(image_area, 1e-6) * 100, 100) # max to prevent division by zero
     
     area_score = 0
-    if area_ratio > 20:      # ลดจาก 30
+    if area_ratio > 20:
         area_score = 100
-    elif area_ratio > 10:    # ลดจาก 15
+    elif area_ratio > 10:
         area_score = 90
-    elif area_ratio > 3:     # ลดจาก 5
-        area_score = 80      # เพิ่มจาก 75
-    elif area_ratio > 0.5:   # ลดจาก 1
-        area_score = 60      # เพิ่มจาก 50
+    elif area_ratio > 3:
+        area_score = 80
+    elif area_ratio > 0.5:
+        area_score = 60
     else:
-        area_score = 40      # เพิ่มจาก 25
+        area_score = 40
     
     # คะแนนความมั่นใจ
     confidence_score = detection.confidence * 100
     
-    # คะแนนอัตราส่วน (หลวมขึ้น)
-    aspect_ratio = detection.aspect_ratio
+    # คะแนนอัตราส่วน
+    aspect_ratio = detection.aspect_ratio # Already handles potential division by zero in BoundingBox
     aspect_diff = abs(aspect_ratio - 0.8)
     
     aspect_score = 0
-    if aspect_diff < 0.15:   # เพิ่มจาก 0.1
+    if aspect_diff < 0.15:
         aspect_score = 100
-    elif aspect_diff < 0.3:  # เพิ่มจาก 0.2
-        aspect_score = 85    # เพิ่มจาก 80
-    elif aspect_diff < 0.5:  # เพิ่มจาก 0.3
-        aspect_score = 70    # เพิ่มจาก 60
-    elif aspect_diff < 0.8:  # เพิ่มจาก 0.5
-        aspect_score = 55    # เพิ่มจาก 40
+    elif aspect_diff < 0.3:
+        aspect_score = 85
+    elif aspect_diff < 0.5:
+        aspect_score = 70
+    elif aspect_diff < 0.8:
+        aspect_score = 55
     else:
-        aspect_score = 35    # เพิ่มจาก 20
+        aspect_score = 35
     
     # คำนวณคะแนนรวม
     final_score = (
@@ -205,8 +215,8 @@ def calculate_face_quality(detection: BoundingBox, image_shape: Tuple[int, int])
         aspect_score * weights['aspect_weight'] / 100
     )
     
-    # เพิ่ม bonus score เพื่อให้ผ่านเกณฑ์ง่ายขึ้น
-    bonus_score = 5.0  # เพิ่ม 5 คะแนน
+    # เพิ่ม bonus score
+    bonus_score = 5.0
     final_score = min(final_score + bonus_score, 100.0)
     
     return final_score
@@ -287,75 +297,71 @@ def save_detection_image(image: np.ndarray, detections: List[FaceDetection],
     return file_path
 
 
-def validate_bounding_box(bbox: BoundingBox, image_shape: Tuple[int, int], min_size: int = 20, max_area_ratio: float = 0.95) -> bool: # MODIFIED: max_area_ratio to 0.95
+def validate_bounding_box(bbox: BoundingBox, image_shape: Tuple[int, int]) -> bool: # Signature changed
     """
-    ตรวจสอบความถูกต้องของ bounding box - RELAXED VERSION
-    
-    Args:
-        bbox: BoundingBox object หรือ dict
-        image_shape: (height, width) ของรูปภาพ
-    
-    Returns:
-        True ถ้า bounding box ถูกต้อง False ถ้าผิดปกติ
+    ตรวจสอบความถูกต้องของ bounding box - FIXED VERSION
+    เอา allow_adjustment และ relaxed_validation parameters ออก
     """
     try:
         # Extract coordinates
-        if hasattr(bbox, 'x1'):
-            x1, y1, x2, y2 = bbox.x1, bbox.y1, bbox.x2, bbox.y2
-        else:
-            x1 = bbox.get('x1', 0)
-            y1 = bbox.get('y1', 0)
-            x2 = bbox.get('x2', 0)
-            y2 = bbox.get('y2', 0)
+        # BoundingBox object will always have x1, x1, x2, y2
+        x1, y1, x2, y2 = bbox.x1, bbox.y1, bbox.x2, bbox.y2
         
+        # Ensure image_shape has at least 2 elements
+        if len(image_shape) < 2:
+            logger.warning(f"image_shape too short for validation: {image_shape}")
+            return False
         img_height, img_width = image_shape[:2]
         
-        # ===== เกณฑ์การตรวจสอบที่หลวมขึ้น =====
-        
-        # 1. ตรวจสอบพิกัดไม่ติดลบ
-        if x1 < 0 or y1 < 0 or x2 < 0 or y2 < 0:
-            logger.debug(f"❌ Negative coordinates: ({x1}, {y1}, {x2}, {y2})") # Changed to debug
+        # เกณฑ์การตรวจสอบ
+        if x1 < 0 or y1 < 0 or x2 < 0 or y2 < 0: # x2, y2 can be negative if width/height is negative
             return False
         
-        # 2. ตรวจสอบไม่เกินขอบเขตรูปภาพ (ให้อภัยเล็กน้อย)
-        margin = 5  # อนุญาตให้เกินขอบ 5 pixels
-        if x2 > img_width + margin or y2 > img_height + margin:
-            logger.debug(f"⚠️ Bbox slightly exceeds image bounds: ({x1}, {y1}, {x2}, {y2}) vs ({img_width}, {img_height})")
-            # ปรับพิกัดให้อยู่ในกรอบ
-            x2 = min(x2, img_width)
-            y2 = min(y2, img_height)
-        
-        # 3. ตรวจสอบ x2 > x1 และ y2 > y1
-        if x2 <= x1 or y2 <= y1:
-            logger.debug(f"❌ Invalid bbox dimensions: width={x2-x1}, height={y2-y1}") # Changed to debug
+        margin = 5 # pixels
+        # Check if box is outside image boundaries (with margin)
+        if x1 > img_width + margin or x2 > img_width + margin or \
+           y1 > img_height + margin or y2 > img_height + margin:
+             # This check might be too strict if x1,y1 can be slightly outside.
+             # The original check was x2 > img_width + margin or y2 > img_height + margin
+             # Let's stick to the user's provided logic for now.
+             pass # User's logic is: if x2 > img_width + margin or y2 > img_height + margin: return False
+
+        if x2 > img_width + margin or y2 > img_height + margin: # User's specific check
+            return False
+
+        if x2 <= x1 or y2 <= y1: # Invalid box dimensions
             return False
         
-        # 4. ตรวจสอบขนาดขั้นต่ำ (ลดลงมาก สำหรับใบหน้าเล็กมาก)
         width = x2 - x1
         height = y2 - y1
-        if width < 8 or height < 8:  # ลดจาก 12 เป็น 8
-            logger.debug(f"🔍 Bbox very small: {width}x{height}")
+        if width < 8 or height < 8: # Minimum size
             return False
-          
-        # 5. ตรวจสอบไม่ครอบคลุมทั้งภาพ (หลวมขึ้นมาก)
+        
         bbox_area = width * height
         image_area = img_width * img_height
+        if image_area == 0: # Avoid division by zero if image area is zero
+            return False 
         area_ratio = bbox_area / image_area
         
-        if area_ratio > 0.98:  # เพิ่มจาก 0.95 เป็น 0.98 (ยอมรับใบหน้าที่ใหญ่มาก)
-            logger.debug(f"⚠️ Bbox covers large area: {area_ratio:.1%} - but allowing it")
-            # ไม่ return False ทันที แต่ให้ผ่านไป
+        # Max area ratio (e.g., face shouldn't be 98% of the image)
+        if area_ratio > 0.98: # User specified 0.98, previous was 0.95
+            return False
         
-        # 6. ตรวจสอบ aspect ratio สมเหตุสมผล (หลวมมาก)
+        # Aspect ratio constraints
+        if height == 0: # Avoid division by zero for aspect ratio
+            return False
         aspect_ratio = width / height
-        if aspect_ratio < 0.1 or aspect_ratio > 15.0:  # หลวมมาก จาก 0.1-10.0 เป็น 0.1-15.0
-            logger.debug(f"🔍 Unusual aspect ratio: {aspect_ratio:.2f} - but allowing it")
-            # ไม่ return False แต่ให้ผ่านไป
+        if aspect_ratio < 0.1 or aspect_ratio > 15.0: # User specified 0.1 and 15.0
+            return False
         
         return True
         
     except Exception as e:
-        logger.error(f"❌ Bbox validation failed: {e}")
+        # Use logger if available, otherwise print
+        if 'logger' in globals():
+            logger.error(f"Bbox validation failed: {e} for bbox {bbox} and image_shape {image_shape}")
+        else:
+            print(f"Bbox validation failed: {e} for bbox {bbox} and image_shape {image_shape}")
         return False
 
 

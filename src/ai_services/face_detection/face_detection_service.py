@@ -11,9 +11,10 @@ import numpy as np
 import os
 from typing import Dict, List, Tuple, Any, Optional, Union
 from enum import Enum
+import asyncio # Add asyncio import
 
 from .yolo_models import YOLOv9ONNXDetector, YOLOv11Detector
-from .utils import BoundingBox, FaceDetection, DetectionResult, calculate_face_quality, filter_detection_results
+from .utils import BoundingBox, FaceDetection, DetectionResult, calculate_face_quality, validate_bounding_box # filter_detection_results removed, validate_bounding_box added
 # Import Enhanced Detector Adapter
 from .enhanced_detector_adapter import EnhancedDetectorAdapter
 
@@ -60,8 +61,8 @@ def fallback_opencv_detection(image: np.ndarray,
         for (x, y, w, h) in faces:
             x1, y1 = int(x), int(y)
             x2, y2 = int(x + w), int(y + h)
-            # Default confidence for Haar, class_id can be set to a default (e.g., 0 for face)
-            bbox = BoundingBox(x1=x1, y1=y1, x2=x2, y2=y2, confidence=0.5, class_id=0) 
+            # Default confidence for Haar, class_id is removed from BoundingBox constructor call
+            bbox = BoundingBox(x1=x1, y1=y1, x2=x2, y2=y2, confidence=0.5)
             bboxes.append(bbox)
         return bboxes
     except Exception as e:
@@ -408,193 +409,252 @@ class FaceDetectionService:
                          model_name: Optional[str] = None, 
                          conf_threshold: Optional[float] = None,
                          iou_threshold: Optional[float] = None,
-                         min_face_size: Optional[Tuple[int, int]] = None, 
-                         max_faces: Optional[int] = None, 
-                         return_landmarks: bool = False) -> DetectionResult:
+                         min_face_size: Optional[Tuple[int, int]] = None, # Parameter added, but not used in current logic
+                         max_faces: Optional[int] = None, # Parameter added, but not used in current logic
+                         return_landmarks: bool = False, # Parameter added, but not used in current logic
+                         # New parameters from user prompt for this method:
+                         min_quality_threshold: Optional[float] = None,
+                         use_fallback: bool = True,
+                         fallback_strategy: Optional[List[Dict[str, Any]]] = None,
+                         force_cpu: bool = False # Parameter added, but not used in current logic
+                         ) -> DetectionResult:
         """
         ตรวจจับใบหน้าในรูปภาพโดยเลือกโมเดลที่เหมาะสมที่สุดโดยอัตโนมัติ,
         พร้อมระบบ Fallback ที่ปรับปรุงใหม่ (Enhanced Detection Strategy).
         """
+        start_time_total = time.time() # Define start_time_total at the beginning
+
         if not self.models_loaded:
             logger.warning("Models were not loaded. Attempting to initialize now...")
             initialized = await self.initialize()
             if not initialized:
-                raise RuntimeError("โมเดลยังไม่ได้ถูกโหลด และการโหลดล้มเหลว กรุณาเรียก initialize() ก่อน")
+                # Return DetectionResult with error, as per new structure
+                return DetectionResult(faces=[], 
+                                       image_shape=(0,0,0), # Provide a default shape if image is not defined
+                                       total_processing_time=time.time() - start_time_total,
+                                       model_used="N/A", 
+                                       error="Models not loaded and initialization failed.")
             logger.info("Models initialized successfully.")
-
-        start_time_total = time.time()
         
+        # image variable will be defined after this block
         if isinstance(image_input, str):
             if not os.path.exists(image_input):
                 logger.error(f"ไม่พบไฟล์รูปภาพ: {image_input}")
-                return DetectionResult(faces=[], image_shape=(0,0,0), total_processing_time=time.time()-start_time_total, model_used="N/A", error_message=f"File not found: {image_input}")
+                return DetectionResult(faces=[], image_shape=(0,0,0), total_processing_time=time.time()-start_time_total, model_used="N/A", error=f"File not found: {image_input}")
             try:
                 image = cv2.imread(image_input)
                 if image is None:
                     logger.error(f"ไม่สามารถอ่านไฟล์รูปภาพ: {image_input}")
-                    return DetectionResult(faces=[], image_shape=(0,0,0), total_processing_time=time.time()-start_time_total, model_used="N/A", error_message=f"Cannot read image file: {image_input}")
+                    return DetectionResult(faces=[], image_shape=(0,0,0), total_processing_time=time.time()-start_time_total, model_used="N/A", error=f"Cannot read image file: {image_input}")
             except Exception as e:
                 logger.error(f"เกิดข้อผิดพลาดในการโหลดรูปภาพ {image_input}: {e}")
-                return DetectionResult(faces=[], image_shape=(0,0,0), total_processing_time=time.time()-start_time_total, model_used="N/A", error_message=f"Error loading image: {e}")
+                return DetectionResult(faces=[], image_shape=(0,0,0), total_processing_time=time.time()-start_time_total, model_used="N/A", error=f"Error loading image: {e}")
         elif isinstance(image_input, np.ndarray):
             image = image_input
         else:
             logger.error("ประเภทข้อมูลรูปภาพไม่ถูกต้อง ต้องเป็น str หรือ np.ndarray")
-            return DetectionResult(faces=[], image_shape=(0,0,0), total_processing_time=time.time()-start_time_total, model_used="N/A", error_message="Invalid image input type")
+            return DetectionResult(faces=[], image_shape=(0,0,0), total_processing_time=time.time()-start_time_total, model_used="N/A", error="Invalid image input type")
 
         if image.size == 0:
              logger.error("รูปภาพที่รับเข้ามาว่างเปล่า")
-             return DetectionResult(faces=[], image_shape=(0,0,0), total_processing_time=time.time()-start_time_total, model_used="N/A", error_message="Empty image provided")
+             return DetectionResult(faces=[], image_shape=(image.shape if hasattr(image, 'shape') else (0,0,0)), total_processing_time=time.time()-start_time_total, model_used="N/A", error="Empty image provided")
 
         # Determine primary model and parameters
-        primary_model_name = model_name if model_name and model_name != 'auto' else 'yolov9c' # Default to yolov9c for initial attempt
+        # User prompt: "model_name: Optional[str] = 'auto'" - default changed here
+        primary_model_name = model_name if model_name and model_name != 'auto' else self.config.get('default_model', 'yolov9c') 
         current_conf = conf_threshold if conf_threshold is not None else self.detection_params['conf_threshold']
         current_iou = iou_threshold if iou_threshold is not None else self.detection_params['iou_threshold']
+        # Use provided min_quality_threshold or from service config
+        current_min_quality = min_quality_threshold if min_quality_threshold is not None else self.config.get('filter_min_quality_final', 40.0)
 
-        logger.info(f"Starting detection with primary model: {primary_model_name}, conf: {current_conf}, iou: {current_iou}")
+        logger.info(f"Starting detection with primary model: {primary_model_name}, conf: {current_conf}, iou: {current_iou}, min_quality: {current_min_quality}")
         
-        detected_faces: List[FaceDetection] = []
-        model_used_for_primary_detection = primary_model_name
-        primary_detection_time = 0.0
-        decision_res = DecisionResult() # For logging fallback attempts
+        detected_faces_final: List[FaceDetection] = []
+        model_used_for_detection = "N/A"
+        detection_time_ms = 0.0
+        fallback_actually_used = False
+        error_message = None
 
         # --- Primary Detection Attempt ---
         try:
             if primary_model_name in self.models:
                 detector = self.models[primary_model_name]
-                start_primary_detect = time.time()
-                # Assuming detect_faces_raw is the method for YOLO models
-                if isinstance(detector, (YOLOv9ONNXDetector, YOLOv11Detector)):
-                    raw_bboxes = detector.detect(image, conf_threshold=current_conf, iou_threshold=current_iou)
-                # elif isinstance(detector, EnhancedDetectorAdapter): # If you have a unified interface
-                #     raw_bboxes = await detector.detect(image, conf_threshold=current_conf) # Example
-                else: # Fallback to a generic call if type is unknown but in self.models
-                    logger.warning(f"Detector for {primary_model_name} is of unknown type, attempting generic detect.")
-                    raw_bboxes = detector.detect(image, conf_threshold=current_conf, iou_threshold=current_iou) # Placeholder
+                model_used_for_detection = primary_model_name
+                start_detect_time = time.time()
 
-                primary_detection_time = time.time() - start_primary_detect
-                
-                # Process raw_bboxes into FaceDetection objects
-                for raw_bbox_array in raw_bboxes:
-                    bbox_obj = BoundingBox.from_array(raw_bbox_array) # Convert np.array to BoundingBox object
-                    # Calculate quality using the relaxed utils.py version
-                    quality_score = calculate_face_quality(bbox_obj, image.shape[:2])
-                    detected_faces.append(FaceDetection(bbox=bbox_obj, quality_score=quality_score))
-                logger.info(f"Primary detection ({primary_model_name}) found {len(detected_faces)} faces in {primary_detection_time:.4f}s.")
-
-            else: # This case should ideally not happen if model_name is validated or comes from a fixed set
-                logger.error(f"Primary model {primary_model_name} not found in loaded models.")
-                # Proceed to fallback if enabled
-        except Exception as e:
-            logger.error(f"Error during primary detection with {primary_model_name}: {e}", exc_info=True)
-            # Proceed to fallback if enabled
-
-        # --- Fallback System ---
-        if self.fallback_config.get('enable_fallback_system', False) and \
-           (len(detected_faces) == 0 or \
-            (self.fallback_config.get('always_run_all_fallbacks_if_zero_initial', True) and len(detected_faces) == 0)):
-            
-            logger.info("Primary detection yielded too few results. Initiating fallback system.")
-            decision_res.fallback_used = True
-            
-            current_fallback_attempt = 0
-            max_attempts = self.fallback_config.get('max_fallback_attempts', 3)
-            
-            # Use a copy of detected_faces for fallback iterations to avoid modifying the primary result directly yet
-            fallback_candidates = list(detected_faces)
-
-            for attempt_num, fallback_model_config in enumerate(self.fallback_config.get('fallback_models', [])):
-                if current_fallback_attempt >= max_attempts:
-                    logger.info("Max fallback attempts reached.")
-                    break
-                
-                # If we already have faces from a previous fallback that met min_detections_after_fallback,
-                # and we are not forced to run all fallbacks, we can stop.
-                if len(fallback_candidates) >= self.fallback_config.get('min_detections_after_fallback', 1) and \
-                   not (self.fallback_config.get('always_run_all_fallbacks_if_zero_initial', True) and len(detected_faces) == 0) : # Check original detected_faces for the 'always_run' condition
-                    logger.info(f"Sufficient faces ({len(fallback_candidates)}) found from fallback, stopping further fallbacks.")
-                    break
-
-                current_fallback_attempt += 1
-                fb_model_name = fallback_model_config['model_name']
-                fb_conf = fallback_model_config.get('conf_threshold', self.detection_params['conf_threshold'])
-                fb_iou = fallback_model_config.get('iou_threshold', self.detection_params['iou_threshold'])
-                fb_min_faces = fallback_model_config.get('min_faces_to_accept', 1)
-
-                attempt_info = {'model_name': fb_model_name, 'conf': fb_conf, 'iou': fb_iou, 'attempt': current_fallback_attempt}
-                logger.info(f"Fallback Attempt {current_fallback_attempt}/{max_attempts} using {fb_model_name} (Conf: {fb_conf}, IoU: {fb_iou})")
-
-                try:
-                    fb_detected_this_attempt = []
-                    start_fb_detect = time.time()
-                    if fb_model_name == 'opencv_haar':
-                        haar_scale = fallback_model_config.get('scale_factor', 1.1)
-                        haar_neighbors = fallback_model_config.get('min_neighbors', 3)
-                        haar_min_size = fallback_model_config.get('min_size', (20,20))
-                        raw_fb_bboxes = fallback_opencv_detection(image, scale_factor=haar_scale, min_neighbors=haar_neighbors, min_size=haar_min_size)
-                    elif fb_model_name in self.models:
-                        detector = self.models[fb_model_name]
-                        if isinstance(detector, (YOLOv9ONNXDetector, YOLOv11Detector)):
-                             raw_fb_bboxes = detector.detect(image, conf_threshold=fb_conf, iou_threshold=fb_iou)
-                        # Add elif for EnhancedDetectorAdapter if it has a compatible method
-                        else:
-                            logger.warning(f"Fallback model {fb_model_name} is of an unsupported type for direct call, skipping.")
-                            raw_fb_bboxes = []
+                raw_bboxes = []
+                if hasattr(detector, 'detect_faces_raw') and callable(detector.detect_faces_raw):
+                    # Assuming detect_faces_raw can be async or sync. If strictly async, needs await.
+                    # Based on yolo_models.py, detect_faces_raw is sync.
+                    if asyncio.iscoroutinefunction(detector.detect_faces_raw):
+                        raw_bboxes = await detector.detect_faces_raw(image, conf_threshold=current_conf, iou_threshold=current_iou)
                     else:
-                        logger.warning(f"Fallback model {fb_model_name} not loaded, skipping.")
+                        raw_bboxes = detector.detect_faces_raw(image, conf_threshold=current_conf, iou_threshold=current_iou)
+                elif hasattr(detector, 'detect') and callable(detector.detect):
+                    if asyncio.iscoroutinefunction(detector.detect):
+                        raw_bboxes = await detector.detect(image, conf_threshold=current_conf, iou_threshold=current_iou)
+                    else:
+                         raw_bboxes = detector.detect(image, conf_threshold=current_conf, iou_threshold=current_iou)
+                else:
+                    error_message = f"Detector {primary_model_name} has no suitable detection method (detect_faces_raw or detect)."
+                    logger.error(error_message)
+                
+                detection_time_ms = (time.time() - start_detect_time) * 1000
+
+                processed_faces_primary = []
+                for raw_bbox_data in raw_bboxes:
+                    if isinstance(raw_bbox_data, np.ndarray):
+                        if len(raw_bbox_data) == 5:
+                            bbox_obj = BoundingBox(x1=raw_bbox_data[0], y1=raw_bbox_data[1], x2=raw_bbox_data[2], y2=raw_bbox_data[3], confidence=raw_bbox_data[4])
+                        elif len(raw_bbox_data) == 6:
+                             bbox_obj = BoundingBox(x1=raw_bbox_data[0], y1=raw_bbox_data[1], x2=raw_bbox_data[2], y2=raw_bbox_data[3], confidence=raw_bbox_data[4])
+                        else:
+                            logger.warning(f"Skipping raw_bbox_data with unexpected length: {len(raw_bbox_data)}")
+                            continue
+                    elif isinstance(raw_bbox_data, BoundingBox):
+                        bbox_obj = raw_bbox_data
+                    else:
+                        logger.warning(f"Skipping detection of unknown type: {type(raw_bbox_data)}")
+                        continue
+                    
+                    if not validate_bounding_box(bbox_obj, image.shape[:2]):
+                        logger.debug(f"Invalid bbox skipped: {bbox_obj}")
+                        continue
+
+                    quality_score = calculate_face_quality(bbox_obj, image.shape[:2])
+                    
+                    if quality_score >= current_min_quality:
+                        face_detection_obj = FaceDetection(bbox=bbox_obj, 
+                                                           quality_score=quality_score,
+                                                           model_used=primary_model_name, 
+                                                           processing_time=detection_time_ms / len(raw_bboxes) if raw_bboxes else detection_time_ms)
+                        processed_faces_primary.append(face_detection_obj)
+                
+                detected_faces_final.extend(processed_faces_primary)
+                logger.info(f"Primary detection ({primary_model_name}) found {len(processed_faces_primary)} valid faces (quality >= {current_min_quality}) in {detection_time_ms:.2f}ms.")
+
+            else:
+                error_message = f"Primary model {primary_model_name} not found in loaded models."
+                logger.error(error_message)
+        except Exception as e:
+            error_message = f"Error during primary detection with {primary_model_name}: {str(e)}"
+            logger.error(error_message, exc_info=True)
+
+        # --- Fallback System (Simplified based on new structure) ---
+        # Fallback if use_fallback is true AND (no faces found OR primary model failed AND error_message is set)
+        if use_fallback and (not detected_faces_final or (error_message and not detected_faces_final)):
+            logger.info(f"Primary detection insufficient or failed. Initiating fallback. Reason: {error_message if error_message else 'No faces found'}")
+            fallback_actually_used = True
+            
+            # Determine fallback strategy: use provided or default from config
+            active_fallback_strategy = fallback_strategy if fallback_strategy is not None else self.fallback_config.get('fallback_models', [])
+            
+            for fb_attempt, fb_config in enumerate(active_fallback_strategy):
+                fb_model_name = fb_config.get('model_name')
+                fb_conf = fb_config.get('conf_threshold', current_conf) # Use current_conf as default for fallback
+                fb_iou = fb_config.get('iou_threshold', current_iou)   # Use current_iou as default for fallback
+                fb_min_faces = fb_config.get('min_faces_to_accept', 1)
+
+                logger.info(f"Fallback Attempt {fb_attempt + 1}/{len(active_fallback_strategy)}: Using {fb_model_name} (conf: {fb_conf}, iou: {fb_iou})")
+                
+                fb_detected_faces_current_attempt = []
+                fb_detection_time_ms = 0.0
+                current_fb_model_name_for_face_obj = fb_model_name # Store the name of the model used for this attempt
+                
+                try:
+                    if fb_model_name == 'opencv_haar':
+                        start_fb_detect = time.time()
+                        # Get params for opencv_haar from fb_config
+                        haar_scale = fb_config.get('scale_factor', 1.1)
+                        haar_min_neighbors = fb_config.get('min_neighbors', 5)
+                        haar_min_size = fb_config.get('min_size', (30,30))
+                        raw_fb_bboxes = fallback_opencv_detection(image, scale_factor=haar_scale, min_neighbors=haar_min_neighbors, min_size=haar_min_size)
+                        fb_detection_time_ms = (time.time() - start_fb_detect) * 1000
+                        model_used_for_detection = "opencv_haar"
+                        current_fb_model_name_for_face_obj = "opencv_haar"
+                    elif fb_model_name in self.models:
+                        detector_fb = self.models[fb_model_name]
+                        model_used_for_detection = fb_model_name
+                        current_fb_model_name_for_face_obj = fb_model_name
+                        start_fb_detect = time.time()
+                        
                         raw_fb_bboxes = []
+                        if hasattr(detector_fb, 'detect_faces_raw') and callable(detector_fb.detect_faces_raw):
+                            if asyncio.iscoroutinefunction(detector_fb.detect_faces_raw):
+                                raw_fb_bboxes = await detector_fb.detect_faces_raw(image, conf_threshold=fb_conf, iou_threshold=fb_iou)
+                            else:
+                                raw_fb_bboxes = detector_fb.detect_faces_raw(image, conf_threshold=fb_conf, iou_threshold=fb_iou)
+                        elif hasattr(detector_fb, 'detect') and callable(detector_fb.detect):
+                             if asyncio.iscoroutinefunction(detector_fb.detect):
+                                raw_fb_bboxes = await detector_fb.detect(image, conf_threshold=fb_conf, iou_threshold=fb_iou)
+                             else:
+                                raw_fb_bboxes = detector_fb.detect(image, conf_threshold=fb_conf, iou_threshold=fb_iou)
+                        else:
+                            logger.warning(f"Fallback detector {fb_model_name} has no suitable detection method.")
+                            continue
+
+                        fb_detection_time_ms = (time.time() - start_fb_detect) * 1000
+                    else:
+                        logger.warning(f"Fallback model {fb_model_name} not found.")
+                        continue
+
+                    # Process raw_fb_bboxes
+                    for raw_bbox_data_fb in raw_fb_bboxes:
+                        if isinstance(raw_bbox_data_fb, np.ndarray):
+                            if len(raw_bbox_data_fb) == 5:
+                                bbox_obj_fb = BoundingBox(x1=raw_bbox_data_fb[0], y1=raw_bbox_data_fb[1], x2=raw_bbox_data_fb[2], y2=raw_bbox_data_fb[3], confidence=raw_bbox_data_fb[4])
+                            elif len(raw_bbox_data_fb) == 6:
+                                bbox_obj_fb = BoundingBox(x1=raw_bbox_data_fb[0], y1=raw_bbox_data_fb[1], x2=raw_bbox_data_fb[2], y2=raw_bbox_data_fb[3], confidence=raw_bbox_data_fb[4])
+                            else:
+                                continue
+                        elif isinstance(raw_bbox_data_fb, BoundingBox):
+                            bbox_obj_fb = raw_bbox_data_fb
+                        else:
+                            continue
+                        
+                        if not validate_bounding_box(bbox_obj_fb, image.shape[:2]):
+                            continue
+
+                        quality_score_fb = calculate_face_quality(bbox_obj_fb, image.shape[:2])
+                        if quality_score_fb >= current_min_quality: # Use the same min_quality as primary for consistency
+                            face_detection_obj_fb = FaceDetection(bbox=bbox_obj_fb, 
+                                                                  quality_score=quality_score_fb,
+                                                                  model_used=current_fb_model_name_for_face_obj, 
+                                                                  processing_time=fb_detection_time_ms / len(raw_fb_bboxes) if raw_fb_bboxes else fb_detection_time_ms)
+                            fb_detected_faces_current_attempt.append(face_detection_obj_fb)
                     
-                    fb_detect_time = time.time() - start_fb_detect
-                    attempt_info['time'] = fb_detect_time
-
-                    for raw_bbox_array in raw_fb_bboxes:
-                        bbox_obj = BoundingBox.from_array(raw_bbox_array) # Convert np.array to BoundingBox object
-                        quality_score = calculate_face_quality(bbox_obj, image.shape[:2])
-                        fb_detected_this_attempt.append(FaceDetection(bbox=bbox_obj, quality_score=quality_score))
-                    
-                    logger.info(f"Fallback {fb_model_name} found {len(fb_detected_this_attempt)} faces in {fb_detect_time:.4f}s.")
-                    attempt_info['faces_found'] = len(fb_detected_this_attempt)
-
-                    # Logic to combine/replace detections. For now, if primary was empty, take these.
-                    # More sophisticated merging (e.g. NMS across primary and fallback) could be added.
-                    if len(fallback_candidates) < fb_min_faces and len(fb_detected_this_attempt) >= fb_min_faces:
-                        logger.info(f"Fallback {fb_model_name} provided {len(fb_detected_this_attempt)} faces, replacing previous {len(fallback_candidates)} candidates.")
-                        fallback_candidates = fb_detected_this_attempt # Replace if this fallback is better
-                        model_used_for_primary_detection = f"{primary_model_name} -> {fb_model_name} (Fallback)" # Update model string
-                        primary_detection_time += fb_detect_time # Add time
-                    elif len(fb_detected_this_attempt) > len(fallback_candidates): # Simple: if more faces, prefer this set
-                        logger.info(f"Fallback {fb_model_name} found more faces ({len(fb_detected_this_attempt)}) than current candidates ({len(fallback_candidates)}). Updating.")
-                        fallback_candidates = fb_detected_this_attempt
-                        model_used_for_primary_detection = f"{primary_model_name} -> {fb_model_name} (Fallback)"
-                        primary_detection_time += fb_detect_time
-
-
+                    logger.info(f"Fallback ({current_fb_model_name_for_face_obj}) found {len(fb_detected_faces_current_attempt)} valid faces in {fb_detection_time_ms:.2f}ms.")
+                    if len(fb_detected_faces_current_attempt) >= fb_min_faces:
+                        detected_faces_final = fb_detected_faces_current_attempt
+                        model_used_for_detection = current_fb_model_name_for_face_obj # Update the overall model used
+                        error_message = None
+                        break
+                
                 except Exception as e_fb:
                     logger.error(f"Error during fallback detection with {fb_model_name}: {e_fb}", exc_info=True)
-                    attempt_info['error'] = str(e_fb)
-                
-                decision_res.fallback_attempts_info.append(attempt_info)
             
-            # After all fallbacks, detected_faces should be the result of the best fallback attempt (or primary if no fallback was better/triggered)
-            detected_faces = fallback_candidates # Update detected_faces with the final list from fallbacks
+            if not detected_faces_final and not error_message:
+                error_message = "All detection attempts (primary and fallback) failed to find usable faces."
 
-        # --- Final Processing and Result Creation ---
-        # The _create_result method will handle filtering by quality, max_faces etc.
-        # The min_quality for filtering is now taken from 'filter_min_quality_final' in config.
-        final_result = self._create_result(
-            detected_faces, 
-            image.shape, 
-            model_used_for_primary_detection, 
-            primary_detection_time, # This time might now include fallback time
-            time.time() - start_time_total, # Total processing time for the whole function
-            max_faces=max_faces,
-            decision_log_override=decision_res # Pass the decision result with fallback info
-        )
+        # --- Final Result Creation ---
+        total_service_time = time.time() - start_time_total
         
-        logger.info(f"Final detection result: {len(final_result.faces)} faces using {final_result.model_used}. Total time: {final_result.total_processing_time:.4f}s")
-        if decision_res.fallback_used:
-            logger.info(f"Fallback summary: {len(decision_res.fallback_attempts_info)} attempts made.")
+        # If max_faces is specified, sort by quality and take top N
+        if max_faces is not None and len(detected_faces_final) > max_faces:
+            detected_faces_final.sort(key=lambda f: f.quality_score if f.quality_score is not None else 0, reverse=True)
+            detected_faces_final = detected_faces_final[:max_faces]
 
+        # Create DetectionResult object using the new structure
+        # model_used should be the one that produced the final set of faces
+        # total_processing_time is the service time, individual face processing_time is already in FaceDetection
+        final_result = self._create_result(
+            processed_faces=detected_faces_final, 
+            image_shape_tuple=image.shape, 
+            total_service_time_seconds=total_service_time, 
+            model_name_overall=model_used_for_detection, 
+            was_fallback_used=fallback_actually_used,
+            error_str=error_message
+        )
         return final_result
 
     # ENHANCED VERSION of _fallback_detection (now integrated into detect_faces, this can be removed or kept for specific scenarios)
@@ -603,220 +663,21 @@ class FaceDetectionService:
     # ... (This logic is now part of the main detect_faces method's fallback loop) ....
 
 
-    # ENHANCED VERSION of _create_result
+    # FIXED VERSION: _create_result method updated
     def _create_result(self, 
-                       faces: List[FaceDetection], 
-                       image_shape: Tuple[int, int, int], 
-                       model_used: str, 
-                       model_processing_time: float, 
-                       total_processing_time: float,
-                       max_faces: Optional[int] = None,
-                       decision_log_override: Optional[DecisionResult] = None # To pass fallback info
+                       processed_faces: List[FaceDetection], 
+                       image_shape_tuple: Tuple[int, int, int],
+                       total_service_time_seconds: float, 
+                       model_name_overall: str, 
+                       was_fallback_used: bool, 
+                       error_str: Optional[str] = None
                        ) -> DetectionResult:
-        """
-        สร้างผลลัพธ์การตรวจจับใบหน้า, กรองตามคุณภาพ (RELAXED), และจำกัดจำนวนใบหน้า.
-        """
-        # Filter by quality using the 'filter_min_quality_final' from config
-        # This uses the relaxed calculate_face_quality scores already on the FaceDetection objects
-        min_quality_for_filtering = self.config.get('filter_min_quality_final', 40.0) # Default to guide's 40
-        
-        # The filter_detection_results function from utils.py (RELAXED VERSION) will be used.
-        # It needs to be passed the correct min_quality.
-        # We assume faces already have quality_score calculated with relaxed_validation=True.
-        
-        # We can directly filter here based on the quality scores already calculated.
-        # The `filter_detection_results` from `utils.py` is more complex and might re-validate or adjust.
-        # For simplicity here, let's filter based on the already computed (relaxed) quality scores.
-        
-        # Step 1: Filter by the final quality threshold
-        high_quality_faces = [
-            face for face in faces if face.quality_score is not None and face.quality_score >= min_quality_for_filtering
-        ]
-        
-        logger.debug(f"Initial faces: {len(faces)}, Filtered by quality ({min_quality_for_filtering}): {len(high_quality_faces)}")
-
-        # Step 2: If still too many faces, sort by quality and take top N (if max_faces is set)
-        if max_faces is not None and len(high_quality_faces) > max_faces:
-            # Sort by quality_score descending, then by confidence if scores are equal
-            high_quality_faces.sort(key=lambda f: (f.quality_score or 0, f.bbox.confidence or 0), reverse=True)
-            final_faces = high_quality_faces[:max_faces]
-            logger.debug(f"Applied max_faces ({max_faces}): {len(final_faces)} faces.")
-        else:
-            final_faces = high_quality_faces
-            # Optionally sort them anyway if an order is preferred
-            final_faces.sort(key=lambda f: (f.quality_score or 0, f.bbox.confidence or 0), reverse=True)
-
-
-        # Create DetectionResult object
-        result = DetectionResult(
-            faces=final_faces,
-            image_shape=image_shape,
-            model_used=model_used,
-            # model_processing_time=model_processing_time, # Removed: Not an expected __init__ argument
-            total_processing_time=total_processing_time,
-            # num_faces=len(final_faces), # Removed: Not an expected __init__ argument
-            # decision_log=decision_log_override.to_dict() if decision_log_override else {}, # Removed: Not an expected __init__ argument
-            fallback_used=decision_log_override.fallback_used if decision_log_override and hasattr(decision_log_override, 'fallback_used') else False
+        """Helper method to create DetectionResult object with new structure."""
+        return DetectionResult(
+            faces=processed_faces,
+            image_shape=image_shape_tuple,
+            total_processing_time=total_service_time_seconds * 1000, 
+            model_used=model_name_overall,
+            fallback_used=was_fallback_used,
+            error=error_str
         )
-        
-        # Attributes like num_faces and decision_log (if they exist on DetectionResult)
-        # would be set by other parts of the code or need to be handled if they are not init args.
-        # The primary fix here is to correct the __init__ call.
-
-        # Analyze quality of the *final* set of faces
-        if final_faces: # Only analyze if there are faces
-            quality_analysis = self.quality_analyzer.analyze_detection_quality(final_faces)
-            result.quality_info = quality_analysis
-            logger.info(f"Final quality analysis: Usable={quality_analysis.get('usable_count')}/{quality_analysis.get('total_count')}, AvgQ={quality_analysis.get('avg_quality'):.2f}")
-        else:
-            result.quality_info = self.quality_analyzer.analyze_detection_quality([]) # Get empty structure
-
-        return result
-
-    async def get_service_info(self) -> Dict[str, Any]:
-        """
-        ดูข้อมูลของบริการตรวจจับใบหน้า
-        
-        Returns:
-            ข้อมูลบริการและสถิติการใช้งาน
-        """
-        vram_status = await self.vram_manager.get_vram_status()
-        
-        # สถิติการตัดสินใจ
-        decision_stats = {}
-        if self.decision_log:
-            # จำนวนการตัดสินใจทั้งหมด
-            decision_stats["total_decisions"] = len(self.decision_log)
-            
-            # จำนวนครั้งที่ใช้แต่ละโมเดล
-            model_counts = {"yolov9c": 0, "yolov9e": 0, "yolov11m": 0}
-            for decision in self.decision_log:
-                model_used = decision["step4_results"]["model_used"]
-                model_counts[model_used] = model_counts.get(model_used, 0) + 1
-            
-            decision_stats["model_usage"] = model_counts
-            
-            # สถิติความเห็นด้วย
-            agreement_counts = {"high_overlap": 0, "low_overlap": 0}
-            for decision in self.decision_log:
-                agreement_type = decision["step2_agreement"]["type"]
-                agreement_counts[agreement_type] = agreement_counts.get(agreement_type, 0) + 1
-            
-            decision_stats["agreement_stats"] = agreement_counts
-            
-            # เหตุผลการตัดสินใจใช้ YOLOv11m
-            yolov11m_reasons = {}
-            for decision in self.decision_log:
-                if decision["step3_decision"]["use_yolov11m"]:
-                    for reason in decision["step3_decision"]["reasons"]:
-                        yolov11m_reasons[reason] = yolov11m_reasons.get(reason, 0) + 1
-            
-            decision_stats["yolov11m_reasons"] = yolov11m_reasons
-            
-            # สถิติคุณภาพ
-            quality_stats = {
-                "total_faces": 0,
-                "usable_faces": 0,
-                "avg_quality_ratio": 0.0
-            }
-            
-            for decision in self.decision_log:
-                if "quality_info" in decision:
-                    quality_stats["total_faces"] += decision["quality_info"].get("total_count", 0)
-                    quality_stats["usable_faces"] += decision["quality_info"].get("usable_count", 0)
-            
-            if quality_stats["total_faces"] > 0:
-                quality_stats["avg_quality_ratio"] = quality_stats["usable_faces"] / quality_stats["total_faces"] * 100
-            
-            decision_stats["quality_stats"] = quality_stats
-        
-        return {
-            "service_name": "Enhanced Intelligent Face Detection Service",
-            "models_loaded": self.models_loaded,
-            "available_models": list(self.models.keys()),
-            "model_stats": self.model_stats,
-            "decision_criteria": self.decision_criteria,
-            "detection_params": self.detection_params,
-            "vram_status": vram_status,
-            "decision_stats": decision_stats,
-            "recent_decisions": self.decision_log[-5:] if self.decision_log else []
-        }
-    
-    async def cleanup(self):
-        """
-        ล้างทรัพยากรและปล่อย VRAM
-        """
-        logger.info("กำลังล้างทรัพยากร FaceDetectionService...")
-        for model_name, model_instance in self.models.items():
-            try:
-                if hasattr(model_instance, 'cleanup'): # For YOLOv11Detector or others with cleanup
-                    model_instance.cleanup()
-                # For ONNX models, explicit cleanup might not be needed beyond releasing allocation
-                
-                # Release VRAM allocation
-                # The allocation object might not be stored directly on the model instance in this structure.
-                # This part needs to align with how allocations are tracked.
-                # Assuming a naming convention for release:
-                await self.vram_manager.release_model_allocation(f"{model_name}-face", "face_detection_service")
-                logger.info(f"Released VRAM for {model_name}")
-            except Exception as e:
-                logger.error(f"Error during cleanup for model {model_name}: {e}")
-        
-        self.models.clear()
-        self.models_loaded = False
-        logger.info("ล้างทรัพยากร FaceDetectionService เสร็จสิ้น")
-
-    async def enhanced_intelligent_detect(self, 
-                                          image: np.ndarray, 
-                                          conf_threshold: float, 
-                                          iou_threshold: float,
-                                          return_landmarks: bool = False) -> DetectionResult:
-        """
-        ใช้ EnhancedDetectorAdapter ถ้าเปิดใช้งาน หรือ fallback ไปที่ intelligent_detect.
-        This method now primarily acts as a wrapper or decision point.
-        The core detection, including fallbacks, is handled by detect_faces.
-        """
-        start_total_time = time.time()
-
-        if self.use_enhanced_detector and 'enhanced' in self.models and isinstance(self.models['enhanced'], EnhancedDetectorAdapter):
-            logger.info("Using EnhancedDetectorAdapter for detection.")
-            # The EnhancedDetectorAdapter might have its own complex logic or simple detection.
-            # We need to ensure its output is compatible (List[FaceDetection]) and then create a result.
-            # This is a simplified call; the adapter might need more specific parameters.
-            try:
-                # Assuming the adapter's detect method returns raw bboxes or FaceDetection objects
-                # Let's assume it returns raw bboxes for consistency with how YOLO results are handled initially
-                enhanced_adapter = self.models['enhanced']
-                # The adapter's detect method signature might vary. This is an example.
-                # raw_bboxes = await enhanced_adapter.detect(image, confidence_threshold=conf_threshold) # Example call
-                
-                # For now, let's assume we call the main detect_faces with 'enhanced' model type
-                # if we want to use its full pipeline including quality calculation and filtering.
-                # However, 'enhanced' is not a standard model in the fallback list.
-                # This suggests 'enhanced_intelligent_detect' might be a separate path.
-
-                # Let's make this simpler: if use_enhanced_detector, we call its specific detection method.
-                # The result processing should be similar to _create_result.
-                
-                # This part is a bit ambiguous based on current structure.
-                # For now, let's assume if detect_faces handles 'enhanced' correctly, we don't need extra logic here.
-                logger.warning("enhanced_intelligent_detect logic needs review for integration with the main detect_faces flow.")
-                return await self.detect_faces(image, model_name='enhanced' if self.use_enhanced_detector else None, 
-                                               conf_threshold=conf_threshold, iou_threshold=iou_threshold, 
-                                               return_landmarks=return_landmarks)
-
-            except Exception as e:
-                logger.error(f"Error during enhanced detection: {e}. Falling back to standard intelligent detection.", exc_info=True)
-                # Fallback to standard intelligent detection logic (which is now part of detect_faces)
-                return await self.detect_faces(image, model_name=None, # Let detect_faces decide primary
-                                               conf_threshold=conf_threshold, iou_threshold=iou_threshold, 
-                                               return_landmarks=return_landmarks)
-        else:
-            # Standard intelligent detection (now primarily handled by detect_faces with its internal logic or _intelligent_detect)
-            logger.info("Using standard detection logic (fallback system integrated).")
-            # Call the main detect_faces, which will use its primary model logic and fallbacks
-            return await self.detect_faces(image, model_name=None, # Let detect_faces decide primary
-                                           conf_threshold=conf_threshold, iou_threshold=iou_threshold, 
-                                           return_landmarks=return_landmarks)
-
-# Ensure the file ends with a newline

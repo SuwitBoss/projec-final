@@ -249,118 +249,152 @@ class YOLOv9ONNXDetector(FaceDetector):
                 torch.cuda.empty_cache()
             return []
     
+    def detect_faces_raw(self, image, conf_threshold: float = 0.5, iou_threshold: float = 0.4) -> List[np.ndarray]:
+        """
+        ตรวจจับใบหน้าและส่งคืน raw detection results
+        เป็น wrapper สำหรับ detect method
+        """
+        return self.detect(image, conf_threshold, iou_threshold)
+
+    def has_attribute_detect_faces_raw(self) -> bool:
+        """ตรวจสอบว่ามี method detect_faces_raw หรือไม่"""
+        return hasattr(self, 'detect_faces_raw')
+
     def _postprocess_outputs(self, 
                            outputs: List[np.ndarray], 
                            scale_factors: Dict[str, Any],
                            conf_threshold: float,
                            iou_threshold: float) -> List[np.ndarray]:
-        """แปลงผลลัพธ์จากโมเดล YOLO v9"""
-        # รับผลลัพธ์จากโมเดล (ปรับตามรูปแบบ output ของโมเดล)
+        """แปลงผลลัพธ์จากโมเดล YOLO v9 - FIXED VERSION"""
         predictions = outputs[0]
-        
-        # กรองตาม confidence
         detections = []
-        
-        for i, prediction in enumerate(predictions):
-            # วนลูปผ่านทุก anchors
-            for pred in prediction:
-                # YOLO v9 output format: [batch, anchors, xywh+obj+class]
-                # ตรวจสอบความยาวของ prediction เพื่อรองรับทั้ง YOLOv9c และ YOLOv9e
-                if len(pred) >= 5:  # ต้องมีอย่างน้อย x, y, w, h, obj
-                    confidence = pred[4]  # objectness score
-                    
+
+        # แก้ไข broadcasting error
+        try:
+            # ตรวจสอบ shape ของ predictions
+            if len(predictions.shape) == 3:
+                # Shape: [batch, num_detections, features]
+                batch_predictions = predictions[0]  # เอาแค่ batch แรก
+            elif len(predictions.shape) == 2:
+                # Shape: [num_detections, features]
+                batch_predictions = predictions
+            else:
+                logger.warning(f"Unexpected predictions shape: {predictions.shape}")
+                return []
+
+            for pred in batch_predictions:
+                try:
+                    # ตรวจสอบความยาวของ prediction
+                    if len(pred) < 5:
+                        continue
+
+                    # แก้ไข broadcasting error - ใช้ indexing แบบชัดเจน
+                    x_center = float(pred[0])
+                    y_center = float(pred[1])
+                    width = float(pred[2])
+                    height = float(pred[3])
+                    confidence = float(pred[4])
+
                     if confidence < conf_threshold:
                         continue
-                    
-                    # แปลงค่าพิกัดจาก xywh เป็น x1y1x2y2
-                    x_center, y_center, width, height = pred[:4]
-                    
-                    # แปลงจากรูปแบบ normalized (0-1) เป็นพิกัดจริง
+
+                    # แปลงจาก center format เป็น corner format
                     x1 = x_center - (width / 2)
                     y1 = y_center - (height / 2)
                     x2 = x_center + (width / 2)
                     y2 = y_center + (height / 2)
-                    
-                    # ย้อนกลับการ normalize
+
+                    # ปรับขนาดตาม input size
                     input_size = self.get_input_size()
                     x1 = x1 * input_size[1]
                     y1 = y1 * input_size[0]
                     x2 = x2 * input_size[1]
                     y2 = y2 * input_size[0]
-                    
-                    # แปลงจากพิกัดใน padded image กลับไปเป็นพิกัดในรูปต้นฉบับ
+
+                    # แปลงกลับเป็นพิกัดต้นฉบับ
                     scale = scale_factors['scale']
                     x_offset = scale_factors['x_offset']
                     y_offset = scale_factors['y_offset']
-                    
+
                     x1 = (x1 - x_offset) / scale
                     y1 = (y1 - y_offset) / scale
                     x2 = (x2 - x_offset) / scale
                     y2 = (y2 - y_offset) / scale
-                    
-                    # ตัดให้อยู่ในขอบเขตของรูปภาพ
+
+                    # Clip to image bounds
                     x1 = max(0, min(x1, scale_factors['original_width']))
                     y1 = max(0, min(y1, scale_factors['original_height']))
                     x2 = max(0, min(x2, scale_factors['original_width']))
                     y2 = max(0, min(y2, scale_factors['original_height']))
-                    
+
                     # สร้าง detection array [x1, y1, x2, y2, confidence]
-                    detection = np.array([x1, y1, x2, y2, confidence])
+                    detection = np.array([x1, y1, x2, y2, confidence], dtype=np.float32)
                     detections.append(detection)
-        
-        # ใช้ NMS (Non-Maximum Suppression) เพื่อกรองกล่องที่ซ้อนทับกัน
-        detections = self._nms(np.array(detections), iou_threshold) if detections else []
-        
-        return detections
-    
-    def _nms(self, detections: np.ndarray, iou_threshold: float) -> List[np.ndarray]:
-        """Non-Maximum Suppression เพื่อกรองกล่องที่ซ้อนทับกัน"""
-        if len(detections) == 0:
+
+                except (IndexError, ValueError, TypeError) as e:
+                    logger.warning(f"Error processing prediction: {e}")
+                    continue
+
+        except Exception as e:
+            logger.error(f"Error in postprocessing: {e}")
             return []
-        
-        # เรียงลำดับตาม confidence (มากไปน้อย)
-        indices = np.argsort(detections[:, 4])[::-1]
-        detections = detections[indices]
-        
+
+        # Apply NMS
+        if detections:
+            detections_array = np.array(detections)
+            final_detections = self._nms(detections_array, iou_threshold)
+            return final_detections
+        else:
+            return []
+
+    def _nms(self, detections: np.ndarray, iou_threshold: float) -> List[np.ndarray]:
+        """
+        Perform Non-Maximum Suppression (NMS) on detections.
+        Args:
+            detections: Array of detections, where each row is [x1, y1, x2, y2, confidence, (optional class_id)].
+            iou_threshold: IoU threshold for suppression.
+        Returns:
+            List of filtered detections.
+        """
+        if detections.shape[0] == 0:
+            return []
+
+        # Extract coordinates and scores
+        # Assuming detections are [x1, y1, x2, y2, confidence, ...]
         x1 = detections[:, 0]
         y1 = detections[:, 1]
         x2 = detections[:, 2]
         y2 = detections[:, 3]
-        
+        scores = detections[:, 4]
+
         areas = (x2 - x1) * (y2 - y1)
+        order = scores.argsort()[::-1]  # Sort by confidence in descending order
+
         keep = []
-        
-        for i in range(len(detections)):
-            # ถ้าผ่านการกรองแล้ว
-            if areas[i] <= 0:
-                continue
-                
-            keep.append(i)
+        while order.size > 0:
+            i = order[0]
+            keep.append(detections[i])
             
-            # คำนวณ IoU กับกล่องที่เหลือ
-            xx1 = np.maximum(x1[i], x1[i+1:])
-            yy1 = np.maximum(y1[i], y1[i+1:])
-            xx2 = np.minimum(x2[i], x2[i+1:])
-            yy2 = np.minimum(y2[i], y2[i+1:])
+            if order.size == 1: # No more boxes to compare
+                break
+
+            # Calculate IoU with remaining boxes
+            xx1 = np.maximum(x1[i], x1[order[1:]])
+            yy1 = np.maximum(y1[i], y1[order[1:]])
+            xx2 = np.minimum(x2[i], x2[order[1:]])
+            yy2 = np.minimum(y2[i], y2[order[1:]])
+
+            w = np.maximum(0.0, xx2 - xx1)
+            h = np.maximum(0.0, yy2 - yy1)
+            inter = w * h
             
-            w = np.maximum(0, xx2 - xx1)
-            h = np.maximum(0, yy2 - yy1)
-            
-            intersection = w * h
-            union = areas[i] + areas[i+1:] - intersection
-            iou = intersection / (union + 1e-10)
-            
-            # กรองกล่องที่มี IoU สูงกว่าเกณฑ์
-            remaining = np.where(iou <= iou_threshold)[0]
-            
-            # อัปเดตดัชนี
-            x1[i+1:] = x1[i+1+remaining]
-            y1[i+1:] = y1[i+1+remaining]
-            x2[i+1:] = x2[i+1+remaining]
-            y2[i+1:] = y2[i+1+remaining]
-            areas[i+1:] = areas[i+1+remaining]
-        
-        return [detections[i] for i in keep]
+            iou = inter / (areas[i] + areas[order[1:]] - inter)
+
+            # Keep boxes with IoU less than threshold
+            inds = np.where(iou <= iou_threshold)[0]
+            order = order[inds + 1] # +1 because order[0] was the current box
+
+        return keep
 
 
 class YOLOv11Detector(FaceDetector):
@@ -444,6 +478,17 @@ class YOLOv11Detector(FaceDetector):
             if isinstance(image, np.ndarray) and os.path.exists("temp_yolov11_input.jpg"):
                 os.remove("temp_yolov11_input.jpg")
             return []
+    
+    def detect_faces_raw(self, image, conf_threshold: float = 0.5, iou_threshold: float = 0.4) -> List[np.ndarray]:
+        """
+        ตรวจจับใบหน้าและส่งคืน raw detection results
+        เป็น wrapper สำหรับ detect method
+        """
+        return self.detect(image, conf_threshold, iou_threshold)
+
+    def has_attribute_detect_faces_raw(self) -> bool:
+        """ตรวจสอบว่ามี method detect_faces_raw หรือไม่"""
+        return hasattr(self, 'detect_faces_raw')
     
     def _convert_results(self, results) -> List[np.ndarray]:
         """แปลงผลลัพธ์จาก YOLO v11 ให้อยู่ในรูปแบบเดียวกับ YOLOv9"""
