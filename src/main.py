@@ -12,7 +12,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # นำเข้า modules
 from src.ai_services.common.vram_manager import VRAMManager  # type: ignore
-from src.ai_services.face_detection.face_detection_service import FaceDetectionService  # type: ignore
+from src.ai_services.face_detection.face_detection_service import FaceDetectionService, get_relaxed_face_detection_config  # type: ignore
 from src.ai_services.face_recognition.face_recognition_service import FaceRecognitionService  # type: ignore
 from src.ai_services.face_analysis.face_analysis_service import FaceAnalysisService  # type: ignore
 from src.api.face_detection_api import router as face_detection_router, init_face_detection_api  # type: ignore
@@ -41,22 +41,25 @@ logger = logging.getLogger(__name__)
 class Settings(BaseModel):
     """การตั้งค่าแอปพลิเคชัน"""
     app_name: str = "Face Detection Service"
+    # These are default paths, actual paths will be taken from relaxed_config
     yolov9c_model_path: str = "model/face-detection/yolov9c-face-lindevs.onnx"
     yolov9e_model_path: str = "model/face-detection/yolov9e-face-lindevs.onnx"
     yolov11m_model_path: str = "model/face-detection/yolov11m-face.pt"
-    max_usable_faces_yolov9: int = 8
-    min_agreement_ratio: float = 0.7
-    min_quality_threshold: int = 60
-    conf_threshold: float = 0.15
-    iou_threshold: float = 0.4
-    img_size: int = 640
+    
+    # Values below are now superseded by get_relaxed_face_detection_config()
+    # max_usable_faces_yolov9: int = 12 # Guide
+    # min_agreement_ratio: float = 0.5 # Guide
+    # min_quality_threshold: int = 40 # Guide
+    # conf_threshold: float = 0.10 # Guide
+    # iou_threshold: float = 0.4 # Default, relaxed is 0.35
+    # img_size: int = 640
 
 
 # สร้างแอปพลิเคชัน FastAPI
 app = FastAPI(
     title="Face Detection Service API",
-    description="บริการตรวจจับใบหน้าที่รองรับโมเดล YOLOv9c, YOLOv9e และ YOLOv11m",
-    version="1.0.0"
+    description="บริการตรวจจับใบหน้าที่รองรับโมเดล YOLOv9c, YOLOv9e และ YOLOv11m (Relaxed Configuration)",
+    version="1.0.1" # Version updated for relaxed config
 )
 
 # เพิ่ม CORS middleware
@@ -83,7 +86,7 @@ async def startup_event():
     global face_detection_service, face_recognition_service, face_analysis_service, vram_manager
     
     try:
-        # โหลดการตั้งค่า
+        # โหลดการตั้งค่า (Settings class is now more for app_name, paths are illustrative)
         settings = Settings()
         
         # สร้างโฟลเดอร์สำหรับเก็บผลลัพธ์
@@ -95,31 +98,30 @@ async def startup_event():
             "reserved_vram_mb": 512,
             "model_vram_estimates": {
                 # Face Detection Models
-                "yolov9c-face": 512 * 1024 * 1024,  # 512MB
-                "yolov9e-face": 2048 * 1024 * 1024,  # 2GB สำหรับ YOLOv9e (เพิ่มจาก 1GB)
-                "yolov11m-face": 2 * 1024 * 1024 * 1024,  # 2GB
+                "yolov9c-face": 512 * 1024 * 1024,
+                "yolov9e-face": 2048 * 1024 * 1024, 
+                "yolov11m-face": 2 * 1024 * 1024 * 1024,
                 
                 # Face Recognition Models  
-                "adaface": 89 * 1024 * 1024,   # 89MB - AdaFace IR101
-                "arcface": 249 * 1024 * 1024,  # 249MB - ArcFace R100
-                "facenet": 249 * 1024 * 1024,  # 249MB - FaceNet VGGFace2
-            }        }
+                "adaface": 89 * 1024 * 1024,
+                "arcface": 249 * 1024 * 1024,
+                "facenet": 249 * 1024 * 1024,
+            }
+        }
         
         vram_manager = VRAMManager(vram_manager_config)
         
-        # ตั้งค่าบริการตรวจจับใบหน้า
-        face_detection_config = {
-            "yolov9c_model_path": settings.yolov9c_model_path,
-            "yolov9e_model_path": settings.yolov9e_model_path,
-            "yolov11m_model_path": settings.yolov11m_model_path,
-            "max_usable_faces_yolov9": settings.max_usable_faces_yolov9,
-            "min_agreement_ratio": settings.min_agreement_ratio,
-            "min_quality_threshold": settings.min_quality_threshold,
-            "conf_threshold": settings.conf_threshold,
-            "iou_threshold": settings.iou_threshold,
-            "img_size": settings.img_size
-        }
-        
+        # MODIFIED: Get relaxed configuration for FaceDetectionService
+        logger.info("Loading RELAXED face detection configuration...")
+        face_detection_config = get_relaxed_face_detection_config()
+
+        # Log the specific relaxed values being used from the guide
+        logger.info(f"Relaxed - conf_threshold: {face_detection_config.get('conf_threshold')}")
+        logger.info(f"Relaxed - max_usable_faces_yolov9: {face_detection_config.get('max_usable_faces_yolov9')}")
+        logger.info(f"Relaxed - min_agreement_ratio: {face_detection_config.get('min_agreement_ratio')}")
+        logger.info(f"Relaxed - min_quality_threshold: {face_detection_config.get('min_quality_threshold')}")
+        logger.info(f"Relaxed - filter_min_quality_final: {face_detection_config.get('filter_min_quality_final')}")
+
         face_detection_service = FaceDetectionService(vram_manager, face_detection_config)
         
         # โหลดโมเดล Face Detection
@@ -127,9 +129,8 @@ async def startup_event():
         
         if not init_success:
             logger.error("ไม่สามารถโหลดโมเดลตรวจจับใบหน้าได้")
-            # ไม่หยุดแอปพลิเคชัน แต่อาจจะมีข้อจำกัดในการใช้งาน
         
-        # ตั้งค่าบริการ Face Recognition
+        # ตั้งค่าบริการ Face Recognition (config remains the same)
         face_recognition_config = {
             "model_path": "model/face-recognition"
         }
@@ -143,8 +144,9 @@ async def startup_event():
             logger.error("ไม่สามารถโหลดโมเดล Face Recognition ได้")
         
         # ตั้งค่าบริการ Face Analysis (Integration Service)
+        # Pass the relaxed detection config to analysis service as well
         face_analysis_config = {
-            "detection": face_detection_config,
+            "detection": face_detection_config, # Use the loaded relaxed config
             "recognition": face_recognition_config
         }
         
@@ -155,7 +157,8 @@ async def startup_event():
         
         if not analysis_init:
             logger.error("ไม่สามารถโหลดบริการ Face Analysis ได้")
-          # ตั้งค่า API
+        
+        # ตั้งค่า API
         init_face_detection_api(face_detection_service)
         
         # Initialize Face Recognition API
@@ -168,10 +171,10 @@ async def startup_event():
         face_analysis_api.face_analysis_service = face_analysis_service
         face_analysis_api.vram_manager = vram_manager
         
-        logger.info(f"เริ่มต้น {settings.app_name} เรียบร้อยแล้ว")
+        logger.info(f"เริ่มต้น {settings.app_name} เรียบร้อยแล้ว (Relaxed Configuration)")
     
     except Exception as e:
-        logger.error(f"เกิดข้อผิดพลาดในการเริ่มต้นแอปพลิเคชัน: {e}")
+        logger.error(f"เกิดข้อผิดพลาดในการเริ่มต้นแอปพลิเคชัน: {e}", exc_info=True)
 
 
 @app.on_event("shutdown")
@@ -218,6 +221,7 @@ async def root():
     return {
         "service": "Face Detection Service",
         "status": "online",
+        "configuration_mode": "Relaxed", # Added status
         "documentation": "/docs",
         "models": ["YOLOv9c", "YOLOv9e", "YOLOv11m"]
     }

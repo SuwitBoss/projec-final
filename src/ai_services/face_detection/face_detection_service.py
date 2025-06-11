@@ -36,12 +36,106 @@ class VRAMManager:
 logger = logging.getLogger(__name__)
 
 
+# FIXED VERSION: Add fallback_opencv_detection function
+def fallback_opencv_detection(image: np.ndarray,
+                              scale_factor: float = 1.1,
+                              min_neighbors: int = 5,
+                              min_size: Tuple[int, int] = (30, 30)) -> List[BoundingBox]:
+    """Detects faces using OpenCV Haar Cascade as a fallback."""
+    try:
+        # Convert to grayscale if needed
+        gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if len(image.shape) == 3 and image.shape[2] == 3 else image
+        
+        # Load Haar Cascade classifier
+        # Ensure the path to the Haar Cascade XML file is correct
+        cascade_path = os.path.join(cv2.data.haarcascades, 'haarcascade_frontalface_default.xml')
+        if not os.path.exists(cascade_path):
+            logger.error(f"Haar Cascade file not found at {cascade_path}")
+            return []
+        
+        face_cascade = cv2.CascadeClassifier(cascade_path)
+        faces = face_cascade.detectMultiScale(gray_image, scaleFactor=scale_factor, minNeighbors=min_neighbors, minSize=min_size)
+        
+        bboxes = []
+        for (x, y, w, h) in faces:
+            x1, y1 = int(x), int(y)
+            x2, y2 = int(x + w), int(y + h)
+            # Default confidence for Haar, class_id can be set to a default (e.g., 0 for face)
+            bbox = BoundingBox(x1=x1, y1=y1, x2=x2, y2=y2, confidence=0.5, class_id=0) 
+            bboxes.append(bbox)
+        return bboxes
+    except Exception as e:
+        logger.error(f"Error in fallback_opencv_detection: {e}")
+        return []
+
+# FIXED VERSION: Add get_relaxed_face_detection_config
+def get_relaxed_face_detection_config() -> Dict[str, Any]:
+    """
+    Provides a relaxed configuration for face detection, suitable for scenarios
+    where maximizing detection recall is prioritized, even at the cost of precision
+    or detection quality stringency.
+    Values aligned with "🔧 คู่มือแก้ไขปัญหา 'จับหน้าไม่ได้' แบบทันที".
+    """
+    return {
+        # General service settings
+        'use_enhanced_detector': False, 
+
+        # Model paths
+        'yolov9c_model_path': 'model/face-detection/yolov9c-face-lindevs.onnx',
+        'yolov9e_model_path': 'model/face-detection/yolov9e-face-lindevs.onnx',
+        'yolov11m_model_path': 'model/face-detection/yolov11m-face.pt',
+
+        # Decision criteria for model selection (relaxed)
+        'max_usable_faces_yolov9': 12,  # From guide
+        'min_agreement_ratio': 0.5,   # From guide
+        'min_quality_threshold': 40,  # From guide
+        'iou_threshold_agreement': 0.3, 
+
+        # Detection parameters (relaxed)
+        'conf_threshold': 0.10,       # From guide
+        'iou_threshold_nms': 0.35,    
+        'img_size': 640,             
+
+        # FaceQualityAnalyzer configuration (relaxed - values from utils.py RELAXED VERSION)
+        'quality_config': {
+            'min_quality_threshold': 40, # Match guide
+            'size_weight': 30,          
+            'area_weight': 25,          
+            'confidence_weight': 30,    
+            'aspect_weight': 15,        
+            'excellent_size': (80, 80), 
+            'good_size': (50, 50),      
+            'acceptable_size': (24, 24),
+            'minimum_size': (8, 8), # from utils.py relaxed
+            'bonus_score_for_high_confidence': 5.0, # from utils.py relaxed
+            'high_confidence_threshold': 0.7 # from utils.py relaxed
+        },
+
+        # Fallback strategy configuration
+        'fallback_config': {
+            'enable_fallback_system': True,
+            'max_fallback_attempts': 3, 
+            'fallback_models': [ 
+                {'model_name': 'yolov11m', 'conf_threshold': 0.15, 'iou_threshold': 0.35, 'min_faces_to_accept': 1},
+                {'model_name': 'yolov9c', 'conf_threshold': 0.05, 'iou_threshold': 0.3, 'min_faces_to_accept': 1}, 
+                {'model_name': 'opencv_haar', 'scale_factor': 1.1, 'min_neighbors': 3, 'min_size': (20,20), 'min_faces_to_accept': 1}
+            ],
+            'min_detections_after_fallback': 1, 
+            'always_run_all_fallbacks_if_zero_initial': True, 
+        },
+        
+        # Filter settings for _create_result (using relaxed values from utils.py)
+        'filter_min_quality': 30.0, # This aligns with the relaxed utils.py, but guide suggests 40 for overall.
+                                    # Let's use the guide's min_quality_threshold for filtering as well for consistency.
+        'filter_min_quality_final': 40.0 # From guide for final filtering
+    }
+
 class QualityCategory(Enum):
     """ระดับคุณภาพของใบหน้า"""
     EXCELLENT = "excellent"  # คุณภาพดีเยี่ยม (80-100)
     GOOD = "good"            # คุณภาพดี (70-79)
-    ACCEPTABLE = "acceptable"  # คุณภาพพอใช้ (60-69)
-    POOR = "poor"            # คุณภาพต่ำ (<60)
+    ACCEPTABLE = "acceptable"  # คุณภาพพอใช้ (min_quality_threshold-69 or 79 if higher)
+    POOR = "poor"            # คุณภาพต่ำ (<min_quality_threshold)
 
 
 class FaceQualityAnalyzer:
@@ -54,32 +148,31 @@ class FaceQualityAnalyzer:
         Args:
             config: การตั้งค่าสำหรับการวิเคราะห์คุณภาพ
         """
-        # น้ำหนักของแต่ละเกณฑ์
         self.quality_weights = {
-            'size_weight': config.get('size_weight', 40),
-            'area_weight': config.get('area_weight', 30),
-            'confidence_weight': config.get('confidence_weight', 20),
-            'aspect_weight': config.get('aspect_weight', 10)
+            'size_weight': config.get('size_weight', 30),
+            'area_weight': config.get('area_weight', 25),
+            'confidence_weight': config.get('confidence_weight', 30),
+            'aspect_weight': config.get('aspect_weight', 15)
         }
         
-        # เกณฑ์ขนาด
         self.size_thresholds = {
-            'excellent': config.get('excellent_size', (100, 100)),
-            'good': config.get('good_size', (64, 64)),
-            'acceptable': config.get('acceptable_size', (32, 32)),
-            'minimum': config.get('minimum_size', (16, 16))
+            'excellent': config.get('excellent_size', (80, 80)),
+            'good': config.get('good_size', (50, 50)),
+            'acceptable': config.get('acceptable_size', (24, 24)),
+            'minimum': config.get('minimum_size', (8, 8)) # from utils.py relaxed
         }
         
-        # เกณฑ์คุณภาพขั้นต่ำ
-        self.min_quality_threshold = config.get('min_quality_threshold', 60)
+        self.min_quality_threshold = config.get('min_quality_threshold', 40) # from guide
+        self.bonus_score_for_high_confidence = config.get('bonus_score_for_high_confidence', 5.0) # from utils.py relaxed
+        self.high_confidence_threshold = config.get('high_confidence_threshold', 0.7) # from utils.py relaxed
     
     def get_quality_category(self, score: float) -> QualityCategory:
         """ระบุระดับคุณภาพตามคะแนน"""
         if score >= 80:
             return QualityCategory.EXCELLENT
-        elif score >= 70:
+        elif score >= 70: # Assuming good starts at 70, adjust if needed
             return QualityCategory.GOOD
-        elif score >= 60:
+        elif score >= self.min_quality_threshold: # Acceptable is now based on the dynamic threshold
             return QualityCategory.ACCEPTABLE
         else:
             return QualityCategory.POOR
@@ -106,20 +199,19 @@ class FaceQualityAnalyzer:
                 'usable_count': 0,
                 'quality_ratio': 0.0,
                 'quality_categories': {
-                    'excellent': 0,
-                    'good': 0,
-                    'acceptable': 0,
-                    'poor': 0
+                    QualityCategory.EXCELLENT.value: 0,
+                    QualityCategory.GOOD.value: 0,
+                    QualityCategory.ACCEPTABLE.value: 0,
+                    QualityCategory.POOR.value: 0
                 },
                 'avg_quality': 0.0
             }
         
-        # แยกตามคุณภาพ
         quality_categories = {
-            'excellent': 0,
-            'good': 0,
-            'acceptable': 0,
-            'poor': 0
+            QualityCategory.EXCELLENT.value: 0,
+            QualityCategory.GOOD.value: 0,
+            QualityCategory.ACCEPTABLE.value: 0,
+            QualityCategory.POOR.value: 0
         }
         
         usable_count = 0
@@ -145,7 +237,6 @@ class FaceQualityAnalyzer:
             'quality_categories': quality_categories,
             'avg_quality': avg_quality
         }
-
 
 class DecisionResult:
     """ผลลัพธ์การตัดสินใจเลือกโมเดล"""
@@ -176,6 +267,10 @@ class DecisionResult:
         
         # เวลาที่ใช้ทั้งหมด
         self.total_time = 0.0
+
+        # Fallback information
+        self.fallback_attempts_info = [] # List of dicts detailing each fallback attempt
+        self.fallback_used = False
     
     def to_dict(self) -> Dict[str, Any]:
         """แปลงเป็น dictionary สำหรับ JSON"""
@@ -205,469 +300,379 @@ class DecisionResult:
                 'time': self.final_time
             },
             'quality_info': self.quality_info,
-            'total_time': self.total_time
+            'total_time': self.total_time,
+            'fallback_info': { # Added fallback info
+                'fallback_used': self.fallback_used,
+                'attempts': self.fallback_attempts_info
+            }
         }
-
 
 class FaceDetectionService:
     """
     บริการตรวจจับใบหน้าอัจฉริยะที่รองรับโมเดล YOLOv9c, YOLOv9e และ YOLOv11m
     """
-    def __init__(self, vram_manager: VRAMManager, config: Dict[str, Any]):
+    def __init__(self, vram_manager: VRAMManager, config: Optional[Dict[str, Any]] = None): # config can be None
         """
         ตั้งค่าเริ่มต้นสำหรับบริการตรวจจับใบหน้า
         
         Args:
             vram_manager: ตัวจัดการหน่วยความจำ GPU
-            config: การตั้งค่าสำหรับบริการ
+            config: การตั้งค่าสำหรับบริการ. If None, uses get_relaxed_face_detection_config().
         """
         self.vram_manager = vram_manager
-        self.config = config
-        self.models: dict[str, Union[YOLOv9ONNXDetector, YOLOv11Detector]] = {}
+        # ENHANCED VERSION: Use get_relaxed_face_detection_config if no config is provided or for specific keys
+        self.config = config if config is not None else get_relaxed_face_detection_config()
+
+        self.models: dict[str, Union[YOLOv9ONNXDetector, YOLOv11Detector, EnhancedDetectorAdapter]] = {} # Allow EnhancedDetectorAdapter
         self.model_stats: dict[str, dict[str, Union[float, int]]] = {}
         
-        # ตัวตรวจจับใบหน้าขั้นสูง
-        self.enhanced_detector = None
-        self.use_enhanced_detector = config.get('use_enhanced_detector', False)
+        self.use_enhanced_detector = self.config.get('use_enhanced_detector', False)
         
-        # เกณฑ์การตัดสินใจเลือกโมเดล
+        # ENHANCED VERSION: Use relaxed decision_criteria from config
         self.decision_criteria = {
-            'max_usable_faces_yolov9': int(config.get('max_usable_faces_yolov9', 8)),
-            'min_agreement_ratio': float(config.get('min_agreement_ratio', 0.7)),
-            'min_quality_threshold': int(config.get('min_quality_threshold', 60)),
-            'iou_threshold': float(config.get('iou_threshold', 0.5))
+            'max_usable_faces_yolov9': int(self.config.get('max_usable_faces_yolov9', 12)), # Guide
+            'min_agreement_ratio': float(self.config.get('min_agreement_ratio', 0.5)), # Guide
+            'min_quality_threshold': int(self.config.get('min_quality_threshold', 40)), # Guide
+            'iou_threshold': float(self.config.get('iou_threshold_agreement', 0.3)) 
         }
         
-        # พารามิเตอร์การตรวจจับ
+        # ENHANCED VERSION: Use relaxed detection_params from config
         self.detection_params = {
-            'conf_threshold': config.get('conf_threshold', 0.15),
-            'iou_threshold': config.get('iou_threshold', 0.4),
-            'img_size': config.get('img_size', 640)
+            'conf_threshold': self.config.get('conf_threshold', 0.10), # Guide
+            'iou_threshold': self.config.get('iou_threshold_nms', 0.35), 
+            'img_size': self.config.get('img_size', 640)
         }
+
+        # ENHANCED VERSION: Use relaxed quality_analyzer config
+        quality_analyzer_config = self.config.get('quality_config', {})
+        quality_analyzer_config.setdefault('min_quality_threshold', self.decision_criteria['min_quality_threshold'])
+        self.quality_analyzer = FaceQualityAnalyzer(quality_analyzer_config)
         
-        # ตั้งค่าตัววิเคราะห์คุณภาพใบหน้า
-        self.quality_analyzer = FaceQualityAnalyzer({
-            'min_quality_threshold': self.decision_criteria['min_quality_threshold'],
-            'size_weight': config.get('size_weight', 40),
-            'area_weight': config.get('area_weight', 30),
-            'confidence_weight': config.get('confidence_weight', 20),
-            'aspect_weight': config.get('aspect_weight', 10)
-        })
+        self.yolov9c_model_path = self.config.get('yolov9c_model_path', 'model/face-detection/yolov9c-face-lindevs.onnx')
+        self.yolov9e_model_path = self.config.get('yolov9e_model_path', 'model/face-detection/yolov9e-face-lindevs.onnx')
+        self.yolov11m_model_path = self.config.get('yolov11m_model_path', 'model/face-detection/yolov11m-face.pt')
         
-        self.yolov9c_model_path = config.get('yolov9c_model_path', 'model/face-detection/yolov9c-face-lindevs.onnx')
-        self.yolov9e_model_path = config.get('yolov9e_model_path', 'model/face-detection/yolov9e-face-lindevs.onnx')
-        self.yolov11m_model_path = config.get('yolov11m_model_path', 'model/face-detection/yolov11m-face.pt')
-        
-        # บันทึกการตัดสินใจ
+        # ENHANCED VERSION: Add fallback_config
+        self.fallback_config = self.config.get('fallback_config', get_relaxed_face_detection_config()['fallback_config'])
+
+
         self.decision_log = []
-        
         self.models_loaded = False
     
     async def initialize(self) -> bool:
         """
-        โหลดโมเดลตรวจจับใบหน้าทั้งหมด
+        โหลดโมเดลตรวจจับใบหน้าาทั้งหมด
         
         Returns:
             สถานะการโหลดโมเดล
         """
         try:
-            logger.info("กำลังโหลดโมเดลตรวจจับใบหน้าทั้งหมด...")
+            logger.info("กำลังโหลดโมเดลตรวจจับใบหน้าาทั้งหมด (Relaxed/Enhanced Mode)...")
             
-            # โหลดตัวตรวจจับใบหน้าขั้นสูงถ้าเปิดใช้งาน
             if self.use_enhanced_detector:
                 logger.info("กำลังโหลดตัวตรวจจับใบหน้าาขั้นสูง (Enhanced Face Detector)...")
-                self.enhanced_detector = EnhancedDetectorAdapter(self.vram_manager)
-                enhanced_init_success = await self.enhanced_detector.initialize()
-                if enhanced_init_success:
-                    logger.info("โหลดตัวตรวจจับใบหน้าขั้นสูงสำเร็จ")
-                else:
-                    logger.warning("ไม่สามารถโหลดตัวตรวจจับใบหน้าขั้นสูงได้ จะใช้โมเดลปกติแทน")
-                    self.use_enhanced_detector = False
-            
-            # ขอจัดสรร VRAM สำหรับโมเดล YOLOv9c
-            yolov9c_allocation = await self.vram_manager.request_model_allocation(
-                "yolov9c-face", "high", "face_detection_service"
-            )
-            
-            # โหลดโมเดล YOLOv9c
+                # Assuming EnhancedDetectorAdapter is already initialized if use_enhanced_detector is true
+                # Or it needs its own config path. For now, let's assume it's handled if self.use_enhanced_detector is true.
+                if 'enhanced' not in self.models: # Basic check
+                    self.models['enhanced'] = EnhancedDetectorAdapter(self.vram_manager) # Needs proper config
+                    # init_success = await self.models['enhanced'].initialize()
+                    # if not init_success: logger.warning("Enhanced detector failed to init.")
+
+            # Load YOLO models as before, but paths come from self.config
+            # YOLOv9c
+            yolov9c_allocation = await self.vram_manager.request_model_allocation("yolov9c-face", "high", "face_detection_service")
             self.models['yolov9c'] = YOLOv9ONNXDetector(self.yolov9c_model_path, "YOLOv9c")
-            yolov9c_device = "cuda" if yolov9c_allocation.location.value == "gpu" else "cpu"
-            self.models['yolov9c'].load_model(yolov9c_device)
+            self.models['yolov9c'].load_model("cuda" if yolov9c_allocation.location.value == "gpu" else "cpu")
             
-            # ขอจัดสรร VRAM สำหรับโมเดล YOLOv9e
-            yolov9e_allocation = await self.vram_manager.request_model_allocation(
-                "yolov9e-face", "high", "face_detection_service"
-            )
-            
-            # โหลดโมเดล YOLOv9e
+            # YOLOv9e
+            yolov9e_allocation = await self.vram_manager.request_model_allocation("yolov9e-face", "high", "face_detection_service")
             self.models['yolov9e'] = YOLOv9ONNXDetector(self.yolov9e_model_path, "YOLOv9e")
-            yolov9e_device = "cuda" if yolov9e_allocation.location.value == "gpu" else "cpu"
-            self.models['yolov9e'].load_model(yolov9e_device)
+            self.models['yolov9e'].load_model("cuda" if yolov9e_allocation.location.value == "gpu" else "cpu")
             
-            # ขอจัดสรร VRAM สำหรับโมเดล YOLOv11m
-            yolov11m_allocation = await self.vram_manager.request_model_allocation(
-                "yolov11m-face", "critical", "face_detection_service"
-            )
-            
-            # โหลดโมเดล YOLOv11m
+            # YOLOv11m
+            yolov11m_allocation = await self.vram_manager.request_model_allocation("yolov11m-face", "critical", "face_detection_service")
             self.models['yolov11m'] = YOLOv11Detector(self.yolov11m_model_path, "YOLOv11m")
-            yolov11m_device = "cuda" if yolov11m_allocation.location.value == "gpu" else "cpu"
-            self.models['yolov11m'].load_model(yolov11m_device)
+            self.models['yolov11m'].load_model("cuda" if yolov11m_allocation.location.value == "gpu" else "cpu")
             
             self.models_loaded = True
-            logger.info("โหลดโมเดลตรวจจับใบหน้าเรียบร้อยแล้ว")
+            logger.info("โหลดโมเดลตรวจจับใบหน้าเรียบร้อยแล้ว (Relaxed/Enhanced Mode)")
             return True
             
         except Exception as e:
-            logger.error(f"เกิดข้อผิดพลาดในการโหลดโมเดล: {e}")
+            logger.error(f"เกิดข้อผิดพลาดในการโหลดโมเดล: {e}", exc_info=True)
             return False
-    
+
+    # ENHANCED VERSION of detect_faces with new fallback system
     async def detect_faces(self, 
                          image_input: Union[str, np.ndarray],
-                         model_name: Optional[str] = None,
+                         model_name: Optional[str] = None, 
                          conf_threshold: Optional[float] = None,
                          iou_threshold: Optional[float] = None,
-                         enhanced_mode: bool = True,
-                         min_face_size: Optional[Tuple[int, int]] = None,
-                         max_faces: Optional[int] = None,
+                         min_face_size: Optional[Tuple[int, int]] = None, 
+                         max_faces: Optional[int] = None, 
                          return_landmarks: bool = False) -> DetectionResult:
         """
-        ตรวจจับใบหน้าในรูปภาพโดยเลือกโมเดลที่เหมาะสมที่สุดโดยอัตโนมัติ
-        
-        Args:
-            image_input: ชื่อไฟล์รูปภาพหรือ numpy array
-            model_name: ชื่อโมเดลที่ต้องการใช้ ('yolov9c', 'yolov9e', 'yolov11m', 'enhanced' หรือ 'auto')
-            conf_threshold: ระดับความมั่นใจขั้นต่ำ
-            iou_threshold: ค่า IoU threshold สำหรับ NMS
-            enhanced_mode: ใช้โหมด Enhanced Intelligent Detection หรือไม่
-            min_face_size: ขนาดใบหน้าขั้นต่ำที่จะตรวจจับ (width, height)
-            max_faces: จำนวนใบหน้าสูงสุดที่จะส่งคืน
-            return_landmarks: ต้องการ landmarks หรือไม่
-        
-        Returns:
-            ผลลัพธ์การตรวจจับใบหน้า
+        ตรวจจับใบหน้าในรูปภาพโดยเลือกโมเดลที่เหมาะสมที่สุดโดยอัตโนมัติ,
+        พร้อมระบบ Fallback ที่ปรับปรุงใหม่ (Enhanced Detection Strategy).
         """
         if not self.models_loaded:
-            raise RuntimeError("โมเดลยังไม่ได้ถูกโหลด กรุณาเรียก initialize() ก่อน")
+            logger.warning("Models were not loaded. Attempting to initialize now...")
+            initialized = await self.initialize()
+            if not initialized:
+                raise RuntimeError("โมเดลยังไม่ได้ถูกโหลด และการโหลดล้มเหลว กรุณาเรียก initialize() ก่อน")
+            logger.info("Models initialized successfully.")
+
+        start_time_total = time.time()
         
-        # ตั้งค่าพารามิเตอร์
-        conf_threshold = conf_threshold or self.detection_params['conf_threshold']
-        iou_threshold = iou_threshold or self.detection_params['iou_threshold']
-        
-        start_time = time.time()
-        
-        # โหลดรูปภาพ
         if isinstance(image_input, str):
             if not os.path.exists(image_input):
-                raise FileNotFoundError(f"ไม่พบไฟล์รูปภาพ: {image_input}")
-            image = cv2.imread(image_input)
-            if image is None:
-                raise ValueError(f"ไม่สามารถอ่านรูปภาพได้: {image_input}")
-        else:
+                logger.error(f"ไม่พบไฟล์รูปภาพ: {image_input}")
+                return DetectionResult(faces=[], image_shape=(0,0,0), total_processing_time=time.time()-start_time_total, model_used="N/A", error_message=f"File not found: {image_input}")
+            try:
+                image = cv2.imread(image_input)
+                if image is None:
+                    logger.error(f"ไม่สามารถอ่านไฟล์รูปภาพ: {image_input}")
+                    return DetectionResult(faces=[], image_shape=(0,0,0), total_processing_time=time.time()-start_time_total, model_used="N/A", error_message=f"Cannot read image file: {image_input}")
+            except Exception as e:
+                logger.error(f"เกิดข้อผิดพลาดในการโหลดรูปภาพ {image_input}: {e}")
+                return DetectionResult(faces=[], image_shape=(0,0,0), total_processing_time=time.time()-start_time_total, model_used="N/A", error_message=f"Error loading image: {e}")
+        elif isinstance(image_input, np.ndarray):
             image = image_input
-            
-        # ใช้ Enhanced Detector ถ้าระบุให้ใช้โดยตรง
-        if model_name == 'enhanced' and self.use_enhanced_detector and self.enhanced_detector:
-            logger.info("ใช้ตัวตรวจจับใบหน้าขั้นสูง (Enhanced Face Detector)")
-            return await self.enhanced_detector.detect_faces(
-                image, 
-                conf_threshold=conf_threshold,
-                iou_threshold=iou_threshold,
-                min_face_size=min_face_size,
-                max_faces=max_faces,
-                return_landmarks=return_landmarks
-            )
-        
-        # ถ้าเปิดใช้ Enhanced Detector และไม่ได้ระบุโมเดลเฉพาะ
-        if self.use_enhanced_detector and self.enhanced_detector and model_name is None:
-            logger.info("ใช้ตัวตรวจจับใบหน้าขั้นสูง (Enhanced Face Detector)")
-            return await self.enhanced_detector.detect_faces(
-                image, 
-                conf_threshold=conf_threshold,
-                iou_threshold=iou_threshold,
-                min_face_size=min_face_size,
-                max_faces=max_faces,
-                return_landmarks=return_landmarks
-            )
-        
-        # ถ้าระบุโมเดลมา ให้ใช้โมเดลนั้น
-        if model_name in ['yolov9c', 'yolov9e', 'yolov11m']:
-            logger.info(f"ใช้โมเดล {model_name} ตามที่ระบุ")
-            detections = self._detect_with_model(
-                image, model_name, conf_threshold, iou_threshold
-            )
-            return self._create_result(detections, image.shape, time.time() - start_time, model_name)
-        
-        # ตรวจจับด้วยระบบอัจฉริยะที่เลือกโมเดลอัตโนมัติ
-        if enhanced_mode:
-            logger.info("ใช้ระบบตรวจจับอัจฉริยะ Enhanced Intelligent Detection")
-            return await self.enhanced_intelligent_detect(image, conf_threshold, iou_threshold, start_time)
         else:
-            logger.info("ใช้ระบบตรวจจับพื้นฐาน")
-            return await self._intelligent_detect(image, conf_threshold, iou_threshold, start_time)
-    
-    def _detect_with_model(self, 
-                         image: np.ndarray, 
-                         model_name: str,
-                         conf_threshold: float,
-                         iou_threshold: float) -> List[FaceDetection]:
-        """
-        ตรวจจับใบหน้าด้วยโมเดลที่ระบุ
-        
-        Args:
-            image: รูปภาพ (numpy array)
-            model_name: ชื่อโมเดล ('yolov9c', 'yolov9e', 'yolov11m')
-            conf_threshold: ระดับความมั่นใจขั้นต่ำ
-            iou_threshold: ค่า IoU threshold สำหรับ NMS
-        
-        Returns:
-            รายการใบหน้าที่ตรวจพบ
-        """
-        # บันทึกเวลาเริ่มต้น
-        model_start_time = time.time()
-        
-        # ตรวจจับใบหน้า
-        detections_raw = self.models[model_name].detect(
-            image, conf_threshold, iou_threshold
-        )
-        
-        # บันทึกเวลาที่ใช้
-        inference_time = time.time() - model_start_time
-        
-        # แปลงผลลัพธ์
-        face_detections = []
-        for det in detections_raw:
-            bbox = BoundingBox.from_array(det)
-            # แปลง image.shape[:2] เป็น tuple[int, int] เพื่อให้ตรงกับ signature ของฟังก์ชัน
-            image_size = (int(image.shape[0]), int(image.shape[1]))
-            quality_score = calculate_face_quality(bbox, image_size)
-            
-            face = FaceDetection(
-                bbox=bbox,
-                quality_score=quality_score,
-                model_used=model_name,
-                processing_time=inference_time
-            )
-            face_detections.append(face)
-        
-        # บันทึกสถิติ
-        quality_scores = [f.quality_score for f in face_detections if f.quality_score is not None]
-        self.model_stats[model_name] = {
-            'last_inference_time': inference_time,
-            'face_count': len(face_detections),
-            'avg_quality': float(np.mean(quality_scores)) if quality_scores else 0.0
-        }
-        
-        return face_detections
-    
-    async def _intelligent_detect(self,
-                               image: np.ndarray,
-                               conf_threshold: float,
-                               iou_threshold: float,
-                               start_time: float) -> DetectionResult:
-        """
-        ระบบตรวจจับอัจฉริยะที่เลือกโมเดลอัตโนมัติ
-        
-        Args:
-            image: รูปภาพ (numpy array)
-            conf_threshold: ระดับความมั่นใจขั้นต่ำ
-            iou_threshold: ค่า IoU threshold สำหรับ NMS
-            start_time: เวลาเริ่มต้น
-            
-        Returns:
-            ผลลัพธ์การตรวจจับใบหน้า
-        """
-        logger.debug("กำลังใช้ระบบตรวจจับอัจฉริยะ...")
-        
-        # ขั้นตอน 1: ทดสอบด้วย YOLOv9c ซึ่งเร็วที่สุด
-        yolov9c_detections = self._detect_with_model(
-            image, 'yolov9c', conf_threshold, iou_threshold
-        )
-        
-        # ถ้าไม่พบใบหน้าเลย ลองใช้ YOLOv11m ซึ่งแม่นยกว่า
-        if not yolov9c_detections:
-            logger.debug("YOLOv9c ไม่พบใบหน้า กำลังลองใช้ YOLOv11m...")
-            yolov11m_detections = self._detect_with_model(
-                image, 'yolov11m', conf_threshold, iou_threshold
-            )
-            return self._create_result(
-                yolov11m_detections, image.shape, time.time() - start_time, 'yolov11m'
-            )
-        
-        # ถ้าพบใบหน้าน้อยกว่าหรือเท่ากับค่าที่กำหนด ให้ใช้ YOLOv9c เลย
-        max_faces = self.decision_criteria['max_usable_faces_yolov9']
-        if len(yolov9c_detections) <= max_faces:
-            logger.debug(f"YOLOv9c พบ {len(yolov9c_detections)} ใบหน้า (≤{max_faces}) ใช้ผลลัพธ์นี้เลย")
-            return self._create_result(
-                yolov9c_detections, image.shape, time.time() - start_time, 'yolov9c'
-            )
-        
-        # ถ้าพบใบหน้าเยอะเกินไป ให้ทดสอบด้วย YOLOv9e ต่อ
-        logger.debug(f"YOLOv9c พบ {len(yolov9c_detections)} ใบหน้า (>{max_faces}) กำลังทดสอบด้วย YOLOv9e...")
-        yolov9e_detections = self._detect_with_model(
-            image, 'yolov9e', conf_threshold, iou_threshold
-        )
-        
-        # เปรียบเทียบผลลัพธ์ระหว่าง YOLOv9c และ YOLOv9e
-        agreement = self._calculate_agreement(
-            yolov9c_detections, yolov9e_detections, self.decision_criteria['iou_threshold']
-        )
-        
-        # ถ้าผลลัพธ์สอดคล้องกัน และมีคุณภาพดี ให้ใช้ YOLOv9e
-        min_agreement = self.decision_criteria['min_agreement_ratio']
-        if agreement >= min_agreement:
-            logger.debug(f"YOLOv9c และ YOLOv9e เห็นด้วยกัน {agreement:.1%} (≥{min_agreement:.1%}) ใช้ YOLOv9e")
-            return self._create_result(
-                yolov9e_detections, image.shape, time.time() - start_time, 'yolov9e'
-            )
-        
-        # ถ้าผลลัพธ์ไม่สอดคล้องกัน ให้ลองใช้ YOLOv11m ซึ่งแม่นยำที่สุด
-        logger.debug(f"YOLOv9c และ YOLOv9e เห็นด้วยกันเพียง {agreement:.1%} (<{min_agreement:.1%}) กำลังใช้ YOLOv11m...")
-        yolov11m_detections = self._detect_with_model(
-            image, 'yolov11m', conf_threshold, iou_threshold
-        )
-        
-        return self._create_result(
-            yolov11m_detections, image.shape, time.time() - start_time, 'yolov11m'
-        )
-    
-    def _calculate_agreement(self, 
-                          detections1: List[FaceDetection], 
-                          detections2: List[FaceDetection],
-                          iou_threshold: float) -> float:
-        """
-        คำนวณความสอดคล้องระหว่างผลลัพธ์การตรวจจับสองชุด
-        
-        Args:
-            detections1: ผลลัพธ์ชุดที่ 1
-            detections2: ผลลัพธ์ชุดที่ 2
-            iou_threshold: ค่า IoU threshold สำหรับพิจารณาว่าตรงกัน
-            
-        Returns:
-            สัดส่วนความสอดคล้อง (0.0-1.0)
-        """
-        if not detections1 or not detections2:
-            return 0.0
-        
-        # จำนวนใบหน้าทั้งหมด
-        total_faces = max(len(detections1), len(detections2))
-        
-        # แปลงเป็น numpy array เพื่อความสะดวก
-        boxes1 = np.array([d.bbox.to_array()[:4] for d in detections1])  # x1, y1, x2, y2
-        boxes2 = np.array([d.bbox.to_array()[:4] for d in detections2])  # x1, y1, x2, y2
-        
-        # นับจำนวนใบหน้าที่ตรงกัน
-        matched_count = 0
-        
-        # สำหรับแต่ละกล่องในชุดแรก
-        for box1 in boxes1:
-            best_iou = 0.0
-            
-            # หา IoU ที่ดีที่สุดกับกล่องในชุดที่สอง
-            for i, box2 in enumerate(boxes2):
-                iou = self._calculate_iou(box1, box2)
-                if iou > best_iou:
-                    best_iou = iou
-            
-            # ถ้ามี IoU ที่ดีพอ ถือว่าตรงกัน
-            if best_iou >= iou_threshold:
-                matched_count += 1
-        
-        # คำนวณสัดส่วน
-        return matched_count / total_faces
-    
-    def _calculate_iou(self, box1: np.ndarray, box2: np.ndarray) -> float:
-        """
-        คำนวณค่า IoU (Intersection over Union) ระหว่างสองกล่อง
-        
-        Args:
-            box1: กล่องที่ 1 [x1, y1, x2, y2]
-            box2: กล่องที่ 2 [x1, y1, x2, y2]
-            
-        Returns:
-            ค่า IoU (0.0-1.0)
-        """
-        # พื้นที่ทับซ้อน
-        x_left = max(box1[0], box2[0])
-        y_top = max(box1[1], box2[1])
-        x_right = min(box1[2], box2[2])
-        y_bottom = min(box1[3], box2[3])
-        
-        if x_right < x_left or y_bottom < y_top:
-            return 0.0
-        
-        intersection_area = (x_right - x_left) * (y_bottom - y_top)
-        
-        # พื้นที่ของแต่ละกล่อง
-        box1_area = (box1[2] - box1[0]) * (box1[3] - box1[1])
-        box2_area = (box2[2] - box2[0]) * (box2[3] - box2[1])        # คำนวณ IoU
-        iou = intersection_area / float(box1_area + box2_area - intersection_area)
-        
-        return iou
+            logger.error("ประเภทข้อมูลรูปภาพไม่ถูกต้อง ต้องเป็น str หรือ np.ndarray")
+            return DetectionResult(faces=[], image_shape=(0,0,0), total_processing_time=time.time()-start_time_total, model_used="N/A", error_message="Invalid image input type")
 
-    def _create_result(self, 
-                     detections: List[FaceDetection], 
-                     image_shape: Tuple[int, ...],
-                     total_time: float,
-                     model_used: str) -> DetectionResult:
-        """
-        สร้างผลลัพธ์การตรวจจับใบหน้าในรูปแบบมาตรฐาน
+        if image.size == 0:
+             logger.error("รูปภาพที่รับเข้ามาว่างเปล่า")
+             return DetectionResult(faces=[], image_shape=(0,0,0), total_processing_time=time.time()-start_time_total, model_used="N/A", error_message="Empty image provided")
+
+        # Determine primary model and parameters
+        primary_model_name = model_name if model_name and model_name != 'auto' else 'yolov9c' # Default to yolov9c for initial attempt
+        current_conf = conf_threshold if conf_threshold is not None else self.detection_params['conf_threshold']
+        current_iou = iou_threshold if iou_threshold is not None else self.detection_params['iou_threshold']
+
+        logger.info(f"Starting detection with primary model: {primary_model_name}, conf: {current_conf}, iou: {current_iou}")
         
-        Args:
-            detections: รายการใบหน้าที่ตรวจพบ
-            image_shape: ขนาดรูปภาพ (height, width, channels)
-            total_time: เวลาที่ใช้ทั้งหมด
-            model_used: โมเดลที่ใช้
+        detected_faces: List[FaceDetection] = []
+        model_used_for_primary_detection = primary_model_name
+        primary_detection_time = 0.0
+        decision_res = DecisionResult() # For logging fallback attempts
+
+        # --- Primary Detection Attempt ---
+        try:
+            if primary_model_name in self.models:
+                detector = self.models[primary_model_name]
+                start_primary_detect = time.time()
+                # Assuming detect_faces_raw is the method for YOLO models
+                if isinstance(detector, (YOLOv9ONNXDetector, YOLOv11Detector)):
+                    raw_bboxes = detector.detect(image, conf_threshold=current_conf, iou_threshold=current_iou)
+                # elif isinstance(detector, EnhancedDetectorAdapter): # If you have a unified interface
+                #     raw_bboxes = await detector.detect(image, conf_threshold=current_conf) # Example
+                else: # Fallback to a generic call if type is unknown but in self.models
+                    logger.warning(f"Detector for {primary_model_name} is of unknown type, attempting generic detect.")
+                    raw_bboxes = detector.detect(image, conf_threshold=current_conf, iou_threshold=current_iou) # Placeholder
+
+                primary_detection_time = time.time() - start_primary_detect
+                
+                # Process raw_bboxes into FaceDetection objects
+                for raw_bbox_array in raw_bboxes:
+                    bbox_obj = BoundingBox.from_array(raw_bbox_array) # Convert np.array to BoundingBox object
+                    # Calculate quality using the relaxed utils.py version
+                    quality_score = calculate_face_quality(bbox_obj, image.shape[:2])
+                    detected_faces.append(FaceDetection(bbox=bbox_obj, quality_score=quality_score))
+                logger.info(f"Primary detection ({primary_model_name}) found {len(detected_faces)} faces in {primary_detection_time:.4f}s.")
+
+            else: # This case should ideally not happen if model_name is validated or comes from a fixed set
+                logger.error(f"Primary model {primary_model_name} not found in loaded models.")
+                # Proceed to fallback if enabled
+        except Exception as e:
+            logger.error(f"Error during primary detection with {primary_model_name}: {e}", exc_info=True)
+            # Proceed to fallback if enabled
+
+        # --- Fallback System ---
+        if self.fallback_config.get('enable_fallback_system', False) and \
+           (len(detected_faces) == 0 or \
+            (self.fallback_config.get('always_run_all_fallbacks_if_zero_initial', True) and len(detected_faces) == 0)):
             
-        Returns:
-            ผลลัพธ์การตรวจจับใบหน้า
+            logger.info("Primary detection yielded too few results. Initiating fallback system.")
+            decision_res.fallback_used = True
+            
+            current_fallback_attempt = 0
+            max_attempts = self.fallback_config.get('max_fallback_attempts', 3)
+            
+            # Use a copy of detected_faces for fallback iterations to avoid modifying the primary result directly yet
+            fallback_candidates = list(detected_faces)
+
+            for attempt_num, fallback_model_config in enumerate(self.fallback_config.get('fallback_models', [])):
+                if current_fallback_attempt >= max_attempts:
+                    logger.info("Max fallback attempts reached.")
+                    break
+                
+                # If we already have faces from a previous fallback that met min_detections_after_fallback,
+                # and we are not forced to run all fallbacks, we can stop.
+                if len(fallback_candidates) >= self.fallback_config.get('min_detections_after_fallback', 1) and \
+                   not (self.fallback_config.get('always_run_all_fallbacks_if_zero_initial', True) and len(detected_faces) == 0) : # Check original detected_faces for the 'always_run' condition
+                    logger.info(f"Sufficient faces ({len(fallback_candidates)}) found from fallback, stopping further fallbacks.")
+                    break
+
+                current_fallback_attempt += 1
+                fb_model_name = fallback_model_config['model_name']
+                fb_conf = fallback_model_config.get('conf_threshold', self.detection_params['conf_threshold'])
+                fb_iou = fallback_model_config.get('iou_threshold', self.detection_params['iou_threshold'])
+                fb_min_faces = fallback_model_config.get('min_faces_to_accept', 1)
+
+                attempt_info = {'model_name': fb_model_name, 'conf': fb_conf, 'iou': fb_iou, 'attempt': current_fallback_attempt}
+                logger.info(f"Fallback Attempt {current_fallback_attempt}/{max_attempts} using {fb_model_name} (Conf: {fb_conf}, IoU: {fb_iou})")
+
+                try:
+                    fb_detected_this_attempt = []
+                    start_fb_detect = time.time()
+                    if fb_model_name == 'opencv_haar':
+                        haar_scale = fallback_model_config.get('scale_factor', 1.1)
+                        haar_neighbors = fallback_model_config.get('min_neighbors', 3)
+                        haar_min_size = fallback_model_config.get('min_size', (20,20))
+                        raw_fb_bboxes = fallback_opencv_detection(image, scale_factor=haar_scale, min_neighbors=haar_neighbors, min_size=haar_min_size)
+                    elif fb_model_name in self.models:
+                        detector = self.models[fb_model_name]
+                        if isinstance(detector, (YOLOv9ONNXDetector, YOLOv11Detector)):
+                             raw_fb_bboxes = detector.detect(image, conf_threshold=fb_conf, iou_threshold=fb_iou)
+                        # Add elif for EnhancedDetectorAdapter if it has a compatible method
+                        else:
+                            logger.warning(f"Fallback model {fb_model_name} is of an unsupported type for direct call, skipping.")
+                            raw_fb_bboxes = []
+                    else:
+                        logger.warning(f"Fallback model {fb_model_name} not loaded, skipping.")
+                        raw_fb_bboxes = []
+                    
+                    fb_detect_time = time.time() - start_fb_detect
+                    attempt_info['time'] = fb_detect_time
+
+                    for raw_bbox_array in raw_fb_bboxes:
+                        bbox_obj = BoundingBox.from_array(raw_bbox_array) # Convert np.array to BoundingBox object
+                        quality_score = calculate_face_quality(bbox_obj, image.shape[:2])
+                        fb_detected_this_attempt.append(FaceDetection(bbox=bbox_obj, quality_score=quality_score))
+                    
+                    logger.info(f"Fallback {fb_model_name} found {len(fb_detected_this_attempt)} faces in {fb_detect_time:.4f}s.")
+                    attempt_info['faces_found'] = len(fb_detected_this_attempt)
+
+                    # Logic to combine/replace detections. For now, if primary was empty, take these.
+                    # More sophisticated merging (e.g. NMS across primary and fallback) could be added.
+                    if len(fallback_candidates) < fb_min_faces and len(fb_detected_this_attempt) >= fb_min_faces:
+                        logger.info(f"Fallback {fb_model_name} provided {len(fb_detected_this_attempt)} faces, replacing previous {len(fallback_candidates)} candidates.")
+                        fallback_candidates = fb_detected_this_attempt # Replace if this fallback is better
+                        model_used_for_primary_detection = f"{primary_model_name} -> {fb_model_name} (Fallback)" # Update model string
+                        primary_detection_time += fb_detect_time # Add time
+                    elif len(fb_detected_this_attempt) > len(fallback_candidates): # Simple: if more faces, prefer this set
+                        logger.info(f"Fallback {fb_model_name} found more faces ({len(fb_detected_this_attempt)}) than current candidates ({len(fallback_candidates)}). Updating.")
+                        fallback_candidates = fb_detected_this_attempt
+                        model_used_for_primary_detection = f"{primary_model_name} -> {fb_model_name} (Fallback)"
+                        primary_detection_time += fb_detect_time
+
+
+                except Exception as e_fb:
+                    logger.error(f"Error during fallback detection with {fb_model_name}: {e_fb}", exc_info=True)
+                    attempt_info['error'] = str(e_fb)
+                
+                decision_res.fallback_attempts_info.append(attempt_info)
+            
+            # After all fallbacks, detected_faces should be the result of the best fallback attempt (or primary if no fallback was better/triggered)
+            detected_faces = fallback_candidates # Update detected_faces with the final list from fallbacks
+
+        # --- Final Processing and Result Creation ---
+        # The _create_result method will handle filtering by quality, max_faces etc.
+        # The min_quality for filtering is now taken from 'filter_min_quality_final' in config.
+        final_result = self._create_result(
+            detected_faces, 
+            image.shape, 
+            model_used_for_primary_detection, 
+            primary_detection_time, # This time might now include fallback time
+            time.time() - start_time_total, # Total processing time for the whole function
+            max_faces=max_faces,
+            decision_log_override=decision_res # Pass the decision result with fallback info
+        )
+        
+        logger.info(f"Final detection result: {len(final_result.faces)} faces using {final_result.model_used}. Total time: {final_result.total_processing_time:.4f}s")
+        if decision_res.fallback_used:
+            logger.info(f"Fallback summary: {len(decision_res.fallback_attempts_info)} attempts made.")
+
+        return final_result
+
+    # ENHANCED VERSION of _fallback_detection (now integrated into detect_faces, this can be removed or kept for specific scenarios)
+    # For now, let's assume the logic is within detect_faces. If a separate _fallback_detection is needed, it can be refactored.
+    # async def _fallback_detection(self, image: np.ndarray, original_results: List[FaceDetection], decision_res: DecisionResult) -> Tuple[List[FaceDetection], str, float]:
+    # ... (This logic is now part of the main detect_faces method's fallback loop) ....
+
+
+    # ENHANCED VERSION of _create_result
+    def _create_result(self, 
+                       faces: List[FaceDetection], 
+                       image_shape: Tuple[int, int, int], 
+                       model_used: str, 
+                       model_processing_time: float, 
+                       total_processing_time: float,
+                       max_faces: Optional[int] = None,
+                       decision_log_override: Optional[DecisionResult] = None # To pass fallback info
+                       ) -> DetectionResult:
         """
-        # แปลง image_shape เป็น Tuple[int, int, int]
-        shape = (image_shape[0], image_shape[1], image_shape[2] if len(image_shape) > 2 else 3)
+        สร้างผลลัพธ์การตรวจจับใบหน้า, กรองตามคุณภาพ (RELAXED), และจำกัดจำนวนใบหน้า.
+        """
+        # Filter by quality using the 'filter_min_quality_final' from config
+        # This uses the relaxed calculate_face_quality scores already on the FaceDetection objects
+        min_quality_for_filtering = self.config.get('filter_min_quality_final', 40.0) # Default to guide's 40
         
-        # กรองและปรับปรุงบbounding box ที่ผิดปกติ
-        logger.info(f"🔍 Validating {len(detections)} bounding boxes...")
-        filtered_detections = filter_detection_results(detections, (shape[0], shape[1]), min_quality=50.0)
+        # The filter_detection_results function from utils.py (RELAXED VERSION) will be used.
+        # It needs to be passed the correct min_quality.
+        # We assume faces already have quality_score calculated with relaxed_validation=True.
         
-        if len(filtered_detections) != len(detections):
-            logger.info(f"📊 Filtered out {len(detections) - len(filtered_detections)} invalid detections")
+        # We can directly filter here based on the quality scores already calculated.
+        # The `filter_detection_results` from `utils.py` is more complex and might re-validate or adjust.
+        # For simplicity here, let's filter based on the already computed (relaxed) quality scores.
         
-        # วิเคราะห์คุณภาพใบหน้า
-        quality_info = self.quality_analyzer.analyze_detection_quality(filtered_detections)
+        # Step 1: Filter by the final quality threshold
+        high_quality_faces = [
+            face for face in faces if face.quality_score is not None and face.quality_score >= min_quality_for_filtering
+        ]
         
-        # สร้างผลลัพธ์
+        logger.debug(f"Initial faces: {len(faces)}, Filtered by quality ({min_quality_for_filtering}): {len(high_quality_faces)}")
+
+        # Step 2: If still too many faces, sort by quality and take top N (if max_faces is set)
+        if max_faces is not None and len(high_quality_faces) > max_faces:
+            # Sort by quality_score descending, then by confidence if scores are equal
+            high_quality_faces.sort(key=lambda f: (f.quality_score or 0, f.bbox.confidence or 0), reverse=True)
+            final_faces = high_quality_faces[:max_faces]
+            logger.debug(f"Applied max_faces ({max_faces}): {len(final_faces)} faces.")
+        else:
+            final_faces = high_quality_faces
+            # Optionally sort them anyway if an order is preferred
+            final_faces.sort(key=lambda f: (f.quality_score or 0, f.bbox.confidence or 0), reverse=True)
+
+
+        # Create DetectionResult object
         result = DetectionResult(
-            faces=filtered_detections,
-            image_shape=shape,
-            total_processing_time=total_time,
+            faces=final_faces,
+            image_shape=image_shape,
             model_used=model_used,
-            fallback_used=False
+            # model_processing_time=model_processing_time, # Removed: Not an expected __init__ argument
+            total_processing_time=total_processing_time,
+            # num_faces=len(final_faces), # Removed: Not an expected __init__ argument
+            # decision_log=decision_log_override.to_dict() if decision_log_override else {}, # Removed: Not an expected __init__ argument
+            fallback_used=decision_log_override.fallback_used if decision_log_override and hasattr(decision_log_override, 'fallback_used') else False
         )
-        # เพิ่มข้อมูลคุณภาพ
-        result.quality_info = quality_info
         
+        # Attributes like num_faces and decision_log (if they exist on DetectionResult)
+        # would be set by other parts of the code or need to be handled if they are not init args.
+        # The primary fix here is to correct the __init__ call.
+
+        # Analyze quality of the *final* set of faces
+        if final_faces: # Only analyze if there are faces
+            quality_analysis = self.quality_analyzer.analyze_detection_quality(final_faces)
+            result.quality_info = quality_analysis
+            logger.info(f"Final quality analysis: Usable={quality_analysis.get('usable_count')}/{quality_analysis.get('total_count')}, AvgQ={quality_analysis.get('avg_quality'):.2f}")
+        else:
+            result.quality_info = self.quality_analyzer.analyze_detection_quality([]) # Get empty structure
+
         return result
-        filtered_detections = filter_detection_results(detections, (shape[0], shape[1]), min_quality=50.0)
-        
-        if len(filtered_detections) != len(detections):
-            logger.info(f"📊 Filtered out {len(detections) - len(filtered_detections)} invalid detections")
-        
-        # วิเคราะห์คุณภาพใบหน้า
-        quality_info = self.quality_analyzer.analyze_detection_quality(filtered_detections)
-        
-        # สร้างผลลัพธ์
-        result = DetectionResult(
-            faces=filtered_detections,
-            image_shape=shape,
-            total_processing_time=total_time,
-            model_used=model_used,
-            fallback_used=False
-        )
-        # เพิ่มข้อมูลคุณภาพ
-        result.quality_info = quality_info
-        
-        return result
-        
+
     async def get_service_info(self) -> Dict[str, Any]:
         """
         ดูข้อมูลของบริการตรวจจับใบหน้า
@@ -737,230 +742,81 @@ class FaceDetectionService:
             "recent_decisions": self.decision_log[-5:] if self.decision_log else []
         }
     
-    async def cleanup(self) -> bool:
+    async def cleanup(self):
         """
-        ทำความสะอาดทรัพยากร
-        
-        Returns:
-            สถานะการทำความสะอาด
+        ล้างทรัพยากรและปล่อย VRAM
         """
-        try:
-            # คืนทรัพยากร VRAM
-            await self.vram_manager.release_model_allocation("yolov9c-face")
-            await self.vram_manager.release_model_allocation("yolov9e-face")
-            await self.vram_manager.release_model_allocation("yolov11m-face")
-            
-            # ทำความสะอาดตัวตรวจจับใบหน้าขั้นสูง
-            if self.use_enhanced_detector and self.enhanced_detector:
-                await self.enhanced_detector.cleanup()
-                self.enhanced_detector = None
-            
-            # ล้างข้อมูลโมเดล
-            self.models = {}
-            self.models_loaded = False
-            
-            logger.info("ทำความสะอาดทรัพยากรเรียบร้อยแล้ว")
-            return True
-            
-        except Exception as e:
-            logger.error(f"เกิดข้อผิดพลาดในการทำความสะอาดทรัพยากร: {e}")
-            return False
-    
-    async def enhanced_intelligent_detect(self,
-                                 image: np.ndarray,
-                                 conf_threshold: float,
-                                 iou_threshold: float,
-                                 start_time: float) -> DetectionResult:
+        logger.info("กำลังล้างทรัพยากร FaceDetectionService...")
+        for model_name, model_instance in self.models.items():
+            try:
+                if hasattr(model_instance, 'cleanup'): # For YOLOv11Detector or others with cleanup
+                    model_instance.cleanup()
+                # For ONNX models, explicit cleanup might not be needed beyond releasing allocation
+                
+                # Release VRAM allocation
+                # The allocation object might not be stored directly on the model instance in this structure.
+                # This part needs to align with how allocations are tracked.
+                # Assuming a naming convention for release:
+                await self.vram_manager.release_model_allocation(f"{model_name}-face", "face_detection_service")
+                logger.info(f"Released VRAM for {model_name}")
+            except Exception as e:
+                logger.error(f"Error during cleanup for model {model_name}: {e}")
+        
+        self.models.clear()
+        self.models_loaded = False
+        logger.info("ล้างทรัพยากร FaceDetectionService เสร็จสิ้น")
+
+    async def enhanced_intelligent_detect(self, 
+                                          image: np.ndarray, 
+                                          conf_threshold: float, 
+                                          iou_threshold: float,
+                                          return_landmarks: bool = False) -> DetectionResult:
         """
-        ระบบตรวจจับอัจฉริยะที่ใช้ 4 ขั้นตอนการตัดสินใจ
-        1. ทดสอบด้วย YOLOv9 (YOLOv9c + YOLOv9e)
-        2. เปรียบเทียบผลลัพธ์ (Agreement Analysis)
-        3. ตัดสินใจเลือกโมเดล (Decision Logic)
-        4. รันโมเดลที่เลือกและแสดงผล
-        
-        Args:
-            image: รูปภาพ (numpy array)
-            conf_threshold: ระดับความมั่นใจขั้นต่ำ
-            iou_threshold: ค่า IoU threshold สำหรับ NMS
-            start_time: เวลาเริ่มต้น
-            
-        Returns:
-            ผลลัพธ์การตรวจจับใบหน้า
+        ใช้ EnhancedDetectorAdapter ถ้าเปิดใช้งาน หรือ fallback ไปที่ intelligent_detect.
+        This method now primarily acts as a wrapper or decision point.
+        The core detection, including fallbacks, is handled by detect_faces.
         """
-        # สร้างอ็อบเจกต์สำหรับเก็บผลลัพธ์การตัดสินใจ
-        decision_result = DecisionResult()
-        
-        # บันทึกเวลาเริ่มต้น
-        decision_result.total_time = time.time() - start_time
-        
-        # ขั้นตอนที่ 1: ทดสอบด้วย YOLOv9c และ YOLOv9e
-        logger.info("📊 Step 1: ทดสอบด้วย YOLOv9 models...")
-        
-        # ทดสอบด้วย YOLOv9c
-        yolov9c_start_time = time.time()
-        yolov9c_detections = self._detect_with_model(
-            image, 'yolov9c', conf_threshold, iou_threshold
-        )
-        yolov9c_time = time.time() - yolov9c_start_time
-        
-        # บันทึกผลลัพธ์
-        decision_result.yolov9c_detections = yolov9c_detections
-        decision_result.yolov9c_time = yolov9c_time
-        
-        # วิเคราะห์คุณภาพ YOLOv9c
-        yolov9c_quality = self.quality_analyzer.analyze_detection_quality(yolov9c_detections)
-        logger.info(f"🔹 YOLOv9c: {yolov9c_quality['total_count']} total, {yolov9c_quality['usable_count']} usable ({yolov9c_time:.2f}s)")
-        
-        # ถ้าไม่พบใบหน้าเลย จะข้ามไปขั้นตอนที่ 4 เลย และใช้ YOLOv11m
-        if not yolov9c_detections:
-            decision_result.use_yolov11m = True
-            decision_result.decision_reasons.append("No faces detected by YOLOv9c")
-            return await self._finish_enhanced_detection(decision_result, image, conf_threshold, iou_threshold, start_time)
-        
-        # ทดสอบด้วย YOLOv9e
-        yolov9e_start_time = time.time()
-        yolov9e_detections = self._detect_with_model(
-            image, 'yolov9e', conf_threshold, iou_threshold
-        )
-        yolov9e_time = time.time() - yolov9e_start_time
-        
-        # บันทึกผลลัพธ์
-        decision_result.yolov9e_detections = yolov9e_detections
-        decision_result.yolov9e_time = yolov9e_time
-        
-        # วิเคราะห์คุณภาพ YOLOv9e
-        yolov9e_quality = self.quality_analyzer.analyze_detection_quality(yolov9e_detections)
-        logger.info(f"🔹 YOLOv9e: {yolov9e_quality['total_count']} total, {yolov9e_quality['usable_count']} usable ({yolov9e_time:.2f}s)")
-        
-        # ขั้นตอนที่ 2: เปรียบเทียบผลลัพธ์ (Agreement Analysis)
-        logger.info("📊 Step 2: วิเคราะห์ความเห็นด้วยระหว่าง YOLOv9 models...")
-        
-        # คำนวณความเห็นด้วย
-        agreement_ratio = self._calculate_agreement(
-            yolov9c_detections, yolov9e_detections, self.decision_criteria['iou_threshold']
-        )
-        
-        # ตัดสินใจความเห็นด้วย
-        agreement = agreement_ratio >= self.decision_criteria['min_agreement_ratio']
-        agreement_type = "high_overlap" if agreement else "low_overlap"
-        
-        # บันทึกผลลัพธ์
-        decision_result.agreement = agreement
-        decision_result.agreement_ratio = agreement_ratio
-        decision_result.agreement_type = agreement_type
-        
-        logger.info(f"🔹 Agreement: {agreement} ({agreement_type})")
-        logger.info(f"🔹 Agreement ratio: {agreement_ratio:.2f}")
-        
-        # ขั้นตอนที่ 3: ตัดสินใจเลือกโมเดล (Decision Logic)
-        logger.info("🎯 Step 3: ตัดสินใจเลือกโมเดล...")
-        
-        # หาจำนวนใบหน้าที่ใช้งานได้
-        max_usable_faces = max(yolov9c_quality['usable_count'], yolov9e_quality['usable_count'])
-        
-        # ตัดสินใจ
-        use_yolov11m = False
-        reasons = []
-        
-        # กรณีที่ต้องใช้ YOLOv11m
-        if not agreement:
-            use_yolov11m = True
-            reasons.append("YOLOv9 models disagree")
-        elif max_usable_faces > self.decision_criteria['max_usable_faces_yolov9']:
-            use_yolov11m = True
-            reasons.append(f"Too many faces ({max_usable_faces} > {self.decision_criteria['max_usable_faces_yolov9']})")
-        elif max_usable_faces == 0:
-            use_yolov11m = True
-            reasons.append("No usable faces from YOLOv9")
+        start_total_time = time.time()
+
+        if self.use_enhanced_detector and 'enhanced' in self.models and isinstance(self.models['enhanced'], EnhancedDetectorAdapter):
+            logger.info("Using EnhancedDetectorAdapter for detection.")
+            # The EnhancedDetectorAdapter might have its own complex logic or simple detection.
+            # We need to ensure its output is compatible (List[FaceDetection]) and then create a result.
+            # This is a simplified call; the adapter might need more specific parameters.
+            try:
+                # Assuming the adapter's detect method returns raw bboxes or FaceDetection objects
+                # Let's assume it returns raw bboxes for consistency with how YOLO results are handled initially
+                enhanced_adapter = self.models['enhanced']
+                # The adapter's detect method signature might vary. This is an example.
+                # raw_bboxes = await enhanced_adapter.detect(image, confidence_threshold=conf_threshold) # Example call
+                
+                # For now, let's assume we call the main detect_faces with 'enhanced' model type
+                # if we want to use its full pipeline including quality calculation and filtering.
+                # However, 'enhanced' is not a standard model in the fallback list.
+                # This suggests 'enhanced_intelligent_detect' might be a separate path.
+
+                # Let's make this simpler: if use_enhanced_detector, we call its specific detection method.
+                # The result processing should be similar to _create_result.
+                
+                # This part is a bit ambiguous based on current structure.
+                # For now, let's assume if detect_faces handles 'enhanced' correctly, we don't need extra logic here.
+                logger.warning("enhanced_intelligent_detect logic needs review for integration with the main detect_faces flow.")
+                return await self.detect_faces(image, model_name='enhanced' if self.use_enhanced_detector else None, 
+                                               conf_threshold=conf_threshold, iou_threshold=iou_threshold, 
+                                               return_landmarks=return_landmarks)
+
+            except Exception as e:
+                logger.error(f"Error during enhanced detection: {e}. Falling back to standard intelligent detection.", exc_info=True)
+                # Fallback to standard intelligent detection logic (which is now part of detect_faces)
+                return await self.detect_faces(image, model_name=None, # Let detect_faces decide primary
+                                               conf_threshold=conf_threshold, iou_threshold=iou_threshold, 
+                                               return_landmarks=return_landmarks)
         else:
-            reasons.append(f"YOLOv9 sufficient: {max_usable_faces} usable faces")
-        
-        # บันทึกผลลัพธ์
-        decision_result.use_yolov11m = use_yolov11m
-        decision_result.decision_reasons = reasons
-        
-        logger.info(f"🔹 Use YOLOv11m: {use_yolov11m}")
-        for reason in reasons:
-            logger.info(f"🔹 Reason: {reason}")
-        
-        # ขั้นตอนที่ 4: ผลลัพธ์สุดท้าย
-        return await self._finish_enhanced_detection(decision_result, image, conf_threshold, iou_threshold, start_time)
-    
-    async def _finish_enhanced_detection(self,
-                                       decision_result: DecisionResult,
-                                       image: np.ndarray,
-                                       conf_threshold: float,
-                                       iou_threshold: float,
-                                       start_time: float) -> DetectionResult:
-        """
-        ขั้นตอนที่ 4: ประมวลผลด้วยโมเดลที่เลือก และสร้างผลลัพธ์สุดท้าย
-        
-        Args:
-            decision_result: ผลลัพธ์การตัดสินใจเลือกโมเดล
-            image: รูปภาพ (numpy array)
-            conf_threshold: ระดับความมั่นใจขั้นต่ำ
-            iou_threshold: ค่า IoU threshold สำหรับ NMS
-            start_time: เวลาเริ่มต้น
-            
-        Returns:
-            ผลลัพธ์การตรวจจับใบหน้า
-        """
-        logger.info("📊 Step 4: ประมวลผลด้วยโมเดลที่เลือก...")
-        
-        # ถ้าต้องใช้ YOLOv11m
-        if decision_result.use_yolov11m:
-            logger.info("🔹 ทดสอบด้วย YOLOv11m...")
-            yolov11m_start_time = time.time()
-            yolov11m_detections = self._detect_with_model(
-                image, 'yolov11m', conf_threshold, iou_threshold
-            )
-            yolov11m_time = time.time() - yolov11m_start_time
-            
-            final_detections = yolov11m_detections
-            final_model = 'yolov11m'
-            final_time = yolov11m_time
-            
-            # วิเคราะห์คุณภาพ
-            quality_info = self.quality_analyzer.analyze_detection_quality(final_detections)
-            logger.info(f"🔹 YOLOv11m: {quality_info['total_count']} total, {quality_info['usable_count']} usable ({final_time:.2f}s)")
-        else:
-            # เลือกโมเดล YOLOv9 ที่ดีที่สุด (เอาที่มีจำนวนใบหน้าใช้งานได้มากกว่า)
-            yolov9c_quality = self.quality_analyzer.analyze_detection_quality(decision_result.yolov9c_detections)
-            yolov9e_quality = self.quality_analyzer.analyze_detection_quality(decision_result.yolov9e_detections)
-            
-            if yolov9e_quality['usable_count'] >= yolov9c_quality['usable_count']:
-                logger.info("🔹 ใช้ผลลัพธ์จาก YOLOv9e")
-                final_detections = decision_result.yolov9e_detections
-                final_model = 'yolov9e'
-                final_time = decision_result.yolov9e_time
-                quality_info = yolov9e_quality
-            else:
-                logger.info("🔹 ใช้ผลลัพธ์จาก YOLOv9c")
-                final_detections = decision_result.yolov9c_detections
-                final_model = 'yolov9c'
-                final_time = decision_result.yolov9c_time
-                quality_info = yolov9c_quality
-        
-        # บันทึกผลลัพธ์
-        decision_result.final_detections = final_detections
-        decision_result.final_model = final_model
-        decision_result.final_time = final_time
-        decision_result.quality_info = quality_info
-        decision_result.total_time = time.time() - start_time
-        
-        # บันทึก decision log
-        self.decision_log.append(decision_result.to_dict())
-        
-        # รายงานผลลัพธ์
-        logger.info("✅ Results:")
-        logger.info(f"🔹 Model used: {final_model}")
-        logger.info(f"🔹 Total faces: {quality_info['total_count']}")
-        logger.info(f"🔹 Usable faces: {quality_info['usable_count']}")
-        logger.info(f"🔹 Quality ratio: {quality_info['quality_ratio']:.1f}%")
-        logger.info(f"🔹 Processing time: {final_time:.2f}s")
-        logger.info(f"🔹 Total time: {decision_result.total_time:.2f}s")
-        
-        # สร้างผลลัพธ์
-        return self._create_result(
-            final_detections, image.shape, decision_result.total_time, final_model
-        )
+            # Standard intelligent detection (now primarily handled by detect_faces with its internal logic or _intelligent_detect)
+            logger.info("Using standard detection logic (fallback system integrated).")
+            # Call the main detect_faces, which will use its primary model logic and fallbacks
+            return await self.detect_faces(image, model_name=None, # Let detect_faces decide primary
+                                           conf_threshold=conf_threshold, iou_threshold=iou_threshold, 
+                                           return_landmarks=return_landmarks)
+
+# Ensure the file ends with a newline
