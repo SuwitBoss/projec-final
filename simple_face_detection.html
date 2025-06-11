@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Face Detection - Real-time</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .main-content {
+            padding: 20px;
+        }
+
+        .video-section {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            max-width: 640px;
+            margin: 0 auto 20px;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        #video, #canvas {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn.danger {
+            background: #e74c3c;
+        }
+
+        .btn.danger:hover {
+            background: #c0392b;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .status.info {
+            background: #d6eaf8;
+            color: #2980b9;
+            border: 2px solid #85c1e9;
+        }
+
+        .status.success {
+            background: #d5f4e6;
+            color: #27ae60;
+            border: 2px solid #82e0aa;
+        }
+
+        .status.error {
+            background: #fadbd8;
+            color: #e74c3c;
+            border: 2px solid #f1948a;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .metric {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #ecf0f1;
+            transition: all 0.3s ease;
+        }
+
+        .metric:hover {
+            border-color: #3498db;
+            transform: translateY(-3px);
+        }
+
+        .metric-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .metric-label {
+            font-size: 14px;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .detection-info {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            border: 2px solid #ecf0f1;
+        }
+
+        .face-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .face-item {
+            background: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border-left: 4px solid #3498db;
+        }
+
+        .face-item.high-conf {
+            border-left-color: #27ae60;
+            background: #d5f4e6;
+        }
+
+        .face-item.medium-conf {
+            border-left-color: #f39c12;
+            background: #fef9e7;
+        }
+
+        .face-item.low-conf {
+            border-left-color: #e74c3c;
+            background: #fadbd8;
+        }
+
+        .face-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            font-size: 14px;
+            color: #6c757d;
+        }
+
+        .confidence-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .conf-high {
+            background: #27ae60;
+        }
+
+        .conf-medium {
+            background: #f39c12;
+        }
+
+        .conf-low {
+            background: #e74c3c;
+        }
+
+        .settings {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .setting-group {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .setting-group label {
+            min-width: 150px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .setting-group input[type="range"] {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: #ddd;
+            outline: none;
+        }
+
+        .setting-group .value-display {
+            min-width: 60px;
+            text-align: center;
+            background: #3498db;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .fps-counter {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .metrics {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .setting-group {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .setting-group label {
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Simple Face Detection</h1>
+            <p>Real-time Face Detection Only - ไม่มี Recognition</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Video Section -->
+            <div class="video-section">
+                <h2>📹 Real-time Face Detection</h2>
+                
+                <div class="video-container">
+                    <video id="video" autoplay muted></video>
+                    <canvas id="canvas"></canvas>
+                    <div class="fps-counter" id="fpsCounter">0 FPS</div>
+                </div>
+
+                <div class="controls">
+                    <button id="startCamera" class="btn">🎥 เริ่มกล้อง</button>
+                    <button id="stopCamera" class="btn danger" disabled>⏹️ หยุดกล้อง</button>
+                    <button id="resetStats" class="btn">🔄 รีเซ็ตสถิติ</button>
+                </div>
+
+                <div id="cameraStatus" class="status info">
+                    📱 กดเริ่มกล้องเพื่อเริ่มการตรวจจับใบหน้า
+                </div>
+            </div>
+
+            <!-- Metrics -->
+            <div class="metrics">
+                <div class="metric">
+                    <div class="metric-value" id="totalFaces">0</div>
+                    <div class="metric-label">Total Faces</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="avgFPS">0</div>
+                    <div class="metric-label">Avg FPS</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="avgConfidence">0%</div>
+                    <div class="metric-label">Avg Confidence</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="detectionRate">0%</div>
+                    <div class="metric-label">Detection Rate</div>
+                </div>
+            </div>            <!-- Detection Results -->
+            <div class="detection-info">
+                <h3>🔍 Current Detection Results</h3>
+                <div style="margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 6px; font-size: 14px;">
+                    <strong>Engine Status:</strong> 
+                    <span id="engineStatus" style="font-family: monospace; color: #2c3e50;">Initializing...</span>
+                </div>
+                <div class="face-list" id="faceList">
+                    <p style="text-align: center; color: #6c757d; padding: 20px;">
+                        การตรวจจับใบหน้าจะแสดงที่นี่...
+                    </p>
+                </div>
+            </div>
+
+            <!-- Settings -->
+            <div class="settings">
+                <h3>⚙️ Detection Settings</h3>
+                
+                <div class="setting-group">
+                    <label>Confidence Threshold:</label>
+                    <input type="range" id="confidenceThreshold" min="0.1" max="0.9" step="0.05" value="0.5">
+                    <div class="value-display" id="confidenceValue">0.50</div>
+                </div>
+                
+                <div class="setting-group">
+                    <label>Detection Frequency:</label>
+                    <input type="range" id="detectionInterval" min="50" max="500" step="50" value="200">
+                    <div class="value-display" id="intervalValue">200ms</div>
+                </div>
+                
+                <div class="setting-group">
+                    <label>Min Face Size:</label>
+                    <input type="range" id="minFaceSize" min="30" max="150" step="10" value="60">
+                    <div class="value-display" id="sizeValue">60px</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class SimpleFaceDetection {
+            constructor() {
+                this.video = document.getElementById('video');
+                this.canvas = document.getElementById('canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.stream = null;
+                this.isDetecting = false;
+                  // การตั้งค่า
+                this.settings = {
+                    confidenceThreshold: 0.5,
+                    detectionInterval: 200,
+                    minFaceSize: 60
+                };
+                
+                // สถานะ API
+                this.apiAvailable = false;
+                this.currentEngine = 'simulation';
+                
+                // สถิติ
+                this.stats = {
+                    totalFaces: 0,
+                    totalFrames: 0,
+                    detectionFrames: 0,
+                    processingTimes: [],
+                    confidenceScores: [],
+                    sessionStart: Date.now()
+                };
+                
+                // FPS tracking
+                this.fpsData = {
+                    frameCount: 0,
+                    lastTime: Date.now(),
+                    fps: 0
+                };
+
+                this.initializeElements();
+                this.bindEvents();
+                this.updateSettingsDisplay();
+            }
+
+            initializeElements() {                this.elements = {
+                    startCamera: document.getElementById('startCamera'),
+                    stopCamera: document.getElementById('stopCamera'),
+                    resetStats: document.getElementById('resetStats'),
+                    cameraStatus: document.getElementById('cameraStatus'),
+                    faceList: document.getElementById('faceList'),
+                    engineStatus: document.getElementById('engineStatus'),
+                    totalFaces: document.getElementById('totalFaces'),
+                    avgFPS: document.getElementById('avgFPS'),
+                    avgConfidence: document.getElementById('avgConfidence'),
+                    detectionRate: document.getElementById('detectionRate'),
+                    fpsCounter: document.getElementById('fpsCounter'),
+                    confidenceThreshold: document.getElementById('confidenceThreshold'),
+                    detectionInterval: document.getElementById('detectionInterval'),
+                    minFaceSize: document.getElementById('minFaceSize'),
+                    confidenceValue: document.getElementById('confidenceValue'),
+                    intervalValue: document.getElementById('intervalValue'),
+                    sizeValue: document.getElementById('sizeValue')
+                };
+            }
+
+            bindEvents() {                this.elements.startCamera.addEventListener('click', () => this.startCamera());
+                this.elements.stopCamera.addEventListener('click', () => this.stopCamera());
+                this.elements.resetStats.addEventListener('click', () => this.resetStats());
+                
+                // ทดสอบการเชื่อมต่อ API
+                this.testAPIConnection();
+                
+                // Settings events
+                this.elements.confidenceThreshold.addEventListener('input', (e) => {
+                    this.settings.confidenceThreshold = parseFloat(e.target.value);
+                    this.elements.confidenceValue.textContent = this.settings.confidenceThreshold.toFixed(2);
+                });
+                
+                this.elements.detectionInterval.addEventListener('input', (e) => {
+                    this.settings.detectionInterval = parseInt(e.target.value);
+                    this.elements.intervalValue.textContent = this.settings.detectionInterval + 'ms';
+                });
+                
+                this.elements.minFaceSize.addEventListener('input', (e) => {
+                    this.settings.minFaceSize = parseInt(e.target.value);
+                    this.elements.sizeValue.textContent = this.settings.minFaceSize + 'px';
+                });
+            }            updateSettingsDisplay() {
+                this.elements.confidenceValue.textContent = this.settings.confidenceThreshold.toFixed(2);
+                this.elements.intervalValue.textContent = this.settings.detectionInterval + 'ms';
+                this.elements.sizeValue.textContent = this.settings.minFaceSize + 'px';
+            }
+
+            async testAPIConnection() {
+                try {
+                    const response = await fetch('/api/face-analysis/health', {
+                        method: 'GET'
+                    });
+                      if (response.ok) {
+                        const result = await response.json();
+                        console.log('✅ Face Detection API Connected:', result);
+                        this.updateStatus('🟢 API Connected - Ready for Real Detection', 'success');
+                        this.apiAvailable = true;
+                        this.elements.engineStatus.textContent = '🟢 YOLO Real-time Detection Active';
+                        this.elements.engineStatus.style.color = '#27ae60';
+                    } else {
+                        throw new Error('API not available');
+                    }                } catch (error) {
+                    console.warn('⚠️ Face Detection API not available, using simulation mode');
+                    this.updateStatus('🟡 API Unavailable - Using Simulation Mode', 'info');
+                    this.apiAvailable = false;
+                    this.elements.engineStatus.textContent = '🟡 Simulation Mode (No Real Detection)';
+                    this.elements.engineStatus.style.color = '#f39c12';
+                }
+            }
+
+            async startCamera() {
+                try {
+                    this.updateStatus('🔄 กำลังเริ่มต้นกล้อง...', 'info');
+                    
+                    this.stream = await navigator.mediaDevices.getUserMedia({
+                        video: { 
+                            width: { ideal: 640 }, 
+                            height: { ideal: 480 },
+                            facingMode: 'user'
+                        }
+                    });
+                    
+                    this.video.srcObject = this.stream;
+                    
+                    this.video.onloadedmetadata = () => {
+                        this.canvas.width = this.video.videoWidth;
+                        this.canvas.height = this.video.videoHeight;
+                        this.startDetection();
+                    };
+
+                    this.elements.startCamera.disabled = true;
+                    this.elements.stopCamera.disabled = false;
+                    
+                    this.updateStatus('✅ กล้องทำงาน - Face Detection เริ่มแล้ว', 'success');
+                    
+                } catch (error) {
+                    console.error('Camera error:', error);
+                    this.updateStatus('❌ ไม่สามารถเข้าถึงกล้องได้', 'error');
+                }
+            }
+
+            stopCamera() {
+                if (this.stream) {
+                    this.stream.getTracks().forEach(track => track.stop());
+                    this.stream = null;
+                }
+                
+                this.isDetecting = false;
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                this.elements.startCamera.disabled = false;
+                this.elements.stopCamera.disabled = true;
+                
+                this.updateStatus('📱 กล้องหยุดทำงาน', 'info');
+                
+                // แสดงสรุปผล
+                this.showSessionSummary();
+            }
+
+            startDetection() {
+                this.isDetecting = true;
+                this.stats.sessionStart = Date.now();
+                this.fpsData.lastTime = Date.now();
+                this.detectFaces();
+            }            async detectFaces() {
+                if (!this.isDetecting || this.video.readyState !== 4) {
+                    if (this.isDetecting) {
+                        requestAnimationFrame(() => this.detectFaces());
+                    }
+                    return;
+                }
+
+                const startTime = performance.now();
+                this.stats.totalFrames++;
+                
+                try {
+                    // วาดเฟรมปัจจุบัน
+                    this.ctx.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
+                      // ตรวจจับใบหน้าจริงผ่าน Backend API
+                    const faces = this.apiAvailable ? 
+                        await this.realFaceDetection() : 
+                        this.simulateFaceDetection();
+                    
+                    // อัปเดต engine ที่ใช้
+                    this.currentEngine = this.apiAvailable ? 'yolo' : 'simulation';
+                    
+                    // ล้างการวาดเก่า
+                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                    
+                    // วาดผลลัพธ์
+                    this.drawDetectionResults(faces);
+                    
+                    // อัปเดตสถิติ
+                    const processingTime = performance.now() - startTime;
+                    this.updateStats(faces, processingTime);
+                    
+                    // อัปเดต FPS
+                    this.updateFPS();
+                    
+                } catch (error) {
+                    console.error('Detection error:', error);
+                    // Fallback เป็นการจำลองถ้า API ล้มเหลว
+                    const faces = this.simulateFaceDetection();
+                    this.drawDetectionResults(faces);
+                }
+
+                // วนซ้ำตามความถี่ที่ตั้งไว้
+                if (this.isDetecting) {
+                    setTimeout(() => requestAnimationFrame(() => this.detectFaces()), this.settings.detectionInterval);
+                }
+            }
+
+            async realFaceDetection() {
+                try {
+                    // แปลงเฟรมวิดีโอเป็น Blob
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = this.video.videoWidth;
+                    canvas.height = this.video.videoHeight;
+                    ctx.drawImage(this.video, 0, 0);
+                    
+                    // แปลงเป็น Blob
+                    const blob = await new Promise(resolve => {
+                        canvas.toBlob(resolve, 'image/jpeg', 0.8);
+                    });
+                    
+                    // สร้าง FormData
+                    const formData = new FormData();
+                    formData.append('image', blob, 'frame.jpg');
+                    formData.append('confidence_threshold', this.settings.confidenceThreshold);
+                    formData.append('min_face_size', this.settings.minFaceSize);
+                    
+                    // เรียก Face Detection API
+                    const response = await fetch('/api/face-analysis/detect', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`API Error: ${response.status}`);
+                    }
+                      const result = await response.json();
+                    
+                    // DEBUG: Log the API response
+                    console.log('🔍 DEBUG - API Response:', result);
+                    console.log('🔍 DEBUG - Success:', result.success);
+                    console.log('🔍 DEBUG - Data:', result.data);
+                    if (result.data && result.data.faces) {
+                        console.log('🔍 DEBUG - Faces array:', result.data.faces);
+                        console.log('🔍 DEBUG - Number of faces:', result.data.faces.length);
+                    }
+                    
+                    // แปลงผลลัพธ์เป็นรูปแบบที่ UI ใช้
+                    if (result.success && result.data && result.data.faces) {
+                        return result.data.faces.map((face, index) => ({
+                            id: `face_${index}_${Date.now()}`,
+                            x: face.bbox.x,
+                            y: face.bbox.y,
+                            width: face.bbox.width,
+                            height: face.bbox.height,
+                            confidence: face.confidence || face.bbox.confidence,
+                            timestamp: Date.now(),
+                            engine: face.detection?.engine_used || 'yolo',
+                            quality_score: face.quality_score || face.detection?.quality_score
+                        }));
+                    }
+                    
+                    return [];
+                    
+                } catch (error) {
+                    console.error('Real face detection failed:', error);
+                    // ใช้การจำลองเป็น fallback
+                    throw error;
+                }
+            }
+
+            simulateFaceDetection() {
+                // จำลองการตรวจจับแบบสมจริง
+                const detectionProb = 0.85; // 85% มีการตรวจจับ
+                if (Math.random() > detectionProb) return [];
+
+                // จำนวนใบหน้า (ส่วนใหญ่ 1 ใบหน้า)
+                const faceCountProb = Math.random();
+                let numFaces;
+                if (faceCountProb < 0.75) numFaces = 1;      // 75% = 1 ใบหน้า
+                else if (faceCountProb < 0.92) numFaces = 2; // 17% = 2 ใบหน้า
+                else numFaces = 3;                           // 8% = 3 ใบหน้า
+
+                const faces = [];
+                
+                for (let i = 0; i < numFaces; i++) {
+                    const face = this.generateRealisticFace(i);
+                    
+                    // กรองตาม confidence threshold
+                    if (face.confidence >= this.settings.confidenceThreshold) {
+                        // กรองตามขนาดใบหน้า
+                        if (face.width >= this.settings.minFaceSize && face.height >= this.settings.minFaceSize) {
+                            faces.push(face);
+                        }
+                    }
+                }
+
+                return faces;
+            }
+
+            generateRealisticFace(index) {
+                // ตำแหน่งสมจริง (กึ่งกลางเฟรม)
+                const centerX = this.canvas.width * (0.2 + Math.random() * 0.6);
+                const centerY = this.canvas.height * (0.15 + Math.random() * 0.6);
+                
+                // ขนาดแบบสมจริง
+                const minSize = this.settings.minFaceSize;
+                const maxSize = Math.min(this.canvas.width, this.canvas.height) * 0.4;
+                const faceSize = minSize + Math.random() * (maxSize - minSize);
+                
+                // Confidence แบบสมจริง (ขึ้นอยู่กับขนาดและตำแหน่ง)
+                let confidence = 0.5 + Math.random() * 0.45; // base 0.5-0.95
+                
+                // ใบหน้าเล็ก = confidence ต่ำ
+                if (faceSize < 80) confidence *= 0.85;
+                
+                // ใบหน้าอยู่ขอบ = confidence ต่ำ
+                const edgeDistance = Math.min(centerX, centerY, this.canvas.width - centerX, this.canvas.height - centerY);
+                if (edgeDistance < 50) confidence *= 0.9;
+                
+                return {
+                    id: `face_${index}_${Date.now()}`,
+                    x: centerX - faceSize/2,
+                    y: centerY - faceSize/2,
+                    width: faceSize,
+                    height: faceSize,
+                    confidence: Math.min(0.99, confidence),
+                    timestamp: Date.now()
+                };
+            }
+
+            drawDetectionResults(faces) {
+                faces.forEach((face, index) => {
+                    // เลือกสีตาม confidence
+                    let color, strokeWidth;
+                    if (face.confidence >= 0.8) {
+                        color = '#27ae60'; // เขียว - high confidence
+                        strokeWidth = 3;
+                    } else if (face.confidence >= 0.6) {
+                        color = '#f39c12'; // ส้ม - medium confidence
+                        strokeWidth = 2;
+                    } else {
+                        color = '#e74c3c'; // แดง - low confidence
+                        strokeWidth = 2;
+                    }
+                    
+                    // วาดกรอบ
+                    this.ctx.strokeStyle = color;
+                    this.ctx.lineWidth = strokeWidth;
+                    this.ctx.strokeRect(face.x, face.y, face.width, face.height);
+                      // วาดข้อความ
+                    const text = `Face ${index + 1} (${(face.confidence * 100).toFixed(0)}%)`;
+                    const engineText = face.engine ? ` [${face.engine}]` : '';
+                    this.ctx.font = 'bold 14px Arial';
+                    const textMetrics = this.ctx.measureText(text + engineText);
+                    
+                    // พื้นหลังข้อความ
+                    this.ctx.fillStyle = color;
+                    this.ctx.fillRect(face.x, face.y - 25, textMetrics.width + 10, 20);
+                    
+                    // ข้อความ
+                    this.ctx.fillStyle = 'white';
+                    this.ctx.fillText(text + engineText, face.x + 5, face.y - 8);
+                    
+                    // วาด ID เล็กๆ
+                    this.ctx.font = '10px Arial';
+                    this.ctx.fillStyle = color;
+                    this.ctx.fillText(`${face.width.toFixed(0)}×${face.height.toFixed(0)}px`, 
+                                     face.x, face.y + face.height + 15);
+                });
+
+                this.updateFaceList(faces);
+            }
+
+            updateFaceList(faces) {
+                const container = this.elements.faceList;
+                
+                if (faces.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: #6c757d; padding: 20px;">ไม่พบใบหน้าในเฟรมนี้</p>';
+                    return;
+                }
+
+                container.innerHTML = faces.map((face, index) => {
+                    let confClass, confBadgeClass;
+                    if (face.confidence >= 0.8) {
+                        confClass = 'high-conf';
+                        confBadgeClass = 'conf-high';
+                    } else if (face.confidence >= 0.6) {
+                        confClass = 'medium-conf';
+                        confBadgeClass = 'conf-medium';
+                    } else {
+                        confClass = 'low-conf';
+                        confBadgeClass = 'conf-low';
+                    }
+                      return `
+                        <div class="face-item ${confClass}">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <strong>Face ${index + 1}</strong>
+                                <span class="confidence-badge ${confBadgeClass}">
+                                    ${(face.confidence * 100).toFixed(1)}%
+                                </span>
+                            </div>
+                            <div class="face-details">
+                                <div><strong>Position:</strong> ${face.x.toFixed(0)}, ${face.y.toFixed(0)}</div>
+                                <div><strong>Size:</strong> ${face.width.toFixed(0)}×${face.height.toFixed(0)}px</div>
+                                <div><strong>Area:</strong> ${(face.width * face.height).toFixed(0)}px²</div>
+                                <div><strong>Ratio:</strong> ${(face.width/face.height).toFixed(2)}</div>
+                                ${face.engine ? `<div><strong>Engine:</strong> ${face.engine}</div>` : ''}
+                                ${face.quality_score ? `<div><strong>Quality:</strong> ${face.quality_score.toFixed(1)}/100</div>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            updateStats(faces, processingTime) {
+                // อัปเดตสถิติ
+                this.stats.totalFaces += faces.length;
+                this.stats.processingTimes.push(processingTime);
+                
+                if (faces.length > 0) {
+                    this.stats.detectionFrames++;
+                    const avgConfidence = faces.reduce((sum, f) => sum + f.confidence, 0) / faces.length;
+                    this.stats.confidenceScores.push(avgConfidence);
+                }
+
+                // เก็บเฉพาะ 100 ค่าล่าสุด
+                if (this.stats.processingTimes.length > 100) {
+                    this.stats.processingTimes = this.stats.processingTimes.slice(-100);
+                }
+                if (this.stats.confidenceScores.length > 100) {
+                    this.stats.confidenceScores = this.stats.confidenceScores.slice(-100);
+                }
+
+                // คำนวณค่าเฉลี่ย
+                const avgProcessingTime = this.stats.processingTimes.reduce((a, b) => a + b, 0) / this.stats.processingTimes.length;
+                const avgConfidence = this.stats.confidenceScores.length > 0 
+                    ? this.stats.confidenceScores.reduce((a, b) => a + b, 0) / this.stats.confidenceScores.length 
+                    : 0;
+                const detectionRate = (this.stats.detectionFrames / this.stats.totalFrames) * 100;
+
+                // อัปเดตแสดงผล
+                this.elements.totalFaces.textContent = this.stats.totalFaces;
+                this.elements.avgConfidence.textContent = (avgConfidence * 100).toFixed(1) + '%';
+                this.elements.detectionRate.textContent = detectionRate.toFixed(1) + '%';
+            }
+
+            updateFPS() {
+                this.fpsData.frameCount++;
+                const now = Date.now();
+                const deltaTime = now - this.fpsData.lastTime;
+                
+                if (deltaTime >= 1000) { // อัปเดตทุกวินาที
+                    this.fpsData.fps = Math.round((this.fpsData.frameCount * 1000) / deltaTime);
+                    this.fpsData.frameCount = 0;
+                    this.fpsData.lastTime = now;
+                    
+                    this.elements.fpsCounter.textContent = this.fpsData.fps + ' FPS';
+                    this.elements.avgFPS.textContent = this.fpsData.fps;
+                }
+            }
+
+            resetStats() {
+                this.stats = {
+                    totalFaces: 0,
+                    totalFrames: 0,
+                    detectionFrames: 0,
+                    processingTimes: [],
+                    confidenceScores: [],
+                    sessionStart: Date.now()
+                };
+                
+                this.fpsData = {
+                    frameCount: 0,
+                    lastTime: Date.now(),
+                    fps: 0
+                };
+
+                // อัปเดตแสดงผล
+                this.elements.totalFaces.textContent = '0';
+                this.elements.avgFPS.textContent = '0';
+                this.elements.avgConfidence.textContent = '0%';
+                this.elements.detectionRate.textContent = '0%';
+                this.elements.fpsCounter.textContent = '0 FPS';
+                
+                this.updateStatus('🔄 รีเซ็ตสถิติเรียบร้อย', 'info');
+            }
+
+            showSessionSummary() {
+                const sessionDuration = (Date.now() - this.stats.sessionStart) / 1000;
+                const avgFPS = this.fpsData.fps;
+                const avgConfidence = this.stats.confidenceScores.length > 0 
+                    ? this.stats.confidenceScores.reduce((a, b) => a + b, 0) / this.stats.confidenceScores.length 
+                    : 0;
+                const detectionRate = (this.stats.detectionFrames / this.stats.totalFrames) * 100;
+
+                const summary = `
+📊 Session Summary:
+⏱️ Duration: ${sessionDuration.toFixed(1)}s
+🎯 Total Faces: ${this.stats.totalFaces}
+📺 Total Frames: ${this.stats.totalFrames}
+🔍 Detection Rate: ${detectionRate.toFixed(1)}%
+⚡ Avg FPS: ${avgFPS}
+✨ Avg Confidence: ${(avgConfidence * 100).toFixed(1)}%
+                `;
+
+                console.log(summary);
+                alert(summary);
+            }
+
+            updateStatus(message, type) {
+                this.elements.cameraStatus.textContent = message;
+                this.elements.cameraStatus.className = `status ${type}`;
+            }
+        }
+
+        // เริ่มต้นระบบ
+        let faceDetection;
+        document.addEventListener('DOMContentLoaded', () => {
+            faceDetection = new SimpleFaceDetection();
+            console.log('🎯 Simple Face Detection System initialized');
+        });
+    </script>
+</body>
+</html>

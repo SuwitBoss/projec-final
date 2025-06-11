@@ -318,9 +318,9 @@ class FaceDetectionService:
         
         Args:
             vram_manager: ตัวจัดการหน่วยความจำ GPU
-            config: การตั้งค่าสำหรับบริการ. If None, uses get_relaxed_face_detection_config().
-        """
+            config: การตั้งค่าสำหรับบริการ. If None, uses get_relaxed_face_detection_config().        """
         self.vram_manager = vram_manager
+        self.logger = logging.getLogger(__name__)  # Add missing logger
         # ENHANCED VERSION: Use get_relaxed_face_detection_config if no config is provided or for specific keys
         self.config = config if config is not None else get_relaxed_face_detection_config()
 
@@ -681,3 +681,42 @@ class FaceDetectionService:
             fallback_used=was_fallback_used,
             error=error_str
         )
+
+    async def cleanup(self):
+        """Clean up face detection service resources"""
+        try:
+            self.logger.info("🧹 Cleaning up Face Detection Service...")
+            
+            # Cleanup YOLO models
+            for model_name, model in self.models.items():
+                try:
+                    if hasattr(model, 'cleanup') and callable(model.cleanup):
+                        if asyncio.iscoroutinefunction(model.cleanup):
+                            await model.cleanup()
+                        else:
+                            model.cleanup()
+                    self.logger.info(f"✅ Cleaned up model: {model_name}")
+                except Exception as e:
+                    self.logger.warning(f"⚠️ Error cleaning up model {model_name}: {e}")
+            
+            # Clear model dictionaries
+            self.models.clear()
+            self.model_stats.clear()
+            
+            # Reset state
+            self.models_loaded = False
+            
+            # Clean up VRAM allocations
+            if self.vram_manager:
+                try:
+                    # Release any allocated VRAM
+                    await self.vram_manager.release_model_allocation("yolov9c-face", "face_detection_service")
+                    await self.vram_manager.release_model_allocation("yolov9e-face", "face_detection_service")
+                    await self.vram_manager.release_model_allocation("yolov11m-face", "face_detection_service")
+                except Exception as e:
+                    self.logger.warning(f"⚠️ Error releasing VRAM allocations: {e}")
+            
+            self.logger.info("✅ Face Detection Service cleanup completed")
+            
+        except Exception as e:
+            self.logger.error(f"❌ Error during Face Detection Service cleanup: {e}")

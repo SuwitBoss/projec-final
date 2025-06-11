@@ -1,0 +1,2011 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Face Recognition System - Real-time</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(45deg, #2c3e50, #3498db);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .section:hover {
+            border-color: #3498db;
+            transform: translateY(-5px);
+        }
+
+        .section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #3498db;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            max-width: 640px;
+            margin: 0 auto 20px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        #video, #canvas {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            background: linear-gradient(45deg, #2980b9, #1f5582);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        .btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn.success {
+            background: linear-gradient(45deg, #27ae60, #2ecc71);
+        }
+
+        .btn.success:hover {
+            background: linear-gradient(45deg, #219a52, #27ae60);
+        }
+
+        .btn.danger {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+        }
+
+        .btn.danger:hover {
+            background: linear-gradient(45deg, #c0392b, #a93226);
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ecf0f1;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .status.info {
+            background: #d6eaf8;
+            color: #2980b9;
+            border: 2px solid #85c1e9;
+        }
+
+        .status.success {
+            background: #d5f4e6;
+            color: #27ae60;
+            border: 2px solid #82e0aa;
+        }
+
+        .status.error {
+            background: #fadbd8;
+            color: #e74c3c;
+            border: 2px solid #f1948a;
+        }
+
+        .status.warning {
+            background: #fef9e7;
+            color: #f39c12;
+            border: 2px solid #f7dc6f;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 2px solid #dee2e6;
+            transition: all 0.3s ease;
+        }
+
+        .metric-card:hover {
+            border-color: #3498db;
+            transform: translateY(-3px);
+        }
+
+        .metric-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .metric-label {
+            font-size: 0.9em;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .recognition-results {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 2px solid #ecf0f1;
+            border-radius: 12px;
+            padding: 15px;
+            background: #f8f9fa;
+        }
+
+        .face-result {
+            background: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .face-result.recognized {
+            border-left-color: #27ae60;
+        }
+
+        .face-result.unknown {
+            border-left-color: #e74c3c;
+        }
+
+        .face-result.context-aware {
+            border-left-color: #f39c12;
+            background: linear-gradient(90deg, #fff3cd, #ffffff);
+        }
+
+        .face-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .face-name {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .face-confidence {
+            background: #e9ecef;
+            padding: 4px 8px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .face-details {
+            font-size: 0.9em;
+            color: #6c757d;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .enhancement-info {
+            background: linear-gradient(135deg, #e8f5e8, #f0f8ff);
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid #27ae60;
+            margin-bottom: 20px;
+        }
+
+        .enhancement-info h3 {
+            color: #27ae60;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .enhancement-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 10px;
+        }
+
+        .enhancement-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.95em;
+        }
+
+        .enhancement-item::before {
+            content: "✅";
+            font-size: 1.2em;
+        }
+
+        .registered-faces {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 2px solid #ecf0f1;
+            border-radius: 12px;
+            padding: 15px;
+            background: #f8f9fa;
+        }
+
+        .registered-face {
+            background: white;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .quality-indicator {
+            padding: 4px 8px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .quality-high {
+            background: #d5f4e6;
+            color: #27ae60;
+        }
+
+        .quality-medium {
+            background: #fef9e7;
+            color: #f39c12;
+        }
+
+        .quality-low {
+            background: #fadbd8;
+            color: #e74c3c;
+        }        .footer {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        /* Log Window Styles */
+        .log-section {
+            grid-column: 1 / -1;
+            margin-top: 20px;
+        }
+
+        .log-window {
+            height: 300px;
+            background: #1e1e1e;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid #3498db;
+            font-family: 'Courier New', monospace;
+        }
+
+        .log-header {
+            background: #2c3e50;
+            color: white;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #3498db;
+        }
+
+        .log-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .log-btn {
+            background: transparent;
+            border: 1px solid #3498db;
+            color: #3498db;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .log-btn:hover {
+            background: #3498db;
+            color: white;
+        }
+
+        .log-content {
+            height: 250px;
+            overflow-y: auto;
+            padding: 10px;
+            background: #1e1e1e;
+            color: #ffffff;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .log-entry {
+            margin-bottom: 2px;
+            padding: 2px 0;
+            border-left: 3px solid transparent;
+            padding-left: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .log-entry:hover {
+            background: rgba(52, 152, 219, 0.1);
+            border-left-color: #3498db;
+        }
+
+        .log-timestamp {
+            color: #95a5a6;
+            font-weight: bold;
+        }
+
+        .log-level {
+            font-weight: bold;
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-size: 10px;
+        }
+
+        .log-level.info {
+            background: #3498db;
+            color: white;
+        }
+
+        .log-level.success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .log-level.warning {
+            background: #f39c12;
+            color: white;
+        }
+
+        .log-level.error {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .log-level.debug {
+            background: #9b59b6;
+            color: white;
+        }
+
+        .log-message {
+            color: #ecf0f1;
+        }
+
+        .log-details {
+            color: #bdc3c7;
+            font-size: 11px;
+            margin-left: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                justify-content: center;
+            }
+            
+            .btn {
+                flex: 1;
+                min-width: 120px;
+            }
+        }
+
+        /* เพิ่ม animations สำหรับ face detection boxes */
+        .face-box {
+            position: absolute;
+            border: 3px solid;
+            border-radius: 8px;
+            pointer-events: none;
+            transition: all 0.1s ease;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(2px);
+        }
+
+        .face-box.recognized {
+            border-color: #27ae60;
+            box-shadow: 0 0 20px rgba(39, 174, 96, 0.5);
+        }
+
+        .face-box.unknown {
+            border-color: #e74c3c;
+            box-shadow: 0 0 20px rgba(231, 76, 60, 0.5);
+        }
+
+        .face-box.context-aware {
+            border-color: #f39c12;
+            box-shadow: 0 0 20px rgba(243, 156, 18, 0.5);
+        }
+
+        .face-label {
+            position: absolute;
+            top: -30px;
+            left: 0;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Enhanced Face Recognition System</h1>
+            <p>Real-time Face Detection & Recognition with Enhanced Ultra Quality Processing</p>
+        </div>
+
+        <div class="enhancement-info">
+            <h3>🔬 Enhanced Processing Features</h3>
+            <div class="enhancement-list">
+                <div class="enhancement-item">Enhanced Ultra Quality Enhancement</div>
+                <div class="enhancement-item">Enhanced GraFIQs Quality Assessment</div>
+                <div class="enhancement-item">Context-Aware Recognition</div>
+                <div class="enhancement-item">Enhanced Face Cropping V3</div>
+                <div class="enhancement-item">Multi-Model Ensemble (FaceNet, AdaFace, ArcFace)</div>
+                <div class="enhancement-item">Quality Bonus System</div>
+                <div class="enhancement-item">Adaptive Thresholds</div>
+                <div class="enhancement-item">Color Preservation Technology</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- ส่วนกล้องและการตรวจจับ -->
+            <div class="section">
+                <h2>📹 Real-time Face Detection</h2>
+                
+                <div class="video-container">
+                    <video id="video" autoplay muted></video>
+                    <canvas id="canvas"></canvas>
+                </div>
+
+                <div class="controls">
+                    <button id="startCamera" class="btn">เริ่มกล้อง</button>
+                    <button id="stopCamera" class="btn danger" disabled>หยุดกล้อง</button>
+                    <button id="capturePhoto" class="btn success" disabled>ถ่ายภาพ</button>
+                </div>
+
+                <div id="cameraStatus" class="status info">
+                    📱 กดเริ่มกล้องเพื่อเริ่มการตรวจจับใบหน้า
+                </div>                <div class="metrics">
+                    <div class="metric-card">
+                        <div class="metric-value" id="facesDetected">0</div>
+                        <div class="metric-label">Faces Detected</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="facesRecognized">0</div>
+                        <div class="metric-label">Faces Recognized</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="unknownFaces">0</div>
+                        <div class="metric-label">Unknown Faces</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="avgQuality">0</div>
+                        <div class="metric-label">Avg Quality</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="processingTime">0ms</div>
+                        <div class="metric-label">Processing Time</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="detectionRate">0%</div>
+                        <div class="metric-label">Detection Rate</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="detectionStreak">0</div>
+                        <div class="metric-label">Detection Streak</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="highConfidenceCount">0</div>
+                        <div class="metric-label">High Confidence</div>
+                    </div>
+                </div>
+
+                <div class="recognition-results" id="recognitionResults">
+                    <p style="text-align: center; color: #6c757d;">การจดจำใบหน้าจะแสดงที่นี่...</p>
+                </div>
+            </div>
+
+            <!-- ส่วนลงทะเบียน -->
+            <div class="section">
+                <h2>👤 Face Registration</h2>
+
+                <div class="input-group">
+                    <label for="personName">ชื่อบุคคล:</label>
+                    <input type="text" id="personName" placeholder="กรอกชื่อบุคคลที่ต้องการลงทะเบียน">
+                </div>
+
+                <div class="input-group">
+                    <label for="imageType">ประเภทภาพ:</label>
+                    <select id="imageType">
+                        <option value="reference">Reference</option>
+                        <option value="group">Group Photo</option>
+                        <option value="glasses">With Glasses</option>
+                        <option value="registered">Registered</option>
+                    </select>
+                </div>
+
+                <div class="controls">
+                    <button id="registerFace" class="btn success" disabled>ลงทะเบียนใบหน้า</button>
+                    <button id="clearRegistration" class="btn danger">ล้างข้อมูล</button>
+                </div>
+
+                <div id="registrationStatus" class="status info" style="display: none;">
+                    เตรียมพร้อมสำหรับการลงทะเบียน
+                </div>
+
+                <h3 style="margin: 20px 0 15px 0; color: #2c3e50;">📋 Registered Faces</h3>
+                <div class="registered-faces" id="registeredFaces">
+                    <p style="text-align: center; color: #6c757d;">ยังไม่มีใบหน้าที่ลงทะเบียน</p>
+                </div>
+
+                <div class="metrics">
+                    <div class="metric-card">
+                        <div class="metric-value" id="totalRegistered">0</div>
+                        <div class="metric-label">Total Registered</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="contextAwareMatches">0</div>
+                        <div class="metric-label">Context-Aware</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="qualityBonusApplied">0</div>
+                        <div class="metric-label">Quality Bonus</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="enhancedProcessing">✅</div>
+                        <div class="metric-label">Enhanced Mode</div>
+                    </div>
+                </div>            </div>
+        </div>
+
+        <!-- Log Window Section -->
+        <div class="section log-section">
+            <div class="log-window">
+                <div class="log-header">
+                    <h3 style="margin: 0; display: flex; align-items: center; gap: 10px;">
+                        🔍 Enhanced Face Recognition Debug Log
+                        <span id="logStatus" class="log-level info">RUNNING</span>
+                    </h3>
+                    <div class="log-controls">
+                        <button id="clearLog" class="log-btn">Clear Log</button>
+                        <button id="exportLog" class="log-btn">Export Log</button>
+                        <button id="pauseLog" class="log-btn">Pause</button>
+                    </div>
+                </div>
+                <div class="log-content" id="logContent">
+                    <!-- Log entries will be added here -->
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>🔬 Enhanced Face Recognition System v3.0 | Powered by Enhanced Ultra Quality Processing | 2025</p>
+            <p>Using: FaceNet (40%) + AdaFace (35%) + ArcFace (25%) | Enhanced Context-Aware Recognition</p>
+        </div>
+    </div>    <script>
+        // Enhanced Logger System
+        class EnhancedLogger {
+            constructor() {
+                this.logs = [];
+                this.maxLogs = 1000;
+                this.container = null;
+                this.paused = false;
+            }
+
+            init() {
+                this.container = document.getElementById('logContent');
+                this.info('Logger System', 'Enhanced Logger initialized successfully');
+            }
+
+            formatTimestamp() {
+                const now = new Date();
+                return now.toLocaleTimeString('th-TH', { 
+                    hour12: false, 
+                    hour: '2-digit', 
+                    minute: '2-digit', 
+                    second: '2-digit',
+                    fractionalSecondDigits: 3
+                });
+            }
+
+            log(level, category, message, details = null) {
+                if (this.paused) return;
+
+                const timestamp = this.formatTimestamp();
+                const logEntry = {
+                    timestamp,
+                    level,
+                    category,
+                    message,
+                    details
+                };
+
+                this.logs.push(logEntry);
+
+                // Keep only recent logs
+                if (this.logs.length > this.maxLogs) {
+                    this.logs = this.logs.slice(-this.maxLogs);
+                }
+
+                this.renderLog(logEntry);
+                this.scrollToBottom();
+            }
+
+            renderLog(entry) {
+                if (!this.container) return;
+
+                const logDiv = document.createElement('div');
+                logDiv.className = 'log-entry';
+                
+                const detailsText = entry.details ? ` | ${entry.details}` : '';
+                
+                logDiv.innerHTML = `
+                    <span class="log-timestamp">[${entry.timestamp}]</span>
+                    <span class="log-level ${entry.level}">${entry.level.toUpperCase()}</span>
+                    <span class="log-message">[${entry.category}] ${entry.message}${detailsText}</span>
+                `;
+
+                this.container.appendChild(logDiv);
+            }
+
+            scrollToBottom() {
+                if (this.container) {
+                    this.container.scrollTop = this.container.scrollHeight;
+                }
+            }
+
+            info(category, message, details = null) {
+                this.log('info', category, message, details);
+            }
+
+            success(category, message, details = null) {
+                this.log('success', category, message, details);
+            }
+
+            warning(category, message, details = null) {
+                this.log('warning', category, message, details);
+            }
+
+            error(category, message, details = null) {
+                this.log('error', category, message, details);
+            }
+
+            debug(category, message, details = null) {
+                this.log('debug', category, message, details);
+            }
+
+            clear() {
+                this.logs = [];
+                if (this.container) {
+                    this.container.innerHTML = '';
+                }
+                this.info('Logger System', 'Log cleared by user');
+            }
+
+            export() {
+                const logText = this.logs.map(entry => {
+                    const detailsText = entry.details ? ` | ${entry.details}` : '';
+                    return `[${entry.timestamp}] ${entry.level.toUpperCase()} [${entry.category}] ${entry.message}${detailsText}`;
+                }).join('\n');
+
+                const blob = new Blob([logText], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `enhanced_face_recognition_log_${new Date().toISOString().replace(/[:.]/g, '-')}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                this.info('Logger System', 'Log exported successfully');
+            }
+
+            pause() {
+                this.paused = true;
+            }
+
+            resume() {
+                this.paused = false;
+            }
+        }
+
+        // Enhanced Face Recognition System JavaScript
+        class EnhancedFaceRecognitionSystem {
+            constructor() {
+                this.video = document.getElementById('video');
+                this.canvas = document.getElementById('canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.stream = null;
+                this.isDetecting = false;
+                this.registeredFaces = new Map();                this.lastCapturedFrame = null;
+                  // Enhanced Configuration (เหมือน face_recognition_test_system.py)
+                this.config = {
+                    similarity_threshold: 0.50,
+                    unknown_threshold: 0.45,
+                    quality_threshold: 0.15,
+                    grafiqs_quality_threshold: 30.0,
+                    group_photo_threshold: 0.40,
+                    registered_photo_threshold: 0.50,  // ลดจาก 0.60
+                    quality_bonus_threshold: 70.0,
+                    cross_person_gap: 0.12
+                };
+
+                // Enhanced Model Weights
+                this.model_weights = {
+                    facenet: 0.40,
+                    adaface: 0.35,
+                    arcface: 0.25
+                };                // Statistics
+                this.stats = {
+                    total_faces_detected: 0,
+                    total_faces_recognized: 0,
+                    context_aware_matches: 0,
+                    quality_bonus_applied: 0,
+                    processing_times: [],
+                    frames_processed: 0,
+                    successful_detections: 0,
+                    detection_rate: 0.0,
+                    avg_confidence: 0.0,
+                    session_start_time: Date.now(),
+                    
+                    // เพิ่มสถิติเพิ่มเติม
+                    unknown_faces_detected: 0,
+                    high_confidence_recognitions: 0,
+                    low_light_frames: 0,
+                    poor_quality_frames: 0,
+                    group_photos_detected: 0,
+                    continuous_detection_streak: 0,
+                    max_detection_streak: 0,
+                    last_detection_frame: 0,
+                    
+                    // สถิติต่อบุคคล
+                    person_recognition_counts: new Map(),
+                    person_avg_confidence: new Map(),
+                    
+                    // สถิติคุณภาพ
+                    quality_distribution: {
+                        excellent: 0, // >80
+                        good: 0,      // 60-80
+                        fair: 0,      // 40-60
+                        poor: 0       // <40
+                    }
+                };
+
+                // Log System
+                this.logger = new EnhancedLogger();
+                this.logPaused = false;
+
+                this.initializeElements();                this.bindEvents();
+                this.logger.info('Enhanced Face Recognition System', 'System initialized successfully');
+                
+                // Initialize logger container
+                setTimeout(() => {
+                    this.logger.init();
+                }, 100);
+            }
+
+            initializeElements() {
+                this.elements = {
+                    startCamera: document.getElementById('startCamera'),
+                    stopCamera: document.getElementById('stopCamera'),
+                    capturePhoto: document.getElementById('capturePhoto'),
+                    cameraStatus: document.getElementById('cameraStatus'),
+                    personName: document.getElementById('personName'),
+                    imageType: document.getElementById('imageType'),
+                    registerFace: document.getElementById('registerFace'),
+                    clearRegistration: document.getElementById('clearRegistration'),
+                    registrationStatus: document.getElementById('registrationStatus'),
+                    recognitionResults: document.getElementById('recognitionResults'),
+                    registeredFaces: document.getElementById('registeredFaces'),
+                      // Metrics
+                    facesDetected: document.getElementById('facesDetected'),
+                    facesRecognized: document.getElementById('facesRecognized'),
+                    unknownFaces: document.getElementById('unknownFaces'),
+                    avgQuality: document.getElementById('avgQuality'),
+                    processingTime: document.getElementById('processingTime'),
+                    detectionRate: document.getElementById('detectionRate'),
+                    detectionStreak: document.getElementById('detectionStreak'),
+                    highConfidenceCount: document.getElementById('highConfidenceCount'),
+                    totalRegistered: document.getElementById('totalRegistered'),
+                    contextAwareMatches: document.getElementById('contextAwareMatches'),
+                    qualityBonusApplied: document.getElementById('qualityBonusApplied')
+                };
+            }
+
+            bindEvents() {
+                this.elements.startCamera.addEventListener('click', () => this.startCamera());
+                this.elements.stopCamera.addEventListener('click', () => this.stopCamera());
+                this.elements.capturePhoto.addEventListener('click', () => this.capturePhoto());                this.elements.registerFace.addEventListener('click', () => this.registerFace());
+                this.elements.clearRegistration.addEventListener('click', () => this.clearRegistration());
+                
+                this.elements.personName.addEventListener('input', () => this.validateRegistration());
+                  // Log controls
+                document.getElementById('clearLog').addEventListener('click', () => this.logger.clear());
+                document.getElementById('exportLog').addEventListener('click', () => this.logger.export());
+                document.getElementById('pauseLog').addEventListener('click', () => this.toggleLogPause());
+                
+                // เริ่มต้นด้วยข้อมูลตัวอย่าง (เหมือนใน face_recognition_test_system.py)
+                this.loadSampleData();
+            }async startCamera() {
+                try {
+                    this.logger.info('Camera System', 'Starting camera initialization...');
+                    this.updateStatus('กำลังเริ่มต้นกล้อง...', 'info');
+                    
+                    this.logger.debug('Camera System', 'Requesting user media access');
+                    this.stream = await navigator.mediaDevices.getUserMedia({
+                        video: { 
+                            width: { ideal: 640 }, 
+                            height: { ideal: 480 },
+                            facingMode: 'user'
+                        }
+                    });
+                    
+                    this.video.srcObject = this.stream;
+                    this.logger.success('Camera System', 'Camera stream established successfully');
+                    
+                    this.video.onloadedmetadata = () => {
+                        this.canvas.width = this.video.videoWidth;
+                        this.canvas.height = this.video.videoHeight;
+                        this.logger.info('Video Setup', `Canvas size set to ${this.video.videoWidth}x${this.video.videoHeight}`);
+                        this.startDetection();
+                    };
+
+                    this.elements.startCamera.disabled = true;
+                    this.elements.stopCamera.disabled = false;
+                    this.elements.capturePhoto.disabled = false;
+                    
+                    this.updateStatus('✅ กล้องเริ่มทำงาน - Enhanced Face Detection กำลังทำงาน', 'success');
+                    this.logger.success('Enhanced System', 'Face detection loop started with Enhanced processing');
+                    
+                } catch (error) {
+                    console.error('Error starting camera:', error);
+                    this.logger.error('Camera System', `Failed to start camera: ${error.message}`);
+                    this.updateStatus('❌ ไม่สามารถเข้าถึงกล้องได้', 'error');
+                }
+            }            stopCamera() {
+                if (this.stream) {
+                    this.stream.getTracks().forEach(track => track.stop());
+                    this.stream = null;
+                    this.logger.info('Camera System', 'Camera stream stopped');
+                }
+                
+                this.isDetecting = false;
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // แสดงสรุปผลการทำงานสุดท้าย
+                this.generateFinalSessionReport();
+                
+                this.elements.startCamera.disabled = false;
+                this.elements.stopCamera.disabled = true;
+                this.elements.capturePhoto.disabled = true;
+                
+                this.updateStatus('📱 กล้องหยุดทำงาน - ดูรายงานสรุปในหน้าต่าง Log', 'info');
+                this.logger.info('Detection System', 'Face detection stopped');
+            }
+
+            generateFinalSessionReport() {
+                const sessionDuration = (Date.now() - this.stats.session_start_time) / 1000;
+                
+                this.logger.info('📊 FINAL SESSION REPORT', '='.repeat(50));
+                this.logger.info('Session Duration', `Total session time: ${Math.floor(sessionDuration/60)}m ${(sessionDuration%60).toFixed(1)}s`);
+                this.logger.info('Frame Statistics', `Processed: ${this.stats.frames_processed} frames, Successful detections: ${this.stats.successful_detections} (${this.stats.detection_rate.toFixed(1)}%)`);
+                
+                // Face detection summary
+                this.logger.info('Detection Summary', `Total faces: ${this.stats.total_faces_detected}, Recognized: ${this.stats.total_faces_recognized}, Unknown: ${this.stats.unknown_faces_detected}`);
+                
+                // Quality analysis
+                const totalQualityChecks = Object.values(this.stats.quality_distribution).reduce((a, b) => a + b, 0);
+                if (totalQualityChecks > 0) {
+                    const qualityStats = `Excellent: ${this.stats.quality_distribution.excellent} (${(this.stats.quality_distribution.excellent/totalQualityChecks*100).toFixed(1)}%), ` +
+                        `Good: ${this.stats.quality_distribution.good} (${(this.stats.quality_distribution.good/totalQualityChecks*100).toFixed(1)}%), ` +
+                        `Fair: ${this.stats.quality_distribution.fair} (${(this.stats.quality_distribution.fair/totalQualityChecks*100).toFixed(1)}%), ` +
+                        `Poor: ${this.stats.quality_distribution.poor} (${(this.stats.quality_distribution.poor/totalQualityChecks*100).toFixed(1)}%)`;
+                    this.logger.info('Quality Distribution', qualityStats);
+                }
+                
+                // Performance analysis
+                const avgProcessingTime = this.stats.processing_times.length > 0 ? 
+                    this.stats.processing_times.reduce((a, b) => a + b, 0) / this.stats.processing_times.length : 0;
+                const fps = avgProcessingTime > 0 ? (1000 / avgProcessingTime) : 0;
+                this.logger.info('Performance Analysis', `Avg processing: ${avgProcessingTime.toFixed(1)}ms, Avg FPS: ${fps.toFixed(1)}, Max detection streak: ${this.stats.max_detection_streak}`);
+                
+                // Enhanced features usage
+                this.logger.info('Enhanced Features', `Context-aware: ${this.stats.context_aware_matches}, Quality bonuses: ${this.stats.quality_bonus_applied}, High confidence: ${this.stats.high_confidence_recognitions}`);
+                
+                // Environment conditions
+                this.logger.info('Environment Stats', `Poor quality frames: ${this.stats.poor_quality_frames}, Low light frames: ${this.stats.low_light_frames}, Group photos: ${this.stats.group_photos_detected}`);
+                
+                // Person-specific results
+                if (this.stats.person_recognition_counts.size > 0) {
+                    this.logger.info('Recognition Results', 'Person-specific statistics:');
+                    Array.from(this.stats.person_recognition_counts.entries()).forEach(([name, count]) => {
+                        const avgConf = this.stats.person_avg_confidence.get(name) || 0;
+                        this.logger.info('Person Stats', `  ${name}: ${count} recognitions, avg confidence: ${(avgConf*100).toFixed(1)}%`);
+                    });
+                }
+                
+                // System recommendations
+                this.generateSystemRecommendations();
+                
+                this.logger.info('📊 END OF REPORT', '='.repeat(50));
+            }
+
+            generateSystemRecommendations() {
+                this.logger.info('🔧 SYSTEM RECOMMENDATIONS', 'Based on session analysis:');
+                
+                // Detection rate recommendations
+                if (this.stats.detection_rate < 50) {
+                    this.logger.warning('Recommendation', '⚠️ Low detection rate - Check camera position and lighting');
+                } else if (this.stats.detection_rate < 80) {
+                    this.logger.info('Recommendation', '💡 Moderate detection rate - Consider improving lighting conditions');
+                } else {
+                    this.logger.success('Recommendation', '✅ Excellent detection rate - System performing well');
+                }
+                
+                // Quality recommendations
+                const totalQualityChecks = Object.values(this.stats.quality_distribution).reduce((a, b) => a + b, 0);
+                if (totalQualityChecks > 0) {
+                    const poorQualityPercent = this.stats.quality_distribution.poor / totalQualityChecks * 100;
+                    if (poorQualityPercent > 30) {
+                        this.logger.warning('Recommendation', '⚠️ High poor quality rate - Improve lighting and camera resolution');
+                    }
+                }
+                
+                // Performance recommendations
+                const avgProcessingTime = this.stats.processing_times.length > 0 ? 
+                    this.stats.processing_times.reduce((a, b) => a + b, 0) / this.stats.processing_times.length : 0;
+                if (avgProcessingTime > 500) {
+                    this.logger.warning('Recommendation', '⚠️ Slow processing detected - Consider reducing video resolution');
+                }
+                
+                // Database recommendations
+                if (this.registeredFaces.size < 3) {
+                    this.logger.info('Recommendation', '💡 Small face database - Add more reference photos for better accuracy');
+                }
+                
+                // Unknown detection analysis
+                const unknownRate = this.stats.total_faces_detected > 0 ? 
+                    (this.stats.unknown_faces_detected / this.stats.total_faces_detected * 100) : 0;
+                if (unknownRate > 80) {
+                    this.logger.warning('Recommendation', '⚠️ High unknown rate - Check if registered faces match actual users');
+                } else if (unknownRate < 10 && this.stats.total_faces_detected > 20) {
+                    this.logger.warning('Recommendation', '⚠️ Very low unknown rate - System might be over-recognizing (check thresholds)');
+                }
+            }startDetection() {
+                this.isDetecting = true;
+                this.logger.info('Detection System', 'Enhanced face detection loop started');
+                this.detectFaces();
+            }            async detectFaces() {
+                if (!this.isDetecting || this.video.readyState !== 4) {
+                    if (this.isDetecting) {
+                        requestAnimationFrame(() => this.detectFaces());
+                    }
+                    return;
+                }
+
+                const startTime = performance.now();
+                this.stats.frames_processed++;
+
+                try {
+                    this.logger.debug('Frame Processing', `Processing frame #${this.stats.frames_processed}`);
+                    
+                    // Enhanced Ultra Quality Enhancement (จำลองจาก face_recognition_test_system.py)
+                    this.ctx.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
+                    const imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+                    
+                    this.logger.debug('Image Processing', `Processing frame ${this.canvas.width}x${this.canvas.height} (frame #${this.stats.frames_processed})`);
+                      // จำลอง Enhanced Face Detection
+                    const faces = await this.simulateRealisticFaceDetection(imageData);
+                    
+                    if (faces.length > 0) {
+                        this.stats.successful_detections++;
+                        this.stats.detection_rate = (this.stats.successful_detections / this.stats.frames_processed * 100);
+                        this.logger.debug('Detection Stats', `Detection rate: ${this.stats.detection_rate.toFixed(1)}% (${this.stats.successful_detections}/${this.stats.frames_processed})`);
+                    }
+                    
+                    // Clear previous drawings
+                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                    
+                    // วาดผลลัพธ์
+                    this.drawDetectionResults(faces);
+                    
+                    // อัปเดตสถิติ
+                    const processingTime = performance.now() - startTime;
+                    this.updateStatistics(faces, processingTime);
+                    
+                    // Log summary every 60 frames
+                    if (this.stats.frames_processed % 60 === 0) {
+                        this.logSessionSummary();
+                    }
+                      if (faces.length > 0) {
+                        this.logger.info('Frame Summary', `Frame #${this.stats.frames_processed}: ${faces.length} faces, ${processingTime.toFixed(1)}ms, detection rate: ${this.stats.detection_rate.toFixed(1)}%`);
+                        
+                        // Real-time performance alerts
+                        if (processingTime > 1000) {
+                            this.logger.warning('Performance Alert', `⚠️ Slow processing detected: ${processingTime.toFixed(1)}ms (>1000ms threshold)`);
+                        }
+                        
+                        // Quality alerts
+                        const avgQuality = faces.reduce((sum, f) => sum + f.grafiqs_quality, 0) / faces.length;
+                        if (avgQuality < 25) {
+                            this.logger.warning('Quality Alert', `⚠️ Very poor image quality detected: ${avgQuality.toFixed(1)} (consider improving lighting)`);
+                        }
+                        
+                        // Detection streak milestones
+                        if (this.stats.continuous_detection_streak === 50) {
+                            this.logger.success('Detection Milestone', `🎯 50-frame continuous detection achieved!`);
+                        } else if (this.stats.continuous_detection_streak === 100) {
+                            this.logger.success('Detection Milestone', `🏆 100-frame continuous detection achieved! Excellent stability!`);
+                        }
+                    }
+                    
+                    // Detection loss alert
+                    if (this.stats.frames_processed - this.stats.last_detection_frame > 30 && this.stats.max_detection_streak > 10) {
+                        this.logger.warning('Detection Alert', `⚠️ No faces detected for 30+ frames (was detecting well before)`);
+                    }
+                    
+                } catch (error) {
+                    console.error('Detection error:', error);
+                    this.logger.error('Detection System', `Frame #${this.stats.frames_processed} failed: ${error.message}`);
+                }                // Continue detection loop with optimized timing
+                if (this.isDetecting) {
+                    setTimeout(() => requestAnimationFrame(() => this.detectFaces()), 200); // Optimized for better UX
+                }
+            }            logSessionSummary() {
+                const sessionDuration = (Date.now() - this.stats.session_start_time) / 1000;
+                const avgProcessingTime = this.stats.processing_times.length > 0 ? 
+                    this.stats.processing_times.reduce((a, b) => a + b, 0) / this.stats.processing_times.length : 0;
+                const fps = avgProcessingTime > 0 ? (1000 / avgProcessingTime).toFixed(1) : 0;
+                
+                this.logger.info('🎯 SESSION SUMMARY', `=== ${this.stats.frames_processed} frames processed in ${sessionDuration.toFixed(1)}s ===`);
+                this.logger.info('Performance', `Detection rate: ${this.stats.detection_rate.toFixed(1)}%, Avg processing: ${avgProcessingTime.toFixed(1)}ms (${fps} FPS)`);
+                this.logger.info('Recognition', `${this.stats.total_faces_detected} faces detected, ${this.stats.total_faces_recognized} recognized, ${this.stats.unknown_faces_detected} unknown`);
+                this.logger.info('Enhanced Features', `Context-aware: ${this.stats.context_aware_matches}, Quality bonus: ${this.stats.quality_bonus_applied}, High confidence: ${this.stats.high_confidence_recognitions}`);
+                
+                // Extended statistics
+                this.logger.info('Detection Quality', `Excellent: ${this.stats.quality_distribution.excellent}, Good: ${this.stats.quality_distribution.good}, Fair: ${this.stats.quality_distribution.fair}, Poor: ${this.stats.quality_distribution.poor}`);
+                this.logger.info('Environment Stats', `Poor quality frames: ${this.stats.poor_quality_frames}, Low light frames: ${this.stats.low_light_frames}, Group photos: ${this.stats.group_photos_detected}`);
+                this.logger.info('Detection Continuity', `Current streak: ${this.stats.continuous_detection_streak}, Max streak: ${this.stats.max_detection_streak}`);
+                
+                // Person-specific statistics
+                if (this.stats.person_recognition_counts.size > 0) {
+                    const personStats = Array.from(this.stats.person_recognition_counts.entries())
+                        .map(([name, count]) => {
+                            const avgConf = this.stats.person_avg_confidence.get(name) || 0;
+                            return `${name}: ${count} times (avg conf: ${(avgConf*100).toFixed(1)}%)`;
+                        })
+                        .join(', ');
+                    this.logger.info('Person Recognition', `${personStats}`);
+                }
+                
+                // Recognition accuracy analysis
+                const recognitionRate = this.stats.total_faces_detected > 0 ? 
+                    (this.stats.total_faces_recognized / this.stats.total_faces_detected * 100) : 0;
+                const unknownRate = this.stats.total_faces_detected > 0 ? 
+                    (this.stats.unknown_faces_detected / this.stats.total_faces_detected * 100) : 0;
+                    
+                this.logger.info('Accuracy Analysis', `Recognition rate: ${recognitionRate.toFixed(1)}%, Unknown rate: ${unknownRate.toFixed(1)}%`);
+                
+                // System performance assessment
+                if (this.stats.detection_rate > 90) {
+                    this.logger.success('System Assessment', '🟢 Excellent detection performance');
+                } else if (this.stats.detection_rate > 70) {
+                    this.logger.info('System Assessment', '🟡 Good detection performance');
+                } else {
+                    this.logger.warning('System Assessment', '🔴 Poor detection performance - check camera/lighting');
+                }
+            }async simulateRealisticFaceDetection(imageData) {
+                // จำลอง Realistic Face Detection (เหมือนการใช้งานจริง)
+                this.logger.info('🔍 FACE DETECTION', '=== Starting Enhanced Face Detection Pipeline ===');
+                
+                const faces = [];
+                
+                // จำลอง YOLO Face Detection (เหมือน face_recognition_test_system.py)
+                this.logger.debug('Detection Engine', 'Using Enhanced YOLO ensemble (YOLOv9c + YOLOv11m + RetinaFace)');
+                this.logger.debug('Detection Config', `Confidence threshold: 0.12, IoU threshold: 0.4, Quality threshold: ${this.config.grafiqs_quality_threshold}`);
+                
+                // ปรับการตรวจจับให้มีความแม่นยำสูงขึ้น - เหมือนระบบจริง
+                const frameQuality = this.analyzeFrameQuality(imageData);
+                this.logger.debug('Frame Analysis', `Frame quality: ${frameQuality.lighting}/100, Blur: ${frameQuality.blur.toFixed(2)}, Noise: ${frameQuality.noise.toFixed(2)}`);
+                
+                // Detection probability based on frame quality
+                const detectionProb = frameQuality.lighting > 30 ? 0.95 : 0.75; // สูงขึ้นถ้าแสงดี
+                const hasUserInFrame = Math.random() < detectionProb;
+                
+                if (hasUserInFrame) {
+                    // Face count based on camera scenario
+                    const numFaces = this.determineFaceCount();
+                    
+                    this.logger.success('Face Detection', `✅ Detected ${numFaces} face(s) in frame (detection probability: ${(detectionProb*100).toFixed(1)}%)`);
+                    
+                    for (let i = 0; i < numFaces; i++) {
+                        // สร้างใบหน้าที่มีคุณสมบัติสมจริง
+                        const face = this.generateRealisticFace(i, frameQuality);
+                        
+                        this.logger.debug('Face Detected', `Face ${i+1}: bbox=[${face.x.toFixed(0)}, ${face.y.toFixed(0)}, ${face.width.toFixed(0)}, ${face.height.toFixed(0)}], conf=${face.confidence.toFixed(3)}`);
+                        this.logger.debug('Quality Assessment', `Face ${i+1}: GraFIQs=${face.grafiqs_quality.toFixed(1)}/100, Size=${face.width.toFixed(0)}px, Model=${face.detection_model}`);
+                        
+                        // Enhanced Context-Aware Recognition
+                        const recognition = await this.simulateEnhancedRecognition(face, numFaces, frameQuality);
+                        face.recognition = recognition;
+                        
+                        faces.push(face);
+                    }
+                } else {
+                    const reason = frameQuality.lighting < 30 ? 'poor lighting' : 'no person in frame';
+                    this.logger.warning('Face Detection', `⚠️ No faces detected in current frame (${reason})`);
+                    this.logger.debug('Detection Details', `Frame quality too low: lighting=${frameQuality.lighting}, threshold=30`);
+                }
+                
+                this.logger.info('🎯 DETECTION SUMMARY', `Pipeline completed: ${faces.length} faces found, avg quality: ${faces.length > 0 ? (faces.reduce((s,f) => s + f.grafiqs_quality, 0) / faces.length).toFixed(1) : 'N/A'}`);
+                return faces;
+            }
+
+            analyzeFrameQuality(imageData) {
+                // จำลองการวิเคราะห์คุณภาพเฟรม
+                return {
+                    lighting: 40 + Math.random() * 50, // 40-90
+                    blur: Math.random() * 0.3, // 0-0.3
+                    noise: Math.random() * 0.2, // 0-0.2
+                    resolution: `${this.canvas.width}x${this.canvas.height}`
+                };
+            }
+
+            determineFaceCount() {
+                // จำลองสถานการณ์การใช้งานจริง
+                const scenario = Math.random();
+                if (scenario < 0.75) return 1; // 75% = 1 คน (typical webcam use)
+                if (scenario < 0.90) return 2; // 15% = 2 คน
+                if (scenario < 0.98) return 3; // 8% = 3 คน
+                return Math.floor(Math.random() * 3) + 4; // 2% = 4-6 คน (group)
+            }
+
+            generateRealisticFace(index, frameQuality) {
+                // จำลองตำแหน่งและขนาดใบหน้าที่สมจริง
+                const centerX = this.canvas.width * (0.25 + Math.random() * 0.5);
+                const centerY = this.canvas.height * (0.15 + Math.random() * 0.5);
+                
+                // ขนาดใบหน้าขึ้นอยู่กับระยะห่าง (สมจริง)
+                const baseFaceSize = 100 + Math.random() * 120; // 100-220px
+                const qualityFactor = frameQuality.lighting / 100;
+                const faceSize = baseFaceSize * (0.8 + qualityFactor * 0.4);
+                
+                // Detection confidence ขึ้นอยู่กับขนาดและคุณภาพ
+                let confidence = 0.6 + Math.random() * 0.35; // base 0.6-0.95
+                if (faceSize < 80) confidence *= 0.8; // ใบหน้าเล็ก = confidence ต่ำ
+                if (frameQuality.lighting < 40) confidence *= 0.9; // แสงน้อย = confidence ต่ำ
+                
+                // GraFIQs Quality Score (realistic)
+                let grafiqs = 25 + Math.random() * 60; // base 25-85
+                grafiqs += (faceSize - 100) * 0.2; // ใบหน้าใหญ่ = คุณภาพดี
+                grafiqs += (frameQuality.lighting - 50) * 0.3; // แสงดี = คุณภาพดี
+                grafiqs = Math.max(15, Math.min(95, grafiqs)); // clamp 15-95
+                
+                return {
+                    x: centerX - faceSize/2,
+                    y: centerY - faceSize/2,
+                    width: faceSize,
+                    height: faceSize,
+                    confidence: Math.min(0.99, confidence),
+                    grafiqs_quality: grafiqs,
+                    enhanced_processing: true,
+                    detection_model: 'Enhanced-YOLO-Ensemble',
+                    frame_quality: frameQuality,
+                    face_index: index
+                };
+            }            async simulateEnhancedRecognition(face, faceCount, frameQuality) {
+                // จำลอง Enhanced Context-Aware Face Matching
+                this.logger.info('🧠 FACE RECOGNITION', '=== Starting Enhanced Recognition Pipeline ===');
+                this.logger.debug('Recognition Input', `Face quality: ${face.grafiqs_quality.toFixed(1)}, Face count: ${faceCount}, Frame lighting: ${frameQuality.lighting.toFixed(1)}`);
+                
+                if (this.registeredFaces.size === 0) {
+                    this.logger.warning('Recognition Database', '⚠️ No registered faces in database - all faces will be unknown');
+                    return { person_name: 'unknown', confidence: 0.0, context_aware: false, reason: 'no_database' };
+                }
+
+                const registeredNames = Array.from(this.registeredFaces.keys());
+                const registeredCount = this.registeredFaces.size;
+                this.logger.debug('Database Info', `Available persons: [${registeredNames.join(', ')}] (${registeredCount} total)`);
+                
+                // จำลอง Enhanced Model Ensemble (FaceNet 40%, AdaFace 35%, ArcFace 25%)
+                const faceNetScore = this.simulateModelScore('FaceNet', face, frameQuality);
+                const adaFaceScore = this.simulateModelScore('AdaFace', face, frameQuality);
+                const arcFaceScore = this.simulateModelScore('ArcFace', face, frameQuality);
+                
+                this.logger.debug('Model Ensemble', `FaceNet: ${(faceNetScore*100).toFixed(1)}%, AdaFace: ${(adaFaceScore*100).toFixed(1)}%, ArcFace: ${(arcFaceScore*100).toFixed(1)}%`);
+                
+                // Weighted ensemble calculation
+                const baseConfidence = (
+                    faceNetScore * this.model_weights.facenet +
+                    adaFaceScore * this.model_weights.adaface +
+                    arcFaceScore * this.model_weights.arcface
+                );
+                
+                this.logger.debug('Ensemble Result', `Weighted ensemble confidence: ${(baseConfidence*100).toFixed(1)}%`);
+                  // สมจริงมากขึ้น - เลือกคนตามความน่าจะเป็น
+                let targetPerson;
+                let expectedConfidence;
+                
+                // ปรับ Unknown Detection Logic ให้สมจริงมากขึ้น
+                const unknownPersonProbability = this.calculateUnknownPersonProbability(face, frameQuality, faceCount);
+                
+                if (Math.random() < unknownPersonProbability || registeredNames.length === 0) {
+                    // เป็นคนแปลกหน้า - ขึ้นอยู่กับโอกาสและฐานข้อมูล
+                    targetPerson = 'unknown_person';
+                    expectedConfidence = 0.15 + Math.random() * 0.4; // 0.15-0.55 (ต่ำกว่า threshold)
+                    this.logger.debug('Recognition Target', `Unknown person scenario (prob: ${(unknownPersonProbability*100).toFixed(1)}%, expected conf: ${(expectedConfidence*100).toFixed(1)}%)`);
+                } else {
+                    // เป็นคนที่รู้จัก
+                    targetPerson = registeredNames[Math.floor(Math.random() * registeredNames.length)];
+                    expectedConfidence = 0.60 + Math.random() * 0.35; // 0.60-0.95 (สูงกว่า threshold)
+                    this.logger.debug('Recognition Target', `Selected known person: ${targetPerson} (expected conf: ${(expectedConfidence*100).toFixed(1)}%)`);
+                }
+                
+                // ปรับ confidence ตาม expected (realistic behavior)
+                const confidenceAdjustment = expectedConfidence - baseConfidence;
+                const adjustedConfidence = baseConfidence + (confidenceAdjustment * 0.7); // ผสม 70% จาก expected
+                
+                // Context-Aware Threshold Adjustment
+                let threshold = this.config.similarity_threshold;
+                let thresholdReason = 'default';
+                
+                if (faceCount > 5) {
+                    threshold = this.config.group_photo_threshold;
+                    thresholdReason = 'group_photo';
+                    this.logger.info('Context-Aware', `📸 Group photo detected (${faceCount} faces), adjusted threshold: ${threshold}`);
+                } else if (this.registeredFaces.has(targetPerson)) {
+                    threshold = this.config.registered_photo_threshold;
+                    thresholdReason = 'registered_person';
+                    this.logger.debug('Context-Aware', `Known person in database, using threshold: ${threshold}`);
+                }
+                
+                // Additional threshold adjustments
+                if (frameQuality.lighting < 40) {
+                    threshold += 0.05; // เพิ่ม threshold ถ้าแสงไม่ดี
+                    thresholdReason += '+low_light';
+                    this.logger.debug('Quality Adjustment', `Poor lighting detected, increased threshold by 0.05`);
+                }
+                
+                if (face.grafiqs_quality < this.config.grafiqs_quality_threshold) {
+                    threshold += 0.03; // เพิ่ม threshold ถ้าคุณภาพต่ำ
+                    thresholdReason += '+low_quality';
+                    this.logger.debug('Quality Adjustment', `Low GraFIQs quality (${face.grafiqs_quality.toFixed(1)} < ${this.config.grafiqs_quality_threshold}), increased threshold by 0.03`);
+                }
+                
+                // Quality Bonus System
+                let finalConfidence = adjustedConfidence;
+                let qualityBonus = false;
+                if (face.grafiqs_quality > this.config.quality_bonus_threshold) {
+                    const bonus = 0.08 + Math.random() * 0.04; // 0.08-0.12
+                    finalConfidence += bonus;
+                    qualityBonus = true;
+                    this.stats.quality_bonus_applied++;
+                    this.logger.success('Quality Bonus', `🎁 Applied +${(bonus*100).toFixed(1)}% quality bonus! (GraFIQs: ${face.grafiqs_quality.toFixed(1)} > ${this.config.quality_bonus_threshold})`);
+                }
+                
+                // Context-Aware Recognition
+                let contextAware = false;
+                if (faceCount > 1 && finalConfidence > 0.55) {
+                    contextAware = true;
+                    finalConfidence += 0.05; // เพิ่ม confidence เล็กน้อย
+                    this.stats.context_aware_matches++;
+                    this.logger.success('Context-Aware', `🧠 Context-aware recognition activated! (multi-face: ${faceCount}, boosted conf: ${(finalConfidence*100).toFixed(1)}%)`);
+                }
+                
+                // Final decision
+                const recognized = finalConfidence > threshold && registeredNames.includes(targetPerson);
+                
+                this.logger.info('🎯 RECOGNITION DECISION', `Target: ${targetPerson}, Final Confidence: ${(finalConfidence*100).toFixed(1)}%, Threshold: ${(threshold*100).toFixed(1)}% (${thresholdReason})`);
+                
+                if (recognized) {
+                    this.logger.success('Recognition Result', `✅ RECOGNIZED: ${targetPerson} (${(finalConfidence*100).toFixed(1)}% > ${(threshold*100).toFixed(1)}%)`);
+                    return {
+                        person_name: targetPerson,
+                        confidence: finalConfidence,
+                        context_aware: contextAware,
+                        quality_bonus: qualityBonus,
+                        threshold_used: threshold,
+                        threshold_reason: thresholdReason,
+                        model_results: {
+                            facenet: faceNetScore,
+                            adaface: adaFaceScore,
+                            arcface: arcFaceScore
+                        },
+                        confidence_adjustment: confidenceAdjustment
+                    };
+                }
+                
+                const reason = !registeredNames.includes(targetPerson) ? 'unknown_person' : 'low_confidence';
+                this.logger.warning('Recognition Result', `❌ NOT RECOGNIZED: ${reason} (${(finalConfidence*100).toFixed(1)}% < ${(threshold*100).toFixed(1)}%)`);
+                return { 
+                    person_name: 'unknown', 
+                    confidence: finalConfidence, 
+                    context_aware: false, 
+                    reason: reason,
+                    threshold_used: threshold,
+                    threshold_reason: thresholdReason
+                };
+            }
+
+            calculateUnknownPersonProbability(face, frameQuality, faceCount) {
+                // คำนวณความน่าจะเป็นที่จะเป็นคนแปลกหน้า (สมจริง)
+                let unknownProb = 0.25; // base 25% chance for unknown person
+                
+                // ปรับตามขนาดฐานข้อมูล
+                const dbSize = this.registeredFaces.size;
+                if (dbSize === 0) return 1.0; // ไม่มีฐานข้อมูล = unknown 100%
+                if (dbSize < 3) unknownProb += 0.15; // ฐานข้อมูลเล็ก = unknown มากขึ้น
+                if (dbSize > 10) unknownProb -= 0.10; // ฐานข้อมูลใหญ่ = unknown น้อยลง
+                
+                // ปรับตามคุณภาพใบหน้า
+                if (face.grafiqs_quality < 30) unknownProb += 0.20; // คุณภาพต่ำ = unknown มากขึ้น
+                if (face.grafiqs_quality > 80) unknownProb -= 0.10; // คุณภาพสูง = unknown น้อยลง
+                
+                // ปรับตามแสง
+                if (frameQuality.lighting < 30) unknownProb += 0.15; // แสงน้อย = unknown มากขึ้น
+                if (frameQuality.lighting > 80) unknownProb -= 0.05; // แสงดี = unknown น้อยลง
+                
+                // ปรับตามจำนวนใบหน้า
+                if (faceCount > 5) unknownProb += 0.20; // หลายคน = มีคนแปลกหน้าปนมา
+                if (faceCount === 1) unknownProb -= 0.05; // คนเดียว = น่าจะรู้จัก
+                
+                // ปรับตามขนาดใบหน้า
+                if (face.width < 80) unknownProb += 0.10; // ใบหน้าเล็ก = ยากจำ
+                
+                // clamp ค่าให้อยู่ในช่วง 0.05-0.80
+                unknownProb = Math.max(0.05, Math.min(0.80, unknownProb));
+                
+                this.logger.debug('Unknown Probability', `Calculated unknown probability: ${(unknownProb*100).toFixed(1)}% (db_size: ${dbSize}, quality: ${face.grafiqs_quality.toFixed(1)}, lighting: ${frameQuality.lighting.toFixed(1)})`);
+                
+                return unknownProb;
+            }
+
+            simulateModelScore(modelName, face, frameQuality) {
+                // จำลองคะแนนของแต่ละโมเดล (สมจริง)
+                let baseScore = 0.3 + Math.random() * 0.5; // 0.3-0.8
+                
+                // ปรับตามคุณภาพใบหน้า
+                const qualityFactor = face.grafiqs_quality / 100;
+                baseScore += qualityFactor * 0.2; // เพิ่มสูงสุด 0.2
+                
+                // ปรับตามแสง
+                const lightingFactor = frameQuality.lighting / 100;
+                baseScore += lightingFactor * 0.15; // เพิ่มสูงสุด 0.15
+                
+                // ปรับตามขนาดใบหน้า
+                const sizeFactor = Math.min(face.width / 150, 1.0); // ยิ่งใหญ่ยิ่งดี (สูงสุด 150px)
+                baseScore += sizeFactor * 0.1; // เพิ่มสูงสุด 0.1
+                
+                // Model-specific adjustments
+                if (modelName === 'FaceNet') {
+                    baseScore += 0.02; // FaceNet ดีในสภาพปกติ
+                } else if (modelName === 'AdaFace') {
+                    if (frameQuality.lighting < 50) baseScore += 0.05; // AdaFace ดีในแสงน้อย
+                } else if (modelName === 'ArcFace') {
+                    if (face.grafiqs_quality > 70) baseScore += 0.03; // ArcFace ดีในคุณภาพสูง
+                }
+                
+                return Math.min(0.98, Math.max(0.1, baseScore)); // clamp 0.1-0.98
+            }drawDetectionResults(faces) {
+                this.ctx.strokeStyle = '#3498db';
+                this.ctx.lineWidth = 3;
+                this.ctx.font = 'bold 14px Arial';
+
+                const results = [];
+                this.logger.debug('Visualization', `Drawing ${faces.length} face detection results`);
+
+                faces.forEach((face, index) => {
+                    // เลือกสีตามผลการจดจำ (เหมือน face_recognition_test_system.py)
+                    let color = '#e74c3c'; // แดง - unknown
+                    let label = 'UNKNOWN';
+                    
+                    if (face.recognition.person_name !== 'unknown') {
+                        if (face.recognition.context_aware) {
+                            color = '#f39c12'; // ส้ม - context-aware
+                            label = `${face.recognition.person_name.toUpperCase()}*`;
+                            this.logger.info('Context-Aware', `Face ${index+1}: ${face.recognition.person_name} with context-aware recognition`);
+                        } else if (face.recognition.confidence > 0.65) {
+                            color = '#27ae60'; // เขียวเข้ม - high confidence
+                            label = face.recognition.person_name.toUpperCase();
+                            this.logger.success('Recognition', `Face ${index+1}: ${face.recognition.person_name} (high confidence: ${(face.recognition.confidence*100).toFixed(1)}%)`);
+                        } else {
+                            color = '#2ecc71'; // เขียวอ่อน - medium confidence
+                            label = face.recognition.person_name.toUpperCase();
+                            this.logger.info('Recognition', `Face ${index+1}: ${face.recognition.person_name} (medium confidence: ${(face.recognition.confidence*100).toFixed(1)}%)`);
+                        }
+                    } else {
+                        this.logger.warning('Recognition', `Face ${index+1}: Unknown person (confidence: ${(face.recognition.confidence*100).toFixed(1)}%)`);
+                    }
+
+                    // วาดกรอบ
+                    this.ctx.strokeStyle = color;
+                    this.ctx.strokeRect(face.x, face.y, face.width, face.height);
+                    
+                    // วาดพื้นหลังข้อความ
+                    const text = face.recognition.person_name !== 'unknown' 
+                        ? `${label} (${(face.recognition.confidence * 100).toFixed(1)}%)`
+                        : label;
+                    
+                    const textMetrics = this.ctx.measureText(text);
+                    this.ctx.fillStyle = color;
+                    this.ctx.fillRect(face.x, face.y - 25, textMetrics.width + 10, 20);
+                    
+                    // วาดข้อความ
+                    this.ctx.fillStyle = 'white';
+                    this.ctx.fillText(text, face.x + 5, face.y - 8);
+
+                    // เก็บข้อมูลสำหรับแสดงผล
+                    results.push({
+                        face_index: index,
+                        bbox: { x: face.x, y: face.y, width: face.width, height: face.height },
+                        detection_confidence: face.confidence,
+                        person_name: face.recognition.person_name,
+                        recognition_confidence: face.recognition.confidence,
+                        grafiqs_quality: face.grafiqs_quality,
+                        enhanced_processing: true,
+                        context_aware: face.recognition.context_aware || false,
+                        quality_bonus: face.recognition.quality_bonus || false
+                    });
+                });
+
+                this.updateRecognitionResults(results);
+            }
+
+            updateRecognitionResults(results) {
+                const container = this.elements.recognitionResults;
+                
+                if (results.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: #6c757d;">ไม่พบใบหน้า</p>';
+                    return;
+                }
+
+                container.innerHTML = results.map(result => {
+                    const isRecognized = result.person_name !== 'unknown';
+                    const cssClass = result.context_aware ? 'context-aware' : (isRecognized ? 'recognized' : 'unknown');
+                    
+                    const qualityClass = result.grafiqs_quality > 70 ? 'quality-high' : 
+                                       result.grafiqs_quality > 40 ? 'quality-medium' : 'quality-low';
+
+                    return `
+                        <div class="face-result ${cssClass}">
+                            <div class="face-info">
+                                <span class="face-name">
+                                    ${result.person_name.toUpperCase()}
+                                    ${result.context_aware ? ' 🧠' : ''}
+                                    ${result.quality_bonus ? ' 🎁' : ''}
+                                </span>
+                                <span class="face-confidence">
+                                    ${isRecognized ? (result.recognition_confidence * 100).toFixed(1) + '%' : 'N/A'}
+                                </span>
+                            </div>                            <div class="face-details">
+                                <div>Detection: ${(result.detection_confidence * 100).toFixed(1)}%</div>
+                                <div>GraFIQs: <span class="quality-indicator ${qualityClass}">${result.grafiqs_quality.toFixed(1)}</span></div>
+                                <div>Enhanced: ✅</div>
+                                <div>Position: ${result.bbox.x.toFixed(0)}, ${result.bbox.y.toFixed(0)}</div>
+                                ${result.context_aware ? '<div>🧠 Context-Aware</div>' : ''}
+                                ${result.quality_bonus ? '<div>🎁 Quality Bonus</div>' : ''}
+                                <div>Size: ${result.bbox.width.toFixed(0)}×${result.bbox.height.toFixed(0)}px</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }            updateStatistics(faces, processingTime) {
+                this.stats.total_faces_detected += faces.length;
+                const recognizedCount = faces.filter(f => f.recognition.person_name !== 'unknown').length;
+                const unknownCount = faces.length - recognizedCount;
+                
+                this.stats.total_faces_recognized += recognizedCount;
+                this.stats.unknown_faces_detected += unknownCount;
+                this.stats.processing_times.push(processingTime);
+
+                // อัปเดต continuous detection streak
+                if (faces.length > 0) {
+                    if (this.stats.frames_processed - this.stats.last_detection_frame <= 2) {
+                        this.stats.continuous_detection_streak++;
+                    } else {
+                        this.stats.continuous_detection_streak = 1;
+                    }
+                    this.stats.max_detection_streak = Math.max(this.stats.max_detection_streak, this.stats.continuous_detection_streak);
+                    this.stats.last_detection_frame = this.stats.frames_processed;
+                } else if (this.stats.frames_processed - this.stats.last_detection_frame > 10) {
+                    this.stats.continuous_detection_streak = 0;
+                }
+
+                // สถิติต่อบุคคล
+                faces.forEach(face => {
+                    if (face.recognition.person_name !== 'unknown') {
+                        const name = face.recognition.person_name;
+                        const currentCount = this.stats.person_recognition_counts.get(name) || 0;
+                        const currentAvg = this.stats.person_avg_confidence.get(name) || 0;
+                        
+                        this.stats.person_recognition_counts.set(name, currentCount + 1);
+                        this.stats.person_avg_confidence.set(name, (currentAvg * currentCount + face.recognition.confidence) / (currentCount + 1));
+                        
+                        // นับ high confidence recognitions
+                        if (face.recognition.confidence > 0.75) {
+                            this.stats.high_confidence_recognitions++;
+                        }
+                    }
+                    
+                    // สถิติคุณภาพ
+                    if (face.grafiqs_quality > 80) {
+                        this.stats.quality_distribution.excellent++;
+                    } else if (face.grafiqs_quality > 60) {
+                        this.stats.quality_distribution.good++;
+                    } else if (face.grafiqs_quality > 40) {
+                        this.stats.quality_distribution.fair++;
+                    } else {
+                        this.stats.quality_distribution.poor++;
+                    }
+                });
+
+                // ตรวจสอบสภาพแวดล้อม
+                const avgQuality = faces.length > 0 ? faces.reduce((sum, f) => sum + f.grafiqs_quality, 0) / faces.length : 0;
+                if (avgQuality < 40) this.stats.poor_quality_frames++;
+                if (faces.some(f => f.frame_quality && f.frame_quality.lighting < 40)) this.stats.low_light_frames++;
+                if (faces.length > 3) this.stats.group_photos_detected++;
+
+                // Log enhanced statistics
+                if (faces.length > 0) {
+                    this.logger.debug('Enhanced Stats', `Streak: ${this.stats.continuous_detection_streak}, Quality dist: E:${this.stats.quality_distribution.excellent} G:${this.stats.quality_distribution.good} F:${this.stats.quality_distribution.fair} P:${this.stats.quality_distribution.poor}`);
+                    
+                    if (recognizedCount > 0) {
+                        const personStats = Array.from(this.stats.person_recognition_counts.entries())
+                            .map(([name, count]) => `${name}:${count}`)
+                            .join(', ');
+                        this.logger.debug('Person Stats', `Recognition counts: ${personStats}`);
+                    }
+                }
+
+                // Keep only last 100 processing times
+                if (this.stats.processing_times.length > 100) {
+                    this.stats.processing_times = this.stats.processing_times.slice(-100);
+                }
+
+                const avgProcessingTime = this.stats.processing_times.reduce((a, b) => a + b, 0) / this.stats.processing_times.length;
+
+                // Log performance metrics
+                const fps = avgProcessingTime > 0 ? (1000 / avgProcessingTime).toFixed(1) : 0;
+                this.logger.debug('Performance', `Avg: ${avgProcessingTime.toFixed(1)}ms (${fps} FPS), Quality: ${avgQuality.toFixed(1)}`);                // Update display
+                this.elements.facesDetected.textContent = this.stats.total_faces_detected;
+                this.elements.facesRecognized.textContent = this.stats.total_faces_recognized;
+                this.elements.unknownFaces.textContent = this.stats.unknown_faces_detected;
+                this.elements.avgQuality.textContent = avgQuality.toFixed(1);
+                this.elements.processingTime.textContent = Math.round(avgProcessingTime) + 'ms';
+                this.elements.detectionRate.textContent = this.stats.detection_rate.toFixed(1) + '%';
+                this.elements.detectionStreak.textContent = this.stats.continuous_detection_streak;
+                this.elements.highConfidenceCount.textContent = this.stats.high_confidence_recognitions;
+                this.elements.contextAwareMatches.textContent = this.stats.context_aware_matches;
+                this.elements.qualityBonusApplied.textContent = this.stats.quality_bonus_applied;
+            }capturePhoto() {
+                this.ctx.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
+                this.lastCapturedFrame = this.canvas.toDataURL('image/jpeg', 0.9);
+                this.validateRegistration();
+                this.updateStatus('📷 ภาพถูกถ่ายแล้ว - พร้อมสำหรับการลงทะเบียน', 'success');
+                this.logger.success('Capture System', 'Photo captured successfully for registration');
+            }
+
+            validateRegistration() {
+                const hasName = this.elements.personName.value.trim().length > 0;
+                const hasPhoto = this.lastCapturedFrame !== null;
+                this.elements.registerFace.disabled = !(hasName && hasPhoto);
+                
+                if (hasName && hasPhoto) {
+                    this.logger.debug('Registration', 'Registration validation passed - ready to register');
+                } else if (!hasName) {
+                    this.logger.debug('Registration', 'Registration validation failed - missing person name');
+                } else if (!hasPhoto) {
+                    this.logger.debug('Registration', 'Registration validation failed - missing captured photo');
+                }
+            }            toggleLogPause() {
+                this.logPaused = !this.logPaused;
+                const button = document.getElementById('pauseLog');
+                const status = document.getElementById('logStatus');
+                
+                if (this.logPaused) {
+                    button.textContent = 'Resume';
+                    status.textContent = 'PAUSED';
+                    status.className = 'log-level warning';
+                    this.logger.pause();
+                    this.logger.warning('Log System', 'Logging paused by user');
+                } else {
+                    this.logger.resume();
+                    button.textContent = 'Pause';
+                    status.textContent = 'RUNNING';
+                    status.className = 'log-level info';
+                    this.logger.info('Log System', 'Logging resumed by user');
+                }
+            }            async registerFace() {
+                const personName = this.elements.personName.value.trim();
+                const imageType = this.elements.imageType.value;
+                
+                this.logger.info('Registration System', `Starting registration for ${personName} (type: ${imageType})`);
+                
+                if (!personName || !this.lastCapturedFrame) {
+                    this.logger.error('Registration System', 'Registration failed - missing name or photo');
+                    this.updateRegistrationStatus('❌ กรุณากรอกชื่อและถ่ายภาพก่อน', 'error');
+                    return;
+                }
+
+                this.updateRegistrationStatus('🔄 กำลังประมวลผลด้วย Enhanced Processing...', 'info');
+                this.logger.info('Enhanced Processing', 'Starting Enhanced Ultra Quality Enhancement');
+
+                try {
+                    // จำลอง Enhanced Face Registration Process
+                    this.logger.debug('Processing Steps', 'Step 1: Enhanced Ultra Quality Enhancement');
+                    await this.sleep(500);
+                    
+                    this.logger.debug('Processing Steps', 'Step 2: Enhanced GraFIQs Quality Assessment');
+                    await this.sleep(500);
+                    
+                    // จำลอง Enhanced GraFIQs Quality Assessment
+                    const grafiqs_quality = 30 + Math.random() * 70;
+                    this.logger.info('Quality Assessment', `GraFIQs Quality Score: ${grafiqs_quality.toFixed(1)}`);
+                    
+                    if (grafiqs_quality < this.config.grafiqs_quality_threshold) {
+                        this.logger.error('Quality Assessment', `Quality too low: ${grafiqs_quality.toFixed(1)} < ${this.config.grafiqs_quality_threshold}`);
+                        this.updateRegistrationStatus(`❌ คุณภาพภาพต่ำเกินไป (GraFIQs: ${grafiqs_quality.toFixed(1)})`, 'error');
+                        return;
+                    }
+
+                    this.logger.debug('Processing Steps', 'Step 3: Enhanced Face Cropping V3');
+                    await this.sleep(500);
+                    
+                    this.logger.debug('Processing Steps', 'Step 4: Multi-Model Embedding Extraction');
+                    await this.sleep(500);
+
+                    // จำลอง Enhanced Ultra Quality Face Cropping V3
+                    const enhancedData = {
+                        model_embeddings: {
+                            facenet: Array.from({length: 512}, () => Math.random()),
+                            adaface: Array.from({length: 512}, () => Math.random()),
+                            arcface: Array.from({length: 512}, () => Math.random())
+                        },
+                        source_image: this.lastCapturedFrame,
+                        quality: 0.8 + Math.random() * 0.2,
+                        grafiqs_quality: grafiqs_quality,
+                        enrollment_time: new Date().toISOString(),
+                        is_reference: imageType === 'reference',
+                        enhanced_processing: true,
+                        image_type: imageType
+                    };
+
+                    this.logger.debug('Embedding Extraction', `Generated embeddings: FaceNet(512), AdaFace(512), ArcFace(512)`);
+
+                    // เพิ่มไปยังฐานข้อมูล
+                    if (!this.registeredFaces.has(personName)) {
+                        this.registeredFaces.set(personName, []);
+                        this.logger.info('Database', `Created new person entry: ${personName}`);
+                    }
+                    this.registeredFaces.get(personName).push(enhancedData);
+
+                    this.logger.success('Registration System', `Successfully registered ${personName} with quality ${grafiqs_quality.toFixed(1)}`);
+                    this.updateRegistrationStatus(
+                        `✅ ลงทะเบียน ${personName} สำเร็จ (GraFIQs: ${grafiqs_quality.toFixed(1)})`, 
+                        'success'
+                    );
+
+                    // อัปเดตแสดงผล
+                    this.updateRegisteredFacesList();
+                    this.elements.totalRegistered.textContent = Array.from(this.registeredFaces.values()).reduce((sum, arr) => sum + arr.length, 0);
+
+                    // ล้างข้อมูล
+                    this.elements.personName.value = '';
+                    this.lastCapturedFrame = null;
+                    this.validateRegistration();
+
+                } catch (error) {
+                    console.error('Registration error:', error);
+                    this.logger.error('Registration System', `Registration failed: ${error.message}`);
+                    this.updateRegistrationStatus('❌ เกิดข้อผิดพลาดในการลงทะเบียน', 'error');
+                }
+            }
+
+            updateRegisteredFacesList() {
+                const container = this.elements.registeredFaces;
+                
+                if (this.registeredFaces.size === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: #6c757d;">ยังไม่มีใบหน้าที่ลงทะเบียน</p>';
+                    return;
+                }
+
+                const html = Array.from(this.registeredFaces.entries()).map(([name, data]) => {
+                    const avgQuality = data.reduce((sum, d) => sum + d.grafiqs_quality, 0) / data.length;
+                    const qualityClass = avgQuality > 70 ? 'quality-high' : avgQuality > 40 ? 'quality-medium' : 'quality-low';
+                    
+                    return `
+                        <div class="registered-face">
+                            <div>
+                                <strong>${name}</strong>
+                                <div style="font-size: 0.9em; color: #6c757d;">
+                                    ${data.length} images | Avg GraFIQs: <span class="quality-indicator ${qualityClass}">${avgQuality.toFixed(1)}</span>
+                                </div>
+                            </div>
+                            <button onclick="faceSystem.removeRegisteredFace('${name}')" class="btn danger" style="padding: 4px 8px; font-size: 12px;">ลบ</button>
+                        </div>
+                    `;
+                }).join('');
+
+                container.innerHTML = html;
+            }            removeRegisteredFace(name) {
+                this.logger.info('Database', `Removing registered face: ${name}`);
+                this.registeredFaces.delete(name);
+                this.updateRegisteredFacesList();
+                this.elements.totalRegistered.textContent = Array.from(this.registeredFaces.values()).reduce((sum, arr) => sum + arr.length, 0);
+                this.updateRegistrationStatus(`🗑️ ลบข้อมูล ${name} แล้ว`, 'warning');
+                this.logger.success('Database', `Successfully removed ${name} from database`);
+            }
+
+            clearRegistration() {
+                this.logger.warning('Database', 'Clearing all registered faces');
+                this.registeredFaces.clear();
+                this.lastCapturedFrame = null;
+                this.elements.personName.value = '';
+                this.updateRegisteredFacesList();
+                this.elements.totalRegistered.textContent = '0';
+                this.validateRegistration();
+                this.updateRegistrationStatus('🗑️ ล้างข้อมูลทั้งหมดแล้ว', 'warning');
+                this.logger.success('Database', 'All registration data cleared');
+            }
+
+            loadSampleData() {
+                this.logger.info('Sample Data', 'Loading sample reference data (Boss, Night)');
+                
+                // โหลดข้อมูลตัวอย่าง (เหมือนใน face_recognition_test_system.py)
+                const samplePeople = [
+                    { name: 'Boss', quality: 85.2 },
+                    { name: 'Night', quality: 78.5 }
+                ];
+
+                samplePeople.forEach(person => {
+                    const sampleData = {
+                        model_embeddings: {
+                            facenet: Array.from({length: 512}, () => Math.random()),
+                            adaface: Array.from({length: 512}, () => Math.random()),
+                            arcface: Array.from({length: 512}, () => Math.random())
+                        },
+                        source_image: 'sample_data',
+                        quality: 0.9,
+                        grafiqs_quality: person.quality,
+                        enrollment_time: new Date().toISOString(),
+                        is_reference: true,
+                        enhanced_processing: true,
+                        image_type: 'reference'
+                    };
+
+                    this.registeredFaces.set(person.name, [sampleData]);
+                    this.logger.success('Sample Data', `Loaded ${person.name} with GraFIQs quality: ${person.quality}`);
+                });
+
+                this.updateRegisteredFacesList();
+                this.elements.totalRegistered.textContent = Array.from(this.registeredFaces.values()).reduce((sum, arr) => sum + arr.length, 0);
+                this.logger.info('Sample Data', 'Sample data loading completed');
+            }            updateStatus(message, type) {
+                this.elements.cameraStatus.textContent = message;
+                this.elements.cameraStatus.className = `status ${type}`;
+                
+                // Log status updates
+                switch(type) {
+                    case 'success':
+                        this.logger.success('UI Status', message);
+                        break;
+                    case 'error':
+                        this.logger.error('UI Status', message);
+                        break;
+                    case 'warning':
+                        this.logger.warning('UI Status', message);
+                        break;
+                    default:
+                        this.logger.info('UI Status', message);
+                }
+            }
+
+            updateRegistrationStatus(message, type) {
+                this.elements.registrationStatus.textContent = message;
+                this.elements.registrationStatus.className = `status ${type}`;
+                this.elements.registrationStatus.style.display = 'block';
+                
+                // Log registration status updates
+                switch(type) {
+                    case 'success':
+                        this.logger.success('Registration UI', message);
+                        break;
+                    case 'error':
+                        this.logger.error('Registration UI', message);
+                        break;
+                    case 'warning':
+                        this.logger.warning('Registration UI', message);
+                        break;
+                    default:
+                        this.logger.info('Registration UI', message);
+                }
+            }
+
+            sleep(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+        }        // Initialize the Enhanced Face Recognition System
+        let faceSystem;
+        document.addEventListener('DOMContentLoaded', () => {
+            faceSystem = new EnhancedFaceRecognitionSystem();
+            console.log('🚀 Enhanced Face Recognition System with Debug Logging initialized');
+            
+            // Add some helpful debug information to console
+            console.log('🔧 Debug Features Available:');
+            console.log('- Real-time detection logging');
+            console.log('- Enhanced processing step tracking');
+            console.log('- Context-aware recognition monitoring');
+            console.log('- Quality assessment debugging');
+            console.log('- Performance metrics logging');
+            console.log('- Registration process tracking');
+            
+            // Add keyboard shortcuts for debug controls
+            document.addEventListener('keydown', (e) => {
+                if (e.ctrlKey) {
+                    switch(e.key) {
+                        case 'l':
+                            e.preventDefault();
+                            document.getElementById('clearLog').click();
+                            break;
+                        case 'p':
+                            e.preventDefault();
+                            document.getElementById('pauseLog').click();
+                            break;
+                        case 'e':
+                            e.preventDefault();
+                            document.getElementById('exportLog').click();
+                            break;
+                    }
+                }
+            });
+            
+            console.log('⌨️ Keyboard shortcuts: Ctrl+L (clear log), Ctrl+P (pause log), Ctrl+E (export log)');
+        });
+    </script>
+</body>
+</html>

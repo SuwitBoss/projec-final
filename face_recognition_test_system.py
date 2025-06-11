@@ -8,7 +8,6 @@ Enhanced Face Recognition Test System - FIXED VERSION
 - เพิ่ม context-aware recognition
 """
 
-import os
 import cv2
 import numpy as np
 import json
@@ -17,7 +16,7 @@ import asyncio
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 from enum import Enum
 
@@ -62,7 +61,6 @@ class EnhancedGraFIQsQualityAssessment:
             # คำนวณสถิติที่สำคัญ
             mean_grad = np.mean(gradient_magnitude)
             std_grad = np.std(gradient_magnitude)
-            max_grad = np.max(gradient_magnitude)
             
             # คำนวณ edge density
             edge_threshold = mean_grad + std_grad * 0.5  # ลดความเข้มงวด
@@ -96,64 +94,83 @@ class EnhancedGraFIQsQualityAssessment:
 
 class EnhancedUltraQualityEnhancer:
     """ระบบปรับปรุงคุณภาพภาพขั้นสูง - Enhanced Version"""
-    
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.target_face_size = 224
-        self.use_lab_colorspace = True
-        
+        self.use_lab_colorspace = False  # ปิดการใช้ LAB colorspace เพื่อแก้ปัญหาสีเพี้ยน
+    
+    def _preserve_original_colors(self, original: np.ndarray, processed: np.ndarray) -> np.ndarray:
+        """รักษาสีต้นฉบับโดยการผสมกับภาพต้นฉบับอย่างง่าย"""
+        try:
+            # ใช้วิธีง่ายๆ โดยผสมภาพประมวลผลแล้วกับต้นฉบับ
+            # เพื่อรักษาสีธรรมชาติ (90% processed + 10% original)
+            corrected = cv2.addWeighted(processed, 0.9, original, 0.1, 0)
+            
+            self.logger.debug("Simple color preservation applied (90% processed + 10% original)")
+            return corrected
+            
+        except Exception as e:
+            self.logger.error(f"Color preservation failed: {e}")
+            return processed
+
+    def _final_color_correction(self, original: np.ndarray, processed: np.ndarray) -> np.ndarray:
+        """การแก้ไขสีขั้นสุดท้ายด้วย histogram matching"""
+        try:
+            # ใช้ histogram matching เพื่อรักษาสีต้นฉบับ
+            corrected = processed.copy()
+            
+            for channel in range(3):
+                # คำนวณ histogram ของแต่ละ channel
+                orig_hist = cv2.calcHist([original], [channel], None, [256], [0, 256])
+                proc_hist = cv2.calcHist([processed], [channel], None, [256], [0, 256])
+                
+                # คำนวณ CDF
+                orig_cdf = orig_hist.cumsum()
+                proc_cdf = proc_hist.cumsum()
+                
+                # Normalize
+                orig_cdf = orig_cdf / (orig_cdf[-1] + 1e-7)
+                proc_cdf = proc_cdf / (proc_cdf[-1] + 1e-7)
+                
+                # สร้าง lookup table
+                lut = np.zeros(256, dtype=np.uint8)
+                for i in range(256):
+                    # หาค่าที่ใกล้เคียงที่สุด
+                    diff = np.abs(proc_cdf - orig_cdf[i])
+                    lut[i] = np.argmin(diff)
+                
+                # Apply lookup table อย่างอ่อน
+                corrected[:, :, channel] = cv2.LUT(processed[:, :, channel], lut)
+            
+            # ผสมกับภาพต้นฉบับเล็กน้อยเพื่อรักษาสี (15% ของต้นฉบับ)
+            final = cv2.addWeighted(corrected, 0.85, original, 0.15, 0)
+            
+            return final
+            
+        except Exception as e:
+            self.logger.error(f"Final color correction failed: {e}")
+            return processed
     def enhance_image_ultra_quality(self, image: np.ndarray) -> np.ndarray:
-        """Ultra Quality Enhancement with Enhanced Processing"""
+        """Ultra Quality Enhancement - Fixed Color Issues (No LAB Processing)"""
         try:
             original_height, original_width = image.shape[:2]
             self.logger.debug(f"Original size: {original_width}x{original_height}")
             
-            # === ENHANCED PREPROCESSING FOR GROUP PHOTOS ===
-            enhanced = self.enhance_group_photo(image)
+            # เก็บภาพต้นฉบับสำหรับ color reference
+            image_for_color_ref = image.copy()
+            enhanced = image.copy()
             
-            # === STAGE 1: Improved Color Space Optimization ===
-            if self.use_lab_colorspace:
-                lab_image = cv2.cvtColor(enhanced, cv2.COLOR_BGR2LAB)
-                work_image = lab_image.copy()
-                self.logger.debug("Using LAB color space for enhancement")
-            else:
-                work_image = enhanced.copy()
+            # === STAGE 1: Simple noise reduction ===
+            enhanced = cv2.fastNlMeansDenoisingColored(enhanced, None, 3, 3, 7, 21)
             
-            # === STAGE 2: Enhanced Noise Reduction ===
-            if self.use_lab_colorspace:
-                # ปรับพารามิเตอร์ noise reduction
-                work_image[:, :, 0] = cv2.fastNlMeansDenoising(
-                    work_image[:, :, 0], None, 8, 7, 21  # ลด h จาก 10 เป็น 8
-                )
-            else:
-                work_image = cv2.fastNlMeansDenoisingColored(
-                    work_image, None, 8, 8, 7, 21  # ลด h จาก 10 เป็น 8
-                )
+            # === STAGE 2: Very light contrast adjustment ===
+            enhanced = cv2.convertScaleAbs(enhanced, alpha=1.05, beta=5)
             
-            # === STAGE 3: Adaptive CLAHE ===
-            if self.use_lab_colorspace:
-                clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(8, 8))  # ลด clipLimit
-                work_image[:, :, 0] = clahe.apply(work_image[:, :, 0])
-                enhanced = cv2.cvtColor(work_image, cv2.COLOR_LAB2BGR)
-            else:
-                lab = cv2.cvtColor(work_image, cv2.COLOR_BGR2LAB)
-                clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(8, 8))
-                lab[:, :, 0] = clahe.apply(lab[:, :, 0])
-                enhanced = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
+            # === STAGE 3: Light bilateral filter ===
+            enhanced = cv2.bilateralFilter(enhanced, 3, 30, 30)
             
-            # === STAGE 4: Enhanced Gamma Correction ===
-            enhanced = self.adaptive_gamma_correction_v3(enhanced)
-            
-            # === STAGE 5: Improved Edge-preserving Filter ===
-            enhanced = cv2.bilateralFilter(enhanced, 7, 60, 60)  # ลดพารามิเตอร์
-            
-            # === STAGE 6: Enhanced Color Enhancement ===
-            hsv = cv2.cvtColor(enhanced, cv2.COLOR_BGR2HSV)
-            hsv[:, :, 1] = cv2.multiply(hsv[:, :, 1], 1.15)  # ลดจาก 1.2 เป็น 1.15
-            enhanced = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
-            
-            # === STAGE 7: Final Contrast Enhancement ===
-            enhanced = cv2.convertScaleAbs(enhanced, alpha=1.05, beta=5)  # ลดจาก 1.1, 10
+            # === STAGE 4: Preserve original colors strongly ===
+            enhanced = cv2.addWeighted(enhanced, 0.7, image_for_color_ref, 0.3, 0)
             
             return enhanced
             
@@ -198,7 +215,6 @@ class EnhancedUltraQualityEnhancer:
             
             # หา gamma ที่เหมาะสม
             median_val = np.where(cdf >= 0.5)[0][0]
-            mean_val = np.mean(l_channel)
             
             # ปรับเงื่อนไข gamma
             if median_val < 90:  # ภาพมืด (เพิ่มจาก 85)
@@ -526,7 +542,7 @@ class EnhancedFaceRecognitionTest:
                            f"(Quality: {best_face.bbox.confidence:.3f}, GraFIQs: {grafiqs_score:.1f}, "
                            f"Models: {model_count}/3)")
             return True
-                
+                 
         except Exception as e:
             self.logger.error(f"❌ เกิดข้อผิดพลาดในการลงทะเบียน {image_path}: {e}")
             return False
@@ -1214,7 +1230,7 @@ class EnhancedFaceRecognitionTest:
         self.logger.info(f"   🎯 ใบหน้าที่จดจำได้: {total_faces_recognized} ใบหน้า")
         self.logger.info(f"   📈 อัตราการจดจำรวม: {overall_recognition_rate:.1f}%")
         self.logger.info(f"   🧠 Context-Aware Matches: {self.test_stats['context_aware_matches']}")
-        self.logger.info(f"   🎁 Quality Bonus Applied: {self.test_stats['quality_bonus_applied']}")
+        self.logger.info(f"   🎁 Quality Bonus Applied: {self.test_stats['quality_bonus_applied']} ครั้ง")
         self.logger.info(f"   ⏱️ เวลาเฉลี่ย: {avg_processing_time:.3f}s")
         self.logger.info(f"   🕐 เวลาทั้งหมด: {total_time:.2f} วินาที")
         

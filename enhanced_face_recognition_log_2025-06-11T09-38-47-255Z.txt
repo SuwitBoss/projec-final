@@ -1,0 +1,1000 @@
+[16:38:28.361] INFO [Context-Aware] Context-aware recognition triggered! Face count: 3, confidence: 74.6%
+[16:38:28.362] DEBUG [Recognition Decision] Final confidence: 74.6%, Threshold: 0.6 (registered_person), Recognized: true
+[16:38:28.364] SUCCESS [Recognition] Face recognized as Boss with 74.6% confidence
+[16:38:28.365] DEBUG [Recognition Result] Face 2: Boss (74.6%)
+[16:38:28.367] DEBUG [Face Processing] Face 3: confidence=0.977, GraFIQs=35.9
+[16:38:28.368] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 35.9
+[16:38:28.369] DEBUG [Model Ensemble] Base confidence: 50.2%
+[16:38:28.371] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:28.372] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:28.373] DEBUG [Recognition Decision] Final confidence: 50.2%, Threshold: 0.6 (registered_person), Recognized: false
+[16:38:28.375] WARNING [Recognition] Face not recognized (confidence: 50.2% < threshold: 0.6)
+[16:38:28.376] DEBUG [Recognition Result] Face 3: unknown (50.2%)
+[16:38:28.377] DEBUG [Face Detection] Detected 3 faces in frame
+[16:38:28.379] DEBUG [Visualization] Drawing 3 face detection results
+[16:38:28.380] INFO [Context-Aware] Face 1: Boss with context-aware recognition
+[16:38:28.381] INFO [Context-Aware] Face 2: Boss with context-aware recognition
+[16:38:28.384] WARNING [Recognition] Face 3: Unknown person (confidence: 50.2%)
+[16:38:28.387] DEBUG [Statistics] Updated: 3 detected, 2 recognized, 71.5ms processing
+[16:38:28.391] DEBUG [Performance] Avg: 24.9ms (40.2 FPS), Quality: 46.5
+[16:38:28.393] INFO [Recognition] Processed 3 faces in 71.5ms
+[16:38:28.398] DEBUG [Face Detection] Starting detection frame processing
+[16:38:28.405] DEBUG [Image Processing] Processing frame 640x480
+[16:38:28.408] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:28.410] DEBUG [Face Detection] No faces detected in current frame
+[16:38:28.411] DEBUG [Face Detection] Detected 0 faces in frame
+[16:38:28.413] DEBUG [Visualization] Drawing 0 face detection results
+[16:38:28.414] DEBUG [Performance] Avg: 24.8ms (40.4 FPS), Quality: 0.0
+[16:38:28.423] DEBUG [Face Detection] Starting detection frame processing
+[16:38:28.431] DEBUG [Image Processing] Processing frame 640x480
+[16:38:28.434] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:28.437] DEBUG [Face Detection] No faces detected in current frame
+[16:38:28.439] DEBUG [Face Detection] Detected 0 faces in frame
+[16:38:28.440] DEBUG [Visualization] Drawing 0 face detection results
+[16:38:28.442] DEBUG [Performance] Avg: 24.7ms (40.4 FPS), Quality: 0.0
+[16:38:28.447] DEBUG [Face Detection] Starting detection frame processing
+[16:38:28.455] DEBUG [Image Processing] Processing frame 640x480
+[16:38:28.459] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:28.461] DEBUG [Face Detection] Simulating detection of 1 faces
+[16:38:28.462] DEBUG [Face Processing] Face 1: confidence=0.701, GraFIQs=99.3
+[16:38:28.464] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 99.3
+[16:38:28.465] DEBUG [Model Ensemble] Base confidence: 32.9%
+[16:38:28.467] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:28.468] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:28.470] INFO [Quality Bonus] Applied quality bonus! GraFIQs: 99.3 > 70
+[16:38:28.471] DEBUG [Recognition Decision] Final confidence: 42.9%, Threshold: 0.6 (registered_person), Recognized: false
+[16:38:28.472] WARNING [Recognition] Face not recognized (confidence: 42.9% < threshold: 0.6)
+[16:38:28.473] DEBUG [Recognition Result] Face 1: unknown (42.9%)
+[16:38:28.476] DEBUG [Face Detection] Detected 1 faces in frame
+[16:38:28.481] DEBUG [Visualization] Drawing 1 face detection results
+[16:38:28.483] WARNING [Recognition] Face 1: Unknown person (confidence: 42.9%)
+[16:38:28.485] DEBUG [Statistics] Updated: 1 detected, 0 recognized, 37.0ms processing
+[16:38:28.486] DEBUG [Performance] Avg: 24.9ms (40.2 FPS), Quality: 99.3
+[16:38:28.487] INFO [Recognition] Processed 1 faces in 37.0ms
+[16:38:28.496] DEBUG [Face Detection] Starting detection frame processing
+[16:38:28.504] DEBUG [Image Processing] Processing frame 640x480
+[16:38:28.507] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:28.509] DEBUG [Face Detection] Simulating detection of 3 faces
+[16:38:28.510] DEBUG [Face Processing] Face 1: confidence=0.701, GraFIQs=64.0
+[16:38:28.512] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 64.0
+[16:38:28.513] DEBUG [Model Ensemble] Base confidence: 34.6%
+[16:38:28.514] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:28.515] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:28.517] DEBUG [Recognition Decision] Final confidence: 34.6%, Threshold: 0.6 (registered_person), Recognized: false
+[16:38:28.518] WARNING [Recognition] Face not recognized (confidence: 34.6% < threshold: 0.6)
+[16:38:28.520] DEBUG [Recognition Result] Face 1: unknown (34.6%)
+[16:38:28.521] DEBUG [Face Processing] Face 2: confidence=0.718, GraFIQs=39.2
+[16:38:28.522] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 39.2
+[16:38:28.524] DEBUG [Model Ensemble] Base confidence: 47.9%
+[16:38:28.526] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:28.527] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:28.528] DEBUG [Recognition Decision] Final confidence: 47.9%, Threshold: 0.6 (registered_person), Recognized: false
+[16:38:28.530] WARNING [Recognition] Face not recognized (confidence: 47.9% < threshold: 0.6)
+[16:38:28.531] DEBUG [Recognition Result] Face 2: unknown (47.9%)
+[16:38:28.532] DEBUG [Face Processing] Face 3: confidence=0.995, GraFIQs=76.6
+[16:38:28.534] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 76.6
+[16:38:28.535] DEBUG [Model Ensemble] Base confidence: 70.6%
+[16:38:28.537] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:28.538] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:28.542] INFO [Quality Bonus] Applied quality bonus! GraFIQs: 76.6 > 70
+[16:38:28.545] INFO [Context-Aware] Context-aware recognition triggered! Face count: 3, confidence: 80.6%
+[16:38:28.547] DEBUG [Recognition Decision] Final confidence: 80.6%, Threshold: 0.6 (registered_person), Recognized: true
+[16:38:28.548] SUCCESS [Recognition] Face recognized as Night with 80.6% confidence
+[16:38:28.550] DEBUG [Recognition Result] Face 3: Night (80.6%)
+[16:38:28.551] DEBUG [Face Detection] Detected 3 faces in frame
+[16:38:28.552] DEBUG [Visualization] Drawing 3 face detection results
+[16:38:28.554] WARNING [Recognition] Face 1: Unknown person (confidence: 34.6%)
+[16:38:28.555] WARNING [Recognition] Face 2: Unknown person (confidence: 47.9%)
+[16:38:28.556] INFO [Context-Aware] Face 3: Night with context-aware recognition
+[16:38:28.558] DEBUG [Statistics] Updated: 3 detected, 1 recognized, 61.4ms processing
+[16:38:28.559] DEBUG [Performance] Avg: 25.3ms (39.5 FPS), Quality: 59.9
+[16:38:28.561] INFO [Recognition] Processed 3 faces in 61.4ms
+[16:38:28.573] DEBUG [Face Detection] Starting detection frame processing
+[16:38:28.581] DEBUG [Image Processing] Processing frame 640x480
+[16:38:28.585] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:28.588] DEBUG [Face Detection] Simulating detection of 2 faces
+[16:38:28.590] DEBUG [Face Processing] Face 1: confidence=0.924, GraFIQs=82.4
+[16:38:28.591] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 82.4
+[16:38:28.593] DEBUG [Model Ensemble] Base confidence: 33.6%
+[16:38:28.594] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:28.596] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:28.598] INFO [Quality Bonus] Applied quality bonus! GraFIQs: 82.4 > 70
+[16:38:28.599] DEBUG [Recognition Decision] Final confidence: 43.6%, Threshold: 0.6 (registered_person), Recognized: false
+[16:38:28.600] WARNING [Recognition] Face not recognized (confidence: 43.6% < threshold: 0.6)
+[16:38:28.602] DEBUG [Recognition Result] Face 1: unknown (43.6%)
+[16:38:28.604] DEBUG [Face Processing] Face 2: confidence=0.762, GraFIQs=43.9
+[16:38:28.605] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 43.9
+[16:38:28.607] DEBUG [Model Ensemble] Base confidence: 63.2%
+[16:38:28.608] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:28.610] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:28.611] INFO [Context-Aware] Context-aware recognition triggered! Face count: 2, confidence: 63.2%
+[16:38:28.613] DEBUG [Recognition Decision] Final confidence: 63.2%, Threshold: 0.6 (registered_person), Recognized: true
+[16:38:28.614] SUCCESS [Recognition] Face recognized as Boss with 63.2% confidence
+[16:38:28.615] DEBUG [Recognition Result] Face 2: Boss (63.2%)
+[16:38:28.617] DEBUG [Face Detection] Detected 2 faces in frame
+[16:38:28.618] DEBUG [Visualization] Drawing 2 face detection results
+[16:38:28.619] WARNING [Recognition] Face 1: Unknown person (confidence: 43.6%)
+[16:38:28.621] INFO [Context-Aware] Face 2: Boss with context-aware recognition
+[16:38:28.622] DEBUG [Statistics] Updated: 2 detected, 1 recognized, 49.5ms processing
+[16:38:28.624] DEBUG [Performance] Avg: 25.6ms (39.1 FPS), Quality: 63.2
+[16:38:28.625] INFO [Recognition] Processed 2 faces in 49.5ms
+[16:38:28.645] DEBUG [Face Detection] Starting detection frame processing
+[16:38:28.653] DEBUG [Image Processing] Processing frame 640x480
+[16:38:28.656] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:28.658] DEBUG [Face Detection] Simulating detection of 1 faces
+[16:38:28.659] DEBUG [Face Processing] Face 1: confidence=0.906, GraFIQs=44.5
+[16:38:28.660] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 44.5
+[16:38:28.662] DEBUG [Model Ensemble] Base confidence: 49.3%
+[16:38:28.663] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:28.664] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:28.666] DEBUG [Recognition Decision] Final confidence: 49.3%, Threshold: 0.6 (registered_person), Recognized: false
+[16:38:28.668] WARNING [Recognition] Face not recognized (confidence: 49.3% < threshold: 0.6)
+[16:38:28.669] DEBUG [Recognition Result] Face 1: unknown (49.3%)
+[16:38:28.670] DEBUG [Face Detection] Detected 1 faces in frame
+[16:38:28.672] DEBUG [Visualization] Drawing 1 face detection results
+[16:38:28.673] WARNING [Recognition] Face 1: Unknown person (confidence: 49.3%)
+[16:38:28.675] DEBUG [Statistics] Updated: 1 detected, 0 recognized, 30.2ms processing
+[16:38:28.677] DEBUG [Performance] Avg: 25.6ms (39.0 FPS), Quality: 44.5
+[16:38:28.678] INFO [Recognition] Processed 1 faces in 30.2ms
+[16:38:28.687] DEBUG [Face Detection] Starting detection frame processing
+[16:38:28.696] DEBUG [Image Processing] Processing frame 640x480
+[16:38:28.699] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:28.701] DEBUG [Face Detection] Simulating detection of 3 faces
+[16:38:28.703] DEBUG [Face Processing] Face 1: confidence=0.719, GraFIQs=93.0
+[16:38:28.704] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 93.0
+[16:38:28.705] DEBUG [Model Ensemble] Base confidence: 55.4%
+[16:38:28.707] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:28.708] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:28.710] INFO [Quality Bonus] Applied quality bonus! GraFIQs: 93.0 > 70
+[16:38:28.711] INFO [Context-Aware] Context-aware recognition triggered! Face count: 3, confidence: 65.4%
+[16:38:28.713] DEBUG [Recognition Decision] Final confidence: 65.4%, Threshold: 0.6 (registered_person), Recognized: true
+[16:38:28.714] SUCCESS [Recognition] Face recognized as Night with 65.4% confidence
+[16:38:28.715] DEBUG [Recognition Result] Face 1: Night (65.4%)
+[16:38:28.717] DEBUG [Face Processing] Face 2: confidence=0.987, GraFIQs=32.3
+[16:38:28.718] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 32.3
+[16:38:28.720] DEBUG [Model Ensemble] Base confidence: 79.4%
+[16:38:28.722] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:28.723] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:28.724] INFO [Context-Aware] Context-aware recognition triggered! Face count: 3, confidence: 79.4%
+[16:38:28.726] DEBUG [Recognition Decision] Final confidence: 79.4%, Threshold: 0.6 (registered_person), Recognized: true
+[16:38:28.727] SUCCESS [Recognition] Face recognized as Night with 79.4% confidence
+[16:38:28.729] DEBUG [Recognition Result] Face 2: Night (79.4%)
+[16:38:28.730] DEBUG [Face Processing] Face 3: confidence=0.712, GraFIQs=87.6
+[16:38:28.731] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 87.6
+[16:38:28.733] DEBUG [Model Ensemble] Base confidence: 65.4%
+[16:38:28.734] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:28.736] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:28.738] INFO [Quality Bonus] Applied quality bonus! GraFIQs: 87.6 > 70
+[16:38:28.739] INFO [Context-Aware] Context-aware recognition triggered! Face count: 3, confidence: 75.4%
+[16:38:28.740] DEBUG [Recognition Decision] Final confidence: 75.4%, Threshold: 0.6 (registered_person), Recognized: true
+[16:38:28.742] SUCCESS [Recognition] Face recognized as Boss with 75.4% confidence
+[16:38:28.743] DEBUG [Recognition Result] Face 3: Boss (75.4%)
+[16:38:28.745] DEBUG [Face Detection] Detected 3 faces in frame
+[16:38:28.746] DEBUG [Visualization] Drawing 3 face detection results
+[16:38:28.747] INFO [Context-Aware] Face 1: Night with context-aware recognition
+[16:38:28.749] INFO [Context-Aware] Face 2: Night with context-aware recognition
+[16:38:28.750] INFO [Context-Aware] Face 3: Boss with context-aware recognition
+[16:38:28.751] DEBUG [Statistics] Updated: 3 detected, 3 recognized, 64.0ms processing
+[16:38:28.753] DEBUG [Performance] Avg: 26.0ms (38.4 FPS), Quality: 71.0
+[16:38:28.755] INFO [Recognition] Processed 3 faces in 64.0ms
+[16:38:28.762] DEBUG [Face Detection] Starting detection frame processing
+[16:38:28.770] DEBUG [Image Processing] Processing frame 640x480
+[16:38:28.773] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:28.775] DEBUG [Face Detection] No faces detected in current frame
+[16:38:28.776] DEBUG [Face Detection] Detected 0 faces in frame
+[16:38:28.777] DEBUG [Visualization] Drawing 0 face detection results
+[16:38:28.779] DEBUG [Performance] Avg: 25.9ms (38.5 FPS), Quality: 0.0
+[16:38:28.788] DEBUG [Face Detection] Starting detection frame processing
+[16:38:28.805] DEBUG [Image Processing] Processing frame 640x480
+[16:38:28.809] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:28.811] DEBUG [Face Detection] Simulating detection of 1 faces
+[16:38:28.813] DEBUG [Face Processing] Face 1: confidence=0.807, GraFIQs=41.2
+[16:38:28.815] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 41.2
+[16:38:28.816] DEBUG [Model Ensemble] Base confidence: 71.6%
+[16:38:28.818] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:28.819] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:28.820] DEBUG [Recognition Decision] Final confidence: 71.6%, Threshold: 0.6 (registered_person), Recognized: true
+[16:38:28.825] SUCCESS [Recognition] Face recognized as Night with 71.6% confidence
+[16:38:28.827] DEBUG [Recognition Result] Face 1: Night (71.6%)
+[16:38:28.829] DEBUG [Face Detection] Detected 1 faces in frame
+[16:38:28.830] DEBUG [Visualization] Drawing 1 face detection results
+[16:38:28.832] SUCCESS [Recognition] Face 1: Night (high confidence: 71.6%)
+[16:38:28.833] DEBUG [Statistics] Updated: 1 detected, 1 recognized, 45.0ms processing
+[16:38:28.835] DEBUG [Performance] Avg: 26.1ms (38.2 FPS), Quality: 41.2
+[16:38:28.837] INFO [Recognition] Processed 1 faces in 45.0ms
+[16:38:28.847] DEBUG [Face Detection] Starting detection frame processing
+[16:38:28.864] DEBUG [Image Processing] Processing frame 640x480
+[16:38:28.867] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:28.869] DEBUG [Face Detection] Simulating detection of 3 faces
+[16:38:28.871] DEBUG [Face Processing] Face 1: confidence=0.998, GraFIQs=92.2
+[16:38:28.873] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 92.2
+[16:38:28.874] DEBUG [Model Ensemble] Base confidence: 69.8%
+[16:38:28.876] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:28.877] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:28.879] INFO [Quality Bonus] Applied quality bonus! GraFIQs: 92.2 > 70
+[16:38:28.881] INFO [Context-Aware] Context-aware recognition triggered! Face count: 3, confidence: 79.8%
+[16:38:28.882] DEBUG [Recognition Decision] Final confidence: 79.8%, Threshold: 0.6 (registered_person), Recognized: true
+[16:38:28.884] SUCCESS [Recognition] Face recognized as Boss with 79.8% confidence
+[16:38:28.885] DEBUG [Recognition Result] Face 1: Boss (79.8%)
+[16:38:28.886] DEBUG [Face Processing] Face 2: confidence=0.923, GraFIQs=98.5
+[16:38:28.888] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 98.5
+[16:38:28.889] DEBUG [Model Ensemble] Base confidence: 32.5%
+[16:38:28.891] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:28.892] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:28.893] INFO [Quality Bonus] Applied quality bonus! GraFIQs: 98.5 > 70
+[16:38:28.895] DEBUG [Recognition Decision] Final confidence: 42.5%, Threshold: 0.6 (registered_person), Recognized: false
+[16:38:28.896] WARNING [Recognition] Face not recognized (confidence: 42.5% < threshold: 0.6)
+[16:38:28.898] DEBUG [Recognition Result] Face 2: unknown (42.5%)
+[16:38:28.899] DEBUG [Face Processing] Face 3: confidence=0.717, GraFIQs=41.8
+[16:38:28.901] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 41.8
+[16:38:28.903] DEBUG [Model Ensemble] Base confidence: 47.9%
+[16:38:28.904] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:28.906] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:28.907] DEBUG [Recognition Decision] Final confidence: 47.9%, Threshold: 0.6 (registered_person), Recognized: false
+[16:38:28.909] WARNING [Recognition] Face not recognized (confidence: 47.9% < threshold: 0.6)
+[16:38:28.910] DEBUG [Recognition Result] Face 3: unknown (47.9%)
+[16:38:28.912] DEBUG [Face Detection] Detected 3 faces in frame
+[16:38:28.913] DEBUG [Visualization] Drawing 3 face detection results
+[16:38:28.914] INFO [Context-Aware] Face 1: Boss with context-aware recognition
+[16:38:28.916] WARNING [Recognition] Face 2: Unknown person (confidence: 42.5%)
+[16:38:28.917] WARNING [Recognition] Face 3: Unknown person (confidence: 47.9%)
+[16:38:28.919] DEBUG [Statistics] Updated: 3 detected, 1 recognized, 71.6ms processing
+[16:38:28.921] DEBUG [Performance] Avg: 26.6ms (37.5 FPS), Quality: 77.5
+[16:38:28.922] INFO [Recognition] Processed 3 faces in 71.6ms
+[16:38:28.932] DEBUG [Face Detection] Starting detection frame processing
+[16:38:28.939] DEBUG [Image Processing] Processing frame 640x480
+[16:38:28.942] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:28.945] DEBUG [Face Detection] Simulating detection of 2 faces
+[16:38:28.947] DEBUG [Face Processing] Face 1: confidence=0.935, GraFIQs=34.8
+[16:38:28.949] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 34.8
+[16:38:28.951] DEBUG [Model Ensemble] Base confidence: 39.2%
+[16:38:28.952] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:28.954] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:28.955] DEBUG [Recognition Decision] Final confidence: 39.2%, Threshold: 0.6 (registered_person), Recognized: false
+[16:38:28.957] WARNING [Recognition] Face not recognized (confidence: 39.2% < threshold: 0.6)
+[16:38:28.958] DEBUG [Recognition Result] Face 1: unknown (39.2%)
+[16:38:28.960] DEBUG [Face Processing] Face 2: confidence=0.848, GraFIQs=59.6
+[16:38:28.961] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 59.6
+[16:38:28.963] DEBUG [Model Ensemble] Base confidence: 39.7%
+[16:38:28.964] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:28.966] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:28.967] DEBUG [Recognition Decision] Final confidence: 39.7%, Threshold: 0.6 (registered_person), Recognized: false
+[16:38:28.968] WARNING [Recognition] Face not recognized (confidence: 39.7% < threshold: 0.6)
+[16:38:28.970] DEBUG [Recognition Result] Face 2: unknown (39.7%)
+[16:38:28.972] DEBUG [Face Detection] Detected 2 faces in frame
+[16:38:28.973] DEBUG [Visualization] Drawing 2 face detection results
+[16:38:28.975] WARNING [Recognition] Face 1: Unknown person (confidence: 39.2%)
+[16:38:28.976] WARNING [Recognition] Face 2: Unknown person (confidence: 39.7%)
+[16:38:28.978] DEBUG [Statistics] Updated: 2 detected, 0 recognized, 46.0ms processing
+[16:38:28.979] DEBUG [Performance] Avg: 26.8ms (37.3 FPS), Quality: 47.2
+[16:38:28.981] INFO [Recognition] Processed 2 faces in 46.0ms
+[16:38:28.995] DEBUG [Face Detection] Starting detection frame processing
+[16:38:29.005] DEBUG [Image Processing] Processing frame 640x480
+[16:38:29.007] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:29.009] DEBUG [Face Detection] Simulating detection of 3 faces
+[16:38:29.011] DEBUG [Face Processing] Face 1: confidence=0.703, GraFIQs=40.4
+[16:38:29.012] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 40.4
+[16:38:29.014] DEBUG [Model Ensemble] Base confidence: 42.1%
+[16:38:29.016] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:29.017] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:29.019] DEBUG [Recognition Decision] Final confidence: 42.1%, Threshold: 0.6 (registered_person), Recognized: false
+[16:38:29.021] WARNING [Recognition] Face not recognized (confidence: 42.1% < threshold: 0.6)
+[16:38:29.022] DEBUG [Recognition Result] Face 1: unknown (42.1%)
+[16:38:29.024] DEBUG [Face Processing] Face 2: confidence=0.838, GraFIQs=75.8
+[16:38:29.025] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 75.8
+[16:38:29.027] DEBUG [Model Ensemble] Base confidence: 77.7%
+[16:38:29.029] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:29.030] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:29.032] INFO [Quality Bonus] Applied quality bonus! GraFIQs: 75.8 > 70
+[16:38:29.033] INFO [Context-Aware] Context-aware recognition triggered! Face count: 3, confidence: 87.7%
+[16:38:29.035] DEBUG [Recognition Decision] Final confidence: 87.7%, Threshold: 0.6 (registered_person), Recognized: true
+[16:38:29.037] SUCCESS [Recognition] Face recognized as Night with 87.7% confidence
+[16:38:29.039] DEBUG [Recognition Result] Face 2: Night (87.7%)
+[16:38:29.040] DEBUG [Face Processing] Face 3: confidence=0.819, GraFIQs=45.1
+[16:38:29.042] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 45.1
+[16:38:29.044] DEBUG [Model Ensemble] Base confidence: 40.1%
+[16:38:29.046] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:29.048] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:29.049] DEBUG [Recognition Decision] Final confidence: 40.1%, Threshold: 0.6 (registered_person), Recognized: false
+[16:38:29.051] WARNING [Recognition] Face not recognized (confidence: 40.1% < threshold: 0.6)
+[16:38:29.054] DEBUG [Recognition Result] Face 3: unknown (40.1%)
+[16:38:29.055] DEBUG [Face Detection] Detected 3 faces in frame
+[16:38:29.057] DEBUG [Visualization] Drawing 3 face detection results
+[16:38:29.058] WARNING [Recognition] Face 1: Unknown person (confidence: 42.1%)
+[16:38:29.060] INFO [Context-Aware] Face 2: Night with context-aware recognition
+[16:38:29.062] WARNING [Recognition] Face 3: Unknown person (confidence: 40.1%)
+[16:38:29.063] DEBUG [Statistics] Updated: 3 detected, 1 recognized, 68.4ms processing
+[16:38:29.065] DEBUG [Performance] Avg: 27.3ms (36.7 FPS), Quality: 53.8
+[16:38:29.067] INFO [Recognition] Processed 3 faces in 68.4ms
+[16:38:29.079] DEBUG [Face Detection] Starting detection frame processing
+[16:38:29.086] DEBUG [Image Processing] Processing frame 640x480
+[16:38:29.089] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:29.092] DEBUG [Face Detection] Simulating detection of 3 faces
+[16:38:29.093] DEBUG [Face Processing] Face 1: confidence=0.918, GraFIQs=66.2
+[16:38:29.095] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 66.2
+[16:38:29.096] DEBUG [Model Ensemble] Base confidence: 53.7%
+[16:38:29.098] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:29.100] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:29.102] DEBUG [Recognition Decision] Final confidence: 53.7%, Threshold: 0.6 (registered_person), Recognized: false
+[16:38:29.104] WARNING [Recognition] Face not recognized (confidence: 53.7% < threshold: 0.6)
+[16:38:29.105] DEBUG [Recognition Result] Face 1: unknown (53.7%)
+[16:38:29.107] DEBUG [Face Processing] Face 2: confidence=0.835, GraFIQs=39.3
+[16:38:29.110] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 39.3
+[16:38:29.112] DEBUG [Model Ensemble] Base confidence: 44.6%
+[16:38:29.114] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:29.116] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:29.117] DEBUG [Recognition Decision] Final confidence: 44.6%, Threshold: 0.6 (registered_person), Recognized: false
+[16:38:29.119] WARNING [Recognition] Face not recognized (confidence: 44.6% < threshold: 0.6)
+[16:38:29.121] DEBUG [Recognition Result] Face 2: unknown (44.6%)
+[16:38:29.123] DEBUG [Face Processing] Face 3: confidence=0.710, GraFIQs=54.0
+[16:38:29.124] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 54.0
+[16:38:29.126] DEBUG [Model Ensemble] Base confidence: 36.5%
+[16:38:29.127] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:29.129] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:29.130] DEBUG [Recognition Decision] Final confidence: 36.5%, Threshold: 0.6 (registered_person), Recognized: false
+[16:38:29.133] WARNING [Recognition] Face not recognized (confidence: 36.5% < threshold: 0.6)
+[16:38:29.135] DEBUG [Recognition Result] Face 3: unknown (36.5%)
+[16:38:29.141] DEBUG [Face Detection] Detected 3 faces in frame
+[16:38:29.145] DEBUG [Visualization] Drawing 3 face detection results
+[16:38:29.148] WARNING [Recognition] Face 1: Unknown person (confidence: 53.7%)
+[16:38:29.150] WARNING [Recognition] Face 2: Unknown person (confidence: 44.6%)
+[16:38:29.153] WARNING [Recognition] Face 3: Unknown person (confidence: 36.5%)
+[16:38:29.154] DEBUG [Statistics] Updated: 3 detected, 0 recognized, 75.7ms processing
+[16:38:29.156] DEBUG [Performance] Avg: 27.8ms (36.0 FPS), Quality: 53.1
+[16:38:29.158] INFO [Recognition] Processed 3 faces in 75.7ms
+[16:38:29.165] DEBUG [Face Detection] Starting detection frame processing
+[16:38:29.177] DEBUG [Image Processing] Processing frame 640x480
+[16:38:29.180] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:29.182] DEBUG [Face Detection] Simulating detection of 3 faces
+[16:38:29.184] DEBUG [Face Processing] Face 1: confidence=0.828, GraFIQs=69.4
+[16:38:29.186] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 69.4
+[16:38:29.188] DEBUG [Model Ensemble] Base confidence: 63.8%
+[16:38:29.189] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:29.191] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:29.192] INFO [Context-Aware] Context-aware recognition triggered! Face count: 3, confidence: 63.8%
+[16:38:29.194] DEBUG [Recognition Decision] Final confidence: 63.8%, Threshold: 0.6 (registered_person), Recognized: true
+[16:38:29.196] SUCCESS [Recognition] Face recognized as Boss with 63.8% confidence
+[16:38:29.197] DEBUG [Recognition Result] Face 1: Boss (63.8%)
+[16:38:29.199] DEBUG [Face Processing] Face 2: confidence=0.779, GraFIQs=82.7
+[16:38:29.200] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 82.7
+[16:38:29.202] DEBUG [Model Ensemble] Base confidence: 61.1%
+[16:38:29.204] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:29.205] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:29.208] INFO [Quality Bonus] Applied quality bonus! GraFIQs: 82.7 > 70
+[16:38:29.211] INFO [Context-Aware] Context-aware recognition triggered! Face count: 3, confidence: 71.1%
+[16:38:29.214] DEBUG [Recognition Decision] Final confidence: 71.1%, Threshold: 0.6 (registered_person), Recognized: true
+[16:38:29.216] SUCCESS [Recognition] Face recognized as Boss with 71.1% confidence
+[16:38:29.218] DEBUG [Recognition Result] Face 2: Boss (71.1%)
+[16:38:29.219] DEBUG [Face Processing] Face 3: confidence=0.975, GraFIQs=75.9
+[16:38:29.221] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 75.9
+[16:38:29.222] DEBUG [Model Ensemble] Base confidence: 34.1%
+[16:38:29.224] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:29.226] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:29.228] INFO [Quality Bonus] Applied quality bonus! GraFIQs: 75.9 > 70
+[16:38:29.229] DEBUG [Recognition Decision] Final confidence: 44.1%, Threshold: 0.6 (registered_person), Recognized: false
+[16:38:29.231] WARNING [Recognition] Face not recognized (confidence: 44.1% < threshold: 0.6)
+[16:38:29.232] DEBUG [Recognition Result] Face 3: unknown (44.1%)
+[16:38:29.234] DEBUG [Face Detection] Detected 3 faces in frame
+[16:38:29.237] DEBUG [Visualization] Drawing 3 face detection results
+[16:38:29.239] INFO [Context-Aware] Face 1: Boss with context-aware recognition
+[16:38:29.242] INFO [Context-Aware] Face 2: Boss with context-aware recognition
+[16:38:29.244] WARNING [Recognition] Face 3: Unknown person (confidence: 44.1%)
+[16:38:29.246] DEBUG [Statistics] Updated: 3 detected, 2 recognized, 81.4ms processing
+[16:38:29.249] DEBUG [Performance] Avg: 28.3ms (35.3 FPS), Quality: 76.0
+[16:38:29.251] INFO [Recognition] Processed 3 faces in 81.4ms
+[16:38:29.263] DEBUG [Face Detection] Starting detection frame processing
+[16:38:29.278] DEBUG [Image Processing] Processing frame 640x480
+[16:38:29.282] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:29.286] DEBUG [Face Detection] No faces detected in current frame
+[16:38:29.288] DEBUG [Face Detection] Detected 0 faces in frame
+[16:38:29.291] DEBUG [Visualization] Drawing 0 face detection results
+[16:38:29.293] DEBUG [Performance] Avg: 28.4ms (35.3 FPS), Quality: 0.0
+[16:38:29.307] DEBUG [Face Detection] Starting detection frame processing
+[16:38:29.317] DEBUG [Image Processing] Processing frame 640x480
+[16:38:29.321] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:29.325] DEBUG [Face Detection] Simulating detection of 3 faces
+[16:38:29.327] DEBUG [Face Processing] Face 1: confidence=0.753, GraFIQs=60.1
+[16:38:29.329] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 60.1
+[16:38:29.330] DEBUG [Model Ensemble] Base confidence: 64.0%
+[16:38:29.332] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:29.334] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:29.336] INFO [Context-Aware] Context-aware recognition triggered! Face count: 3, confidence: 64.0%
+[16:38:29.337] DEBUG [Recognition Decision] Final confidence: 64.0%, Threshold: 0.6 (registered_person), Recognized: true
+[16:38:29.339] SUCCESS [Recognition] Face recognized as Boss with 64.0% confidence
+[16:38:29.340] DEBUG [Recognition Result] Face 1: Boss (64.0%)
+[16:38:29.342] DEBUG [Face Processing] Face 2: confidence=0.873, GraFIQs=48.4
+[16:38:29.344] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 48.4
+[16:38:29.345] DEBUG [Model Ensemble] Base confidence: 61.6%
+[16:38:29.347] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:29.349] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:29.351] INFO [Context-Aware] Context-aware recognition triggered! Face count: 3, confidence: 61.6%
+[16:38:29.352] DEBUG [Recognition Decision] Final confidence: 61.6%, Threshold: 0.6 (registered_person), Recognized: true
+[16:38:29.354] SUCCESS [Recognition] Face recognized as Night with 61.6% confidence
+[16:38:29.356] DEBUG [Recognition Result] Face 2: Night (61.6%)
+[16:38:29.357] DEBUG [Face Processing] Face 3: confidence=0.976, GraFIQs=74.3
+[16:38:29.359] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 74.3
+[16:38:29.360] DEBUG [Model Ensemble] Base confidence: 30.7%
+[16:38:29.362] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:29.364] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:29.365] INFO [Quality Bonus] Applied quality bonus! GraFIQs: 74.3 > 70
+[16:38:29.367] DEBUG [Recognition Decision] Final confidence: 40.7%, Threshold: 0.6 (registered_person), Recognized: false
+[16:38:29.368] WARNING [Recognition] Face not recognized (confidence: 40.7% < threshold: 0.6)
+[16:38:29.370] DEBUG [Recognition Result] Face 3: unknown (40.7%)
+[16:38:29.372] DEBUG [Face Detection] Detected 3 faces in frame
+[16:38:29.373] DEBUG [Visualization] Drawing 3 face detection results
+[16:38:29.375] INFO [Context-Aware] Face 1: Boss with context-aware recognition
+[16:38:29.377] INFO [Context-Aware] Face 2: Night with context-aware recognition
+[16:38:29.378] WARNING [Recognition] Face 3: Unknown person (confidence: 40.7%)
+[16:38:29.382] DEBUG [Statistics] Updated: 3 detected, 2 recognized, 75.7ms processing
+[16:38:29.386] DEBUG [Performance] Avg: 28.8ms (34.7 FPS), Quality: 60.9
+[16:38:29.390] INFO [Recognition] Processed 3 faces in 75.7ms
+[16:38:29.405] DEBUG [Face Detection] Starting detection frame processing
+[16:38:29.413] DEBUG [Image Processing] Processing frame 640x480
+[16:38:29.417] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:29.419] DEBUG [Face Detection] Simulating detection of 2 faces
+[16:38:29.421] DEBUG [Face Processing] Face 1: confidence=0.798, GraFIQs=57.1
+[16:38:29.422] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 57.1
+[16:38:29.424] DEBUG [Model Ensemble] Base confidence: 73.2%
+[16:38:29.426] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:29.428] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:29.430] INFO [Context-Aware] Context-aware recognition triggered! Face count: 2, confidence: 73.2%
+[16:38:29.431] DEBUG [Recognition Decision] Final confidence: 73.2%, Threshold: 0.6 (registered_person), Recognized: true
+[16:38:29.433] SUCCESS [Recognition] Face recognized as Night with 73.2% confidence
+[16:38:29.435] DEBUG [Recognition Result] Face 1: Night (73.2%)
+[16:38:29.436] DEBUG [Face Processing] Face 2: confidence=0.746, GraFIQs=89.4
+[16:38:29.438] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 89.4
+[16:38:29.440] DEBUG [Model Ensemble] Base confidence: 79.6%
+[16:38:29.441] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:29.443] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:29.445] INFO [Quality Bonus] Applied quality bonus! GraFIQs: 89.4 > 70
+[16:38:29.447] INFO [Context-Aware] Context-aware recognition triggered! Face count: 2, confidence: 89.6%
+[16:38:29.448] DEBUG [Recognition Decision] Final confidence: 89.6%, Threshold: 0.6 (registered_person), Recognized: true
+[16:38:29.450] SUCCESS [Recognition] Face recognized as Night with 89.6% confidence
+[16:38:29.452] DEBUG [Recognition Result] Face 2: Night (89.6%)
+[16:38:29.454] DEBUG [Face Detection] Detected 2 faces in frame
+[16:38:29.456] DEBUG [Visualization] Drawing 2 face detection results
+[16:38:29.458] INFO [Context-Aware] Face 1: Night with context-aware recognition
+[16:38:29.459] INFO [Context-Aware] Face 2: Night with context-aware recognition
+[16:38:29.461] DEBUG [Statistics] Updated: 2 detected, 2 recognized, 56.6ms processing
+[16:38:29.463] DEBUG [Performance] Avg: 29.1ms (34.3 FPS), Quality: 73.3
+[16:38:29.465] INFO [Recognition] Processed 2 faces in 56.6ms
+[16:38:29.474] DEBUG [Face Detection] Starting detection frame processing
+[16:38:29.484] DEBUG [Image Processing] Processing frame 640x480
+[16:38:29.488] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:29.491] DEBUG [Face Detection] Simulating detection of 1 faces
+[16:38:29.493] DEBUG [Face Processing] Face 1: confidence=0.735, GraFIQs=84.7
+[16:38:29.495] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 84.7
+[16:38:29.497] DEBUG [Model Ensemble] Base confidence: 36.5%
+[16:38:29.498] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:29.500] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:29.502] INFO [Quality Bonus] Applied quality bonus! GraFIQs: 84.7 > 70
+[16:38:29.504] DEBUG [Recognition Decision] Final confidence: 46.5%, Threshold: 0.6 (registered_person), Recognized: false
+[16:38:29.506] WARNING [Recognition] Face not recognized (confidence: 46.5% < threshold: 0.6)
+[16:38:29.507] DEBUG [Recognition Result] Face 1: unknown (46.5%)
+[16:38:29.509] DEBUG [Face Detection] Detected 1 faces in frame
+[16:38:29.511] DEBUG [Visualization] Drawing 1 face detection results
+[16:38:29.513] WARNING [Recognition] Face 1: Unknown person (confidence: 46.5%)
+[16:38:29.515] DEBUG [Statistics] Updated: 1 detected, 0 recognized, 40.2ms processing
+[16:38:29.518] DEBUG [Performance] Avg: 29.4ms (34.0 FPS), Quality: 84.7
+[16:38:29.520] INFO [Recognition] Processed 1 faces in 40.2ms
+[16:38:29.533] DEBUG [Face Detection] Starting detection frame processing
+[16:38:29.540] DEBUG [Image Processing] Processing frame 640x480
+[16:38:29.543] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:29.545] DEBUG [Face Detection] Simulating detection of 2 faces
+[16:38:29.547] DEBUG [Face Processing] Face 1: confidence=0.926, GraFIQs=42.0
+[16:38:29.549] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 42.0
+[16:38:29.550] DEBUG [Model Ensemble] Base confidence: 63.0%
+[16:38:29.552] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:29.554] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:29.555] INFO [Context-Aware] Context-aware recognition triggered! Face count: 2, confidence: 63.0%
+[16:38:29.557] DEBUG [Recognition Decision] Final confidence: 63.0%, Threshold: 0.6 (registered_person), Recognized: true
+[16:38:29.559] SUCCESS [Recognition] Face recognized as Night with 63.0% confidence
+[16:38:29.561] DEBUG [Recognition Result] Face 1: Night (63.0%)
+[16:38:29.562] DEBUG [Face Processing] Face 2: confidence=0.882, GraFIQs=66.0
+[16:38:29.564] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 66.0
+[16:38:29.566] DEBUG [Model Ensemble] Base confidence: 74.5%
+[16:38:29.568] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:29.569] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:29.571] INFO [Context-Aware] Context-aware recognition triggered! Face count: 2, confidence: 74.5%
+[16:38:29.573] DEBUG [Recognition Decision] Final confidence: 74.5%, Threshold: 0.6 (registered_person), Recognized: true
+[16:38:29.575] SUCCESS [Recognition] Face recognized as Night with 74.5% confidence
+[16:38:29.576] DEBUG [Recognition Result] Face 2: Night (74.5%)
+[16:38:29.578] DEBUG [Face Detection] Detected 2 faces in frame
+[16:38:29.580] DEBUG [Visualization] Drawing 2 face detection results
+[16:38:29.582] INFO [Context-Aware] Face 1: Night with context-aware recognition
+[16:38:29.585] INFO [Context-Aware] Face 2: Night with context-aware recognition
+[16:38:29.589] DEBUG [Statistics] Updated: 2 detected, 2 recognized, 56.0ms processing
+[16:38:29.593] DEBUG [Performance] Avg: 29.9ms (33.5 FPS), Quality: 54.0
+[16:38:29.596] INFO [Recognition] Processed 2 faces in 56.0ms
+[16:38:29.613] DEBUG [Face Detection] Starting detection frame processing
+[16:38:29.618] DEBUG [Image Processing] Processing frame 640x480
+[16:38:29.622] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:29.625] DEBUG [Face Detection] No faces detected in current frame
+[16:38:29.627] DEBUG [Face Detection] Detected 0 faces in frame
+[16:38:29.629] DEBUG [Visualization] Drawing 0 face detection results
+[16:38:29.631] DEBUG [Performance] Avg: 30.0ms (33.3 FPS), Quality: 0.0
+[16:38:29.642] DEBUG [Face Detection] Starting detection frame processing
+[16:38:29.650] DEBUG [Image Processing] Processing frame 640x480
+[16:38:29.654] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:29.655] DEBUG [Face Detection] Simulating detection of 1 faces
+[16:38:29.657] DEBUG [Face Processing] Face 1: confidence=0.798, GraFIQs=92.3
+[16:38:29.659] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 92.3
+[16:38:29.661] DEBUG [Model Ensemble] Base confidence: 31.5%
+[16:38:29.662] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:29.664] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:29.666] INFO [Quality Bonus] Applied quality bonus! GraFIQs: 92.3 > 70
+[16:38:29.667] DEBUG [Recognition Decision] Final confidence: 41.5%, Threshold: 0.6 (registered_person), Recognized: false
+[16:38:29.669] WARNING [Recognition] Face not recognized (confidence: 41.5% < threshold: 0.6)
+[16:38:29.671] DEBUG [Recognition Result] Face 1: unknown (41.5%)
+[16:38:29.673] DEBUG [Face Detection] Detected 1 faces in frame
+[16:38:29.676] DEBUG [Visualization] Drawing 1 face detection results
+[16:38:29.679] WARNING [Recognition] Face 1: Unknown person (confidence: 41.5%)
+[16:38:29.681] DEBUG [Statistics] Updated: 1 detected, 0 recognized, 38.7ms processing
+[16:38:29.683] DEBUG [Performance] Avg: 30.2ms (33.1 FPS), Quality: 92.3
+[16:38:29.685] INFO [Recognition] Processed 1 faces in 38.7ms
+[16:38:29.696] DEBUG [Face Detection] Starting detection frame processing
+[16:38:29.703] DEBUG [Image Processing] Processing frame 640x480
+[16:38:29.707] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:29.709] DEBUG [Face Detection] Simulating detection of 2 faces
+[16:38:29.711] DEBUG [Face Processing] Face 1: confidence=0.971, GraFIQs=86.8
+[16:38:29.712] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 86.8
+[16:38:29.714] DEBUG [Model Ensemble] Base confidence: 55.5%
+[16:38:29.715] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:29.717] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:29.719] INFO [Quality Bonus] Applied quality bonus! GraFIQs: 86.8 > 70
+[16:38:29.720] INFO [Context-Aware] Context-aware recognition triggered! Face count: 2, confidence: 65.5%
+[16:38:29.722] DEBUG [Recognition Decision] Final confidence: 65.5%, Threshold: 0.6 (registered_person), Recognized: true
+[16:38:29.723] SUCCESS [Recognition] Face recognized as Night with 65.5% confidence
+[16:38:29.725] DEBUG [Recognition Result] Face 1: Night (65.5%)
+[16:38:29.727] DEBUG [Face Processing] Face 2: confidence=0.739, GraFIQs=86.9
+[16:38:29.728] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 86.9
+[16:38:29.730] DEBUG [Model Ensemble] Base confidence: 39.8%
+[16:38:29.732] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:29.733] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:29.735] INFO [Quality Bonus] Applied quality bonus! GraFIQs: 86.9 > 70
+[16:38:29.736] DEBUG [Recognition Decision] Final confidence: 49.8%, Threshold: 0.6 (registered_person), Recognized: false
+[16:38:29.738] WARNING [Recognition] Face not recognized (confidence: 49.8% < threshold: 0.6)
+[16:38:29.740] DEBUG [Recognition Result] Face 2: unknown (49.8%)
+[16:38:29.741] DEBUG [Face Detection] Detected 2 faces in frame
+[16:38:29.743] DEBUG [Visualization] Drawing 2 face detection results
+[16:38:29.744] INFO [Context-Aware] Face 1: Night with context-aware recognition
+[16:38:29.746] WARNING [Recognition] Face 2: Unknown person (confidence: 49.8%)
+[16:38:29.747] DEBUG [Statistics] Updated: 2 detected, 1 recognized, 51.4ms processing
+[16:38:29.749] DEBUG [Performance] Avg: 30.6ms (32.6 FPS), Quality: 86.8
+[16:38:29.751] INFO [Recognition] Processed 2 faces in 51.4ms
+[16:38:29.763] DEBUG [Face Detection] Starting detection frame processing
+[16:38:29.770] DEBUG [Image Processing] Processing frame 640x480
+[16:38:29.773] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:29.775] DEBUG [Face Detection] Simulating detection of 2 faces
+[16:38:29.777] DEBUG [Face Processing] Face 1: confidence=0.859, GraFIQs=66.6
+[16:38:29.778] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 66.6
+[16:38:29.780] DEBUG [Model Ensemble] Base confidence: 74.9%
+[16:38:29.782] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:29.784] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:29.786] INFO [Context-Aware] Context-aware recognition triggered! Face count: 2, confidence: 74.9%
+[16:38:29.788] DEBUG [Recognition Decision] Final confidence: 74.9%, Threshold: 0.6 (registered_person), Recognized: true
+[16:38:29.790] SUCCESS [Recognition] Face recognized as Night with 74.9% confidence
+[16:38:29.791] DEBUG [Recognition Result] Face 1: Night (74.9%)
+[16:38:29.793] DEBUG [Face Processing] Face 2: confidence=0.899, GraFIQs=82.3
+[16:38:29.794] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 82.3
+[16:38:29.797] DEBUG [Model Ensemble] Base confidence: 52.0%
+[16:38:29.800] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:29.801] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:29.803] INFO [Quality Bonus] Applied quality bonus! GraFIQs: 82.3 > 70
+[16:38:29.805] INFO [Context-Aware] Context-aware recognition triggered! Face count: 2, confidence: 62.0%
+[16:38:29.807] DEBUG [Recognition Decision] Final confidence: 62.0%, Threshold: 0.6 (registered_person), Recognized: true
+[16:38:29.809] SUCCESS [Recognition] Face recognized as Night with 62.0% confidence
+[16:38:29.811] DEBUG [Recognition Result] Face 2: Night (62.0%)
+[16:38:29.812] DEBUG [Face Detection] Detected 2 faces in frame
+[16:38:29.814] DEBUG [Visualization] Drawing 2 face detection results
+[16:38:29.815] INFO [Context-Aware] Face 1: Night with context-aware recognition
+[16:38:29.817] INFO [Context-Aware] Face 2: Night with context-aware recognition
+[16:38:29.819] DEBUG [Statistics] Updated: 2 detected, 2 recognized, 56.3ms processing
+[16:38:29.821] DEBUG [Performance] Avg: 31.1ms (32.1 FPS), Quality: 74.5
+[16:38:29.822] INFO [Recognition] Processed 2 faces in 56.3ms
+[16:38:29.828] DEBUG [Face Detection] Starting detection frame processing
+[16:38:29.834] DEBUG [Image Processing] Processing frame 640x480
+[16:38:29.838] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:29.840] DEBUG [Face Detection] No faces detected in current frame
+[16:38:29.841] DEBUG [Face Detection] Detected 0 faces in frame
+[16:38:29.843] DEBUG [Visualization] Drawing 0 face detection results
+[16:38:29.845] DEBUG [Performance] Avg: 31.1ms (32.1 FPS), Quality: 0.0
+[16:38:29.853] DEBUG [Face Detection] Starting detection frame processing
+[16:38:29.860] DEBUG [Image Processing] Processing frame 640x480
+[16:38:29.863] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:29.865] DEBUG [Face Detection] Simulating detection of 1 faces
+[16:38:29.867] DEBUG [Face Processing] Face 1: confidence=0.755, GraFIQs=72.0
+[16:38:29.869] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 72.0
+[16:38:29.870] DEBUG [Model Ensemble] Base confidence: 47.7%
+[16:38:29.872] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:29.874] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:29.875] INFO [Quality Bonus] Applied quality bonus! GraFIQs: 72.0 > 70
+[16:38:29.877] DEBUG [Recognition Decision] Final confidence: 57.7%, Threshold: 0.6 (registered_person), Recognized: false
+[16:38:29.878] WARNING [Recognition] Face not recognized (confidence: 57.7% < threshold: 0.6)
+[16:38:29.880] DEBUG [Recognition Result] Face 1: unknown (57.7%)
+[16:38:29.881] DEBUG [Face Detection] Detected 1 faces in frame
+[16:38:29.883] DEBUG [Visualization] Drawing 1 face detection results
+[16:38:29.885] WARNING [Recognition] Face 1: Unknown person (confidence: 57.7%)
+[16:38:29.886] DEBUG [Statistics] Updated: 1 detected, 0 recognized, 32.9ms processing
+[16:38:29.888] DEBUG [Performance] Avg: 31.3ms (32.0 FPS), Quality: 72.0
+[16:38:29.890] INFO [Recognition] Processed 1 faces in 32.9ms
+[16:38:29.899] DEBUG [Face Detection] Starting detection frame processing
+[16:38:29.908] DEBUG [Image Processing] Processing frame 640x480
+[16:38:29.913] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:29.916] DEBUG [Face Detection] No faces detected in current frame
+[16:38:29.920] DEBUG [Face Detection] Detected 0 faces in frame
+[16:38:29.922] DEBUG [Visualization] Drawing 0 face detection results
+[16:38:29.924] DEBUG [Performance] Avg: 31.4ms (31.9 FPS), Quality: 0.0
+[16:38:29.935] DEBUG [Face Detection] Starting detection frame processing
+[16:38:29.945] DEBUG [Image Processing] Processing frame 640x480
+[16:38:29.952] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:29.956] DEBUG [Face Detection] No faces detected in current frame
+[16:38:29.959] DEBUG [Face Detection] Detected 0 faces in frame
+[16:38:29.961] DEBUG [Visualization] Drawing 0 face detection results
+[16:38:29.963] DEBUG [Performance] Avg: 31.5ms (31.7 FPS), Quality: 0.0
+[16:38:29.969] DEBUG [Face Detection] Starting detection frame processing
+[16:38:29.975] DEBUG [Image Processing] Processing frame 640x480
+[16:38:29.979] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:29.982] DEBUG [Face Detection] Simulating detection of 3 faces
+[16:38:29.984] DEBUG [Face Processing] Face 1: confidence=0.882, GraFIQs=81.2
+[16:38:29.986] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 81.2
+[16:38:29.988] DEBUG [Model Ensemble] Base confidence: 68.7%
+[16:38:29.990] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:29.992] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:29.994] INFO [Quality Bonus] Applied quality bonus! GraFIQs: 81.2 > 70
+[16:38:29.995] INFO [Context-Aware] Context-aware recognition triggered! Face count: 3, confidence: 78.7%
+[16:38:29.997] DEBUG [Recognition Decision] Final confidence: 78.7%, Threshold: 0.6 (registered_person), Recognized: true
+[16:38:29.999] SUCCESS [Recognition] Face recognized as Boss with 78.7% confidence
+[16:38:30.001] DEBUG [Recognition Result] Face 1: Boss (78.7%)
+[16:38:30.004] DEBUG [Face Processing] Face 2: confidence=0.888, GraFIQs=72.0
+[16:38:30.006] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 72.0
+[16:38:30.008] DEBUG [Model Ensemble] Base confidence: 40.1%
+[16:38:30.010] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:30.012] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:30.013] INFO [Quality Bonus] Applied quality bonus! GraFIQs: 72.0 > 70
+[16:38:30.016] DEBUG [Recognition Decision] Final confidence: 50.1%, Threshold: 0.6 (registered_person), Recognized: false
+[16:38:30.018] WARNING [Recognition] Face not recognized (confidence: 50.1% < threshold: 0.6)
+[16:38:30.021] DEBUG [Recognition Result] Face 2: unknown (50.1%)
+[16:38:30.024] DEBUG [Face Processing] Face 3: confidence=0.776, GraFIQs=81.6
+[16:38:30.026] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 81.6
+[16:38:30.028] DEBUG [Model Ensemble] Base confidence: 48.9%
+[16:38:30.031] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:30.033] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:30.035] INFO [Quality Bonus] Applied quality bonus! GraFIQs: 81.6 > 70
+[16:38:30.038] INFO [Context-Aware] Context-aware recognition triggered! Face count: 3, confidence: 58.9%
+[16:38:30.040] DEBUG [Recognition Decision] Final confidence: 58.9%, Threshold: 0.6 (registered_person), Recognized: false
+[16:38:30.043] WARNING [Recognition] Face not recognized (confidence: 58.9% < threshold: 0.6)
+[16:38:30.047] DEBUG [Recognition Result] Face 3: unknown (58.9%)
+[16:38:30.049] DEBUG [Face Detection] Detected 3 faces in frame
+[16:38:30.051] DEBUG [Visualization] Drawing 3 face detection results
+[16:38:30.053] INFO [Context-Aware] Face 1: Boss with context-aware recognition
+[16:38:30.055] WARNING [Recognition] Face 2: Unknown person (confidence: 50.1%)
+[16:38:30.056] WARNING [Recognition] Face 3: Unknown person (confidence: 58.9%)
+[16:38:30.058] DEBUG [Statistics] Updated: 3 detected, 1 recognized, 89.2ms processing
+[16:38:30.062] DEBUG [Performance] Avg: 32.4ms (30.9 FPS), Quality: 78.3
+[16:38:30.064] INFO [Recognition] Processed 3 faces in 89.2ms
+[16:38:30.078] DEBUG [Face Detection] Starting detection frame processing
+[16:38:30.084] DEBUG [Image Processing] Processing frame 640x480
+[16:38:30.088] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:30.090] DEBUG [Face Detection] No faces detected in current frame
+[16:38:30.092] DEBUG [Face Detection] Detected 0 faces in frame
+[16:38:30.094] DEBUG [Visualization] Drawing 0 face detection results
+[16:38:30.096] DEBUG [Performance] Avg: 32.5ms (30.8 FPS), Quality: 0.0
+[16:38:30.111] DEBUG [Face Detection] Starting detection frame processing
+[16:38:30.116] DEBUG [Image Processing] Processing frame 640x480
+[16:38:30.120] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:30.122] DEBUG [Face Detection] Simulating detection of 3 faces
+[16:38:30.125] DEBUG [Face Processing] Face 1: confidence=0.842, GraFIQs=71.4
+[16:38:30.128] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 71.4
+[16:38:30.130] DEBUG [Model Ensemble] Base confidence: 57.5%
+[16:38:30.133] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:30.135] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:30.138] INFO [Quality Bonus] Applied quality bonus! GraFIQs: 71.4 > 70
+[16:38:30.140] INFO [Context-Aware] Context-aware recognition triggered! Face count: 3, confidence: 67.5%
+[16:38:30.142] DEBUG [Recognition Decision] Final confidence: 67.5%, Threshold: 0.6 (registered_person), Recognized: true
+[16:38:30.145] SUCCESS [Recognition] Face recognized as Night with 67.5% confidence
+[16:38:30.148] DEBUG [Recognition Result] Face 1: Night (67.5%)
+[16:38:30.150] DEBUG [Face Processing] Face 2: confidence=0.909, GraFIQs=55.8
+[16:38:30.153] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 55.8
+[16:38:30.155] DEBUG [Model Ensemble] Base confidence: 65.1%
+[16:38:30.158] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:30.160] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:30.163] INFO [Context-Aware] Context-aware recognition triggered! Face count: 3, confidence: 65.1%
+[16:38:30.166] DEBUG [Recognition Decision] Final confidence: 65.1%, Threshold: 0.6 (registered_person), Recognized: true
+[16:38:30.168] SUCCESS [Recognition] Face recognized as Night with 65.1% confidence
+[16:38:30.171] DEBUG [Recognition Result] Face 2: Night (65.1%)
+[16:38:30.174] DEBUG [Face Processing] Face 3: confidence=0.798, GraFIQs=79.2
+[16:38:30.176] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 79.2
+[16:38:30.178] DEBUG [Model Ensemble] Base confidence: 37.2%
+[16:38:30.181] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:30.185] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:30.188] INFO [Quality Bonus] Applied quality bonus! GraFIQs: 79.2 > 70
+[16:38:30.190] DEBUG [Recognition Decision] Final confidence: 47.2%, Threshold: 0.6 (registered_person), Recognized: false
+[16:38:30.192] WARNING [Recognition] Face not recognized (confidence: 47.2% < threshold: 0.6)
+[16:38:30.194] DEBUG [Recognition Result] Face 3: unknown (47.2%)
+[16:38:30.196] DEBUG [Face Detection] Detected 3 faces in frame
+[16:38:30.198] DEBUG [Visualization] Drawing 3 face detection results
+[16:38:30.199] INFO [Context-Aware] Face 1: Night with context-aware recognition
+[16:38:30.202] INFO [Context-Aware] Face 2: Night with context-aware recognition
+[16:38:30.204] WARNING [Recognition] Face 3: Unknown person (confidence: 47.2%)
+[16:38:30.206] DEBUG [Statistics] Updated: 3 detected, 2 recognized, 95.3ms processing
+[16:38:30.210] DEBUG [Performance] Avg: 33.2ms (30.1 FPS), Quality: 68.8
+[16:38:30.212] INFO [Recognition] Processed 3 faces in 95.3ms
+[16:38:30.225] DEBUG [Face Detection] Starting detection frame processing
+[16:38:30.233] DEBUG [Image Processing] Processing frame 640x480
+[16:38:30.238] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:30.242] DEBUG [Face Detection] Simulating detection of 1 faces
+[16:38:30.245] DEBUG [Face Processing] Face 1: confidence=0.769, GraFIQs=35.0
+[16:38:30.247] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 35.0
+[16:38:30.251] DEBUG [Model Ensemble] Base confidence: 53.7%
+[16:38:30.254] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:30.256] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:30.259] DEBUG [Recognition Decision] Final confidence: 53.7%, Threshold: 0.6 (registered_person), Recognized: false
+[16:38:30.261] WARNING [Recognition] Face not recognized (confidence: 53.7% < threshold: 0.6)
+[16:38:30.263] DEBUG [Recognition Result] Face 1: unknown (53.7%)
+[16:38:30.265] DEBUG [Face Detection] Detected 1 faces in frame
+[16:38:30.267] DEBUG [Visualization] Drawing 1 face detection results
+[16:38:30.269] WARNING [Recognition] Face 1: Unknown person (confidence: 53.7%)
+[16:38:30.271] DEBUG [Statistics] Updated: 1 detected, 0 recognized, 46.6ms processing
+[16:38:30.273] DEBUG [Performance] Avg: 33.6ms (29.8 FPS), Quality: 35.0
+[16:38:30.275] INFO [Recognition] Processed 1 faces in 46.6ms
+[16:38:30.284] DEBUG [Face Detection] Starting detection frame processing
+[16:38:30.294] DEBUG [Image Processing] Processing frame 640x480
+[16:38:30.298] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:30.301] DEBUG [Face Detection] Simulating detection of 3 faces
+[16:38:30.303] DEBUG [Face Processing] Face 1: confidence=0.815, GraFIQs=73.6
+[16:38:30.305] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 73.6
+[16:38:30.307] DEBUG [Model Ensemble] Base confidence: 33.0%
+[16:38:30.310] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:30.314] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:30.316] INFO [Quality Bonus] Applied quality bonus! GraFIQs: 73.6 > 70
+[16:38:30.318] DEBUG [Recognition Decision] Final confidence: 43.0%, Threshold: 0.6 (registered_person), Recognized: false
+[16:38:30.320] WARNING [Recognition] Face not recognized (confidence: 43.0% < threshold: 0.6)
+[16:38:30.322] DEBUG [Recognition Result] Face 1: unknown (43.0%)
+[16:38:30.324] DEBUG [Face Processing] Face 2: confidence=0.937, GraFIQs=66.2
+[16:38:30.326] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 66.2
+[16:38:30.328] DEBUG [Model Ensemble] Base confidence: 53.3%
+[16:38:30.330] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:30.332] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:30.334] DEBUG [Recognition Decision] Final confidence: 53.3%, Threshold: 0.6 (registered_person), Recognized: false
+[16:38:30.336] WARNING [Recognition] Face not recognized (confidence: 53.3% < threshold: 0.6)
+[16:38:30.338] DEBUG [Recognition Result] Face 2: unknown (53.3%)
+[16:38:30.341] DEBUG [Face Processing] Face 3: confidence=0.828, GraFIQs=69.0
+[16:38:30.343] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 69.0
+[16:38:30.346] DEBUG [Model Ensemble] Base confidence: 62.3%
+[16:38:30.349] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:30.351] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:30.354] INFO [Context-Aware] Context-aware recognition triggered! Face count: 3, confidence: 62.3%
+[16:38:30.357] DEBUG [Recognition Decision] Final confidence: 62.3%, Threshold: 0.6 (registered_person), Recognized: true
+[16:38:30.359] SUCCESS [Recognition] Face recognized as Boss with 62.3% confidence
+[16:38:30.362] DEBUG [Recognition Result] Face 3: Boss (62.3%)
+[16:38:30.364] DEBUG [Face Detection] Detected 3 faces in frame
+[16:38:30.366] DEBUG [Visualization] Drawing 3 face detection results
+[16:38:30.368] WARNING [Recognition] Face 1: Unknown person (confidence: 43.0%)
+[16:38:30.370] WARNING [Recognition] Face 2: Unknown person (confidence: 53.3%)
+[16:38:30.372] INFO [Context-Aware] Face 3: Boss with context-aware recognition
+[16:38:30.377] DEBUG [Statistics] Updated: 3 detected, 1 recognized, 93.1ms processing
+[16:38:30.383] DEBUG [Performance] Avg: 34.3ms (29.1 FPS), Quality: 69.6
+[16:38:30.388] INFO [Recognition] Processed 3 faces in 93.1ms
+[16:38:30.403] DEBUG [Face Detection] Starting detection frame processing
+[16:38:30.411] DEBUG [Image Processing] Processing frame 640x480
+[16:38:30.415] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:30.417] DEBUG [Face Detection] Simulating detection of 1 faces
+[16:38:30.419] DEBUG [Face Processing] Face 1: confidence=0.786, GraFIQs=42.4
+[16:38:30.421] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 42.4
+[16:38:30.423] DEBUG [Model Ensemble] Base confidence: 63.1%
+[16:38:30.425] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:30.427] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:30.428] DEBUG [Recognition Decision] Final confidence: 63.1%, Threshold: 0.6 (registered_person), Recognized: true
+[16:38:30.430] SUCCESS [Recognition] Face recognized as Night with 63.1% confidence
+[16:38:30.432] DEBUG [Recognition Result] Face 1: Night (63.1%)
+[16:38:30.433] DEBUG [Face Detection] Detected 1 faces in frame
+[16:38:30.435] DEBUG [Visualization] Drawing 1 face detection results
+[16:38:30.439] INFO [Recognition] Face 1: Night (medium confidence: 63.1%)
+[16:38:30.443] DEBUG [Statistics] Updated: 1 detected, 1 recognized, 39.6ms processing
+[16:38:30.446] DEBUG [Performance] Avg: 34.5ms (29.0 FPS), Quality: 42.4
+[16:38:30.449] INFO [Recognition] Processed 1 faces in 39.6ms
+[16:38:30.457] DEBUG [Face Detection] Starting detection frame processing
+[16:38:30.466] DEBUG [Image Processing] Processing frame 640x480
+[16:38:30.469] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:30.472] DEBUG [Face Detection] No faces detected in current frame
+[16:38:30.474] DEBUG [Face Detection] Detected 0 faces in frame
+[16:38:30.476] DEBUG [Visualization] Drawing 0 face detection results
+[16:38:30.477] DEBUG [Performance] Avg: 34.5ms (29.0 FPS), Quality: 0.0
+[16:38:30.488] DEBUG [Face Detection] Starting detection frame processing
+[16:38:30.497] DEBUG [Image Processing] Processing frame 640x480
+[16:38:30.502] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:30.505] DEBUG [Face Detection] Simulating detection of 2 faces
+[16:38:30.507] DEBUG [Face Processing] Face 1: confidence=0.918, GraFIQs=32.5
+[16:38:30.510] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 32.5
+[16:38:30.512] DEBUG [Model Ensemble] Base confidence: 50.2%
+[16:38:30.514] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:30.516] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:30.518] DEBUG [Recognition Decision] Final confidence: 50.2%, Threshold: 0.6 (registered_person), Recognized: false
+[16:38:30.520] WARNING [Recognition] Face not recognized (confidence: 50.2% < threshold: 0.6)
+[16:38:30.522] DEBUG [Recognition Result] Face 1: unknown (50.2%)
+[16:38:30.524] DEBUG [Face Processing] Face 2: confidence=0.767, GraFIQs=30.3
+[16:38:30.526] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 30.3
+[16:38:30.528] DEBUG [Model Ensemble] Base confidence: 31.9%
+[16:38:30.530] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:30.533] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:30.534] DEBUG [Recognition Decision] Final confidence: 31.9%, Threshold: 0.6 (registered_person), Recognized: false
+[16:38:30.536] WARNING [Recognition] Face not recognized (confidence: 31.9% < threshold: 0.6)
+[16:38:30.538] DEBUG [Recognition Result] Face 2: unknown (31.9%)
+[16:38:30.540] DEBUG [Face Detection] Detected 2 faces in frame
+[16:38:30.541] DEBUG [Visualization] Drawing 2 face detection results
+[16:38:30.543] WARNING [Recognition] Face 1: Unknown person (confidence: 50.2%)
+[16:38:30.545] WARNING [Recognition] Face 2: Unknown person (confidence: 31.9%)
+[16:38:30.547] DEBUG [Statistics] Updated: 2 detected, 0 recognized, 59.5ms processing
+[16:38:30.549] DEBUG [Performance] Avg: 34.9ms (28.6 FPS), Quality: 31.4
+[16:38:30.551] INFO [Recognition] Processed 2 faces in 59.5ms
+[16:38:30.564] DEBUG [Face Detection] Starting detection frame processing
+[16:38:30.570] DEBUG [Image Processing] Processing frame 640x480
+[16:38:30.573] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:30.575] DEBUG [Face Detection] No faces detected in current frame
+[16:38:30.577] DEBUG [Face Detection] Detected 0 faces in frame
+[16:38:30.579] DEBUG [Visualization] Drawing 0 face detection results
+[16:38:30.581] DEBUG [Performance] Avg: 35.0ms (28.6 FPS), Quality: 0.0
+[16:38:30.591] DEBUG [Face Detection] Starting detection frame processing
+[16:38:30.599] DEBUG [Image Processing] Processing frame 640x480
+[16:38:30.604] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:30.607] DEBUG [Face Detection] Simulating detection of 3 faces
+[16:38:30.610] DEBUG [Face Processing] Face 1: confidence=0.759, GraFIQs=55.6
+[16:38:30.612] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 55.6
+[16:38:30.614] DEBUG [Model Ensemble] Base confidence: 32.6%
+[16:38:30.616] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:30.618] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:30.620] DEBUG [Recognition Decision] Final confidence: 32.6%, Threshold: 0.6 (registered_person), Recognized: false
+[16:38:30.622] WARNING [Recognition] Face not recognized (confidence: 32.6% < threshold: 0.6)
+[16:38:30.623] DEBUG [Recognition Result] Face 1: unknown (32.6%)
+[16:38:30.626] DEBUG [Face Processing] Face 2: confidence=0.912, GraFIQs=76.9
+[16:38:30.627] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 76.9
+[16:38:30.629] DEBUG [Model Ensemble] Base confidence: 56.2%
+[16:38:30.631] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:30.632] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:30.634] INFO [Quality Bonus] Applied quality bonus! GraFIQs: 76.9 > 70
+[16:38:30.636] INFO [Context-Aware] Context-aware recognition triggered! Face count: 3, confidence: 66.2%
+[16:38:30.638] DEBUG [Recognition Decision] Final confidence: 66.2%, Threshold: 0.6 (registered_person), Recognized: true
+[16:38:30.640] SUCCESS [Recognition] Face recognized as Boss with 66.2% confidence
+[16:38:30.641] DEBUG [Recognition Result] Face 2: Boss (66.2%)
+[16:38:30.643] DEBUG [Face Processing] Face 3: confidence=0.975, GraFIQs=88.7
+[16:38:30.645] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 88.7
+[16:38:30.647] DEBUG [Model Ensemble] Base confidence: 51.0%
+[16:38:30.649] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:30.651] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:30.652] INFO [Quality Bonus] Applied quality bonus! GraFIQs: 88.7 > 70
+[16:38:30.654] INFO [Context-Aware] Context-aware recognition triggered! Face count: 3, confidence: 61.0%
+[16:38:30.656] DEBUG [Recognition Decision] Final confidence: 61.0%, Threshold: 0.6 (registered_person), Recognized: true
+[16:38:30.658] SUCCESS [Recognition] Face recognized as Night with 61.0% confidence
+[16:38:30.660] DEBUG [Recognition Result] Face 3: Night (61.0%)
+[16:38:30.662] DEBUG [Face Detection] Detected 3 faces in frame
+[16:38:30.663] DEBUG [Visualization] Drawing 3 face detection results
+[16:38:30.665] WARNING [Recognition] Face 1: Unknown person (confidence: 32.6%)
+[16:38:30.667] INFO [Context-Aware] Face 2: Boss with context-aware recognition
+[16:38:30.669] INFO [Context-Aware] Face 3: Night with context-aware recognition
+[16:38:30.671] DEBUG [Statistics] Updated: 3 detected, 2 recognized, 80.4ms processing
+[16:38:30.673] DEBUG [Performance] Avg: 35.7ms (28.0 FPS), Quality: 73.7
+[16:38:30.675] INFO [Recognition] Processed 3 faces in 80.4ms
+[16:38:30.686] DEBUG [Face Detection] Starting detection frame processing
+[16:38:30.694] DEBUG [Image Processing] Processing frame 640x480
+[16:38:30.698] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:30.701] DEBUG [Face Detection] No faces detected in current frame
+[16:38:30.703] DEBUG [Face Detection] Detected 0 faces in frame
+[16:38:30.705] DEBUG [Visualization] Drawing 0 face detection results
+[16:38:30.706] DEBUG [Performance] Avg: 35.7ms (28.0 FPS), Quality: 0.0
+[16:38:30.720] DEBUG [Face Detection] Starting detection frame processing
+[16:38:30.728] DEBUG [Image Processing] Processing frame 640x480
+[16:38:30.732] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:30.734] DEBUG [Face Detection] Simulating detection of 2 faces
+[16:38:30.736] DEBUG [Face Processing] Face 1: confidence=0.701, GraFIQs=33.2
+[16:38:30.738] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 33.2
+[16:38:30.740] DEBUG [Model Ensemble] Base confidence: 47.1%
+[16:38:30.742] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:30.744] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:30.745] DEBUG [Recognition Decision] Final confidence: 47.1%, Threshold: 0.6 (registered_person), Recognized: false
+[16:38:30.747] WARNING [Recognition] Face not recognized (confidence: 47.1% < threshold: 0.6)
+[16:38:30.749] DEBUG [Recognition Result] Face 1: unknown (47.1%)
+[16:38:30.751] DEBUG [Face Processing] Face 2: confidence=0.964, GraFIQs=89.0
+[16:38:30.753] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 89.0
+[16:38:30.754] DEBUG [Model Ensemble] Base confidence: 55.7%
+[16:38:30.756] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:30.758] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:30.760] INFO [Quality Bonus] Applied quality bonus! GraFIQs: 89.0 > 70
+[16:38:30.762] INFO [Context-Aware] Context-aware recognition triggered! Face count: 2, confidence: 65.7%
+[16:38:30.764] DEBUG [Recognition Decision] Final confidence: 65.7%, Threshold: 0.6 (registered_person), Recognized: true
+[16:38:30.766] SUCCESS [Recognition] Face recognized as Boss with 65.7% confidence
+[16:38:30.767] DEBUG [Recognition Result] Face 2: Boss (65.7%)
+[16:38:30.769] DEBUG [Face Detection] Detected 2 faces in frame
+[16:38:30.771] DEBUG [Visualization] Drawing 2 face detection results
+[16:38:30.773] WARNING [Recognition] Face 1: Unknown person (confidence: 47.1%)
+[16:38:30.775] INFO [Context-Aware] Face 2: Boss with context-aware recognition
+[16:38:30.777] DEBUG [Statistics] Updated: 2 detected, 1 recognized, 56.9ms processing
+[16:38:30.779] DEBUG [Performance] Avg: 36.2ms (27.6 FPS), Quality: 61.1
+[16:38:30.781] INFO [Recognition] Processed 2 faces in 56.9ms
+[16:38:30.789] DEBUG [Face Detection] Starting detection frame processing
+[16:38:30.797] DEBUG [Image Processing] Processing frame 640x480
+[16:38:30.801] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:30.803] DEBUG [Face Detection] Simulating detection of 2 faces
+[16:38:30.805] DEBUG [Face Processing] Face 1: confidence=0.844, GraFIQs=97.7
+[16:38:30.807] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 97.7
+[16:38:30.809] DEBUG [Model Ensemble] Base confidence: 73.2%
+[16:38:30.811] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:30.813] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:30.815] INFO [Quality Bonus] Applied quality bonus! GraFIQs: 97.7 > 70
+[16:38:30.822] INFO [Context-Aware] Context-aware recognition triggered! Face count: 2, confidence: 83.2%
+[16:38:30.826] DEBUG [Recognition Decision] Final confidence: 83.2%, Threshold: 0.6 (registered_person), Recognized: true
+[16:38:30.829] SUCCESS [Recognition] Face recognized as Night with 83.2% confidence
+[16:38:30.832] DEBUG [Recognition Result] Face 1: Night (83.2%)
+[16:38:30.834] DEBUG [Face Processing] Face 2: confidence=0.969, GraFIQs=92.4
+[16:38:30.835] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 92.4
+[16:38:30.838] DEBUG [Model Ensemble] Base confidence: 37.2%
+[16:38:30.840] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:30.843] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:30.845] INFO [Quality Bonus] Applied quality bonus! GraFIQs: 92.4 > 70
+[16:38:30.848] DEBUG [Recognition Decision] Final confidence: 47.2%, Threshold: 0.6 (registered_person), Recognized: false
+[16:38:30.850] WARNING [Recognition] Face not recognized (confidence: 47.2% < threshold: 0.6)
+[16:38:30.852] DEBUG [Recognition Result] Face 2: unknown (47.2%)
+[16:38:30.854] DEBUG [Face Detection] Detected 2 faces in frame
+[16:38:30.856] DEBUG [Visualization] Drawing 2 face detection results
+[16:38:30.858] INFO [Context-Aware] Face 1: Night with context-aware recognition
+[16:38:30.860] WARNING [Recognition] Face 2: Unknown person (confidence: 47.2%)
+[16:38:30.862] DEBUG [Statistics] Updated: 2 detected, 1 recognized, 72.7ms processing
+[16:38:30.864] DEBUG [Performance] Avg: 36.8ms (27.2 FPS), Quality: 95.1
+[16:38:30.866] INFO [Recognition] Processed 2 faces in 72.7ms
+[16:38:30.874] DEBUG [Face Detection] Starting detection frame processing
+[16:38:30.880] DEBUG [Image Processing] Processing frame 640x480
+[16:38:30.884] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:30.886] DEBUG [Face Detection] Simulating detection of 1 faces
+[16:38:30.888] DEBUG [Face Processing] Face 1: confidence=0.744, GraFIQs=56.1
+[16:38:30.890] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 56.1
+[16:38:30.892] DEBUG [Model Ensemble] Base confidence: 55.2%
+[16:38:30.894] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:30.895] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:30.897] DEBUG [Recognition Decision] Final confidence: 55.2%, Threshold: 0.6 (registered_person), Recognized: false
+[16:38:30.899] WARNING [Recognition] Face not recognized (confidence: 55.2% < threshold: 0.6)
+[16:38:30.901] DEBUG [Recognition Result] Face 1: unknown (55.2%)
+[16:38:30.903] DEBUG [Face Detection] Detected 1 faces in frame
+[16:38:30.905] DEBUG [Visualization] Drawing 1 face detection results
+[16:38:30.907] WARNING [Recognition] Face 1: Unknown person (confidence: 55.2%)
+[16:38:30.909] DEBUG [Statistics] Updated: 1 detected, 0 recognized, 34.7ms processing
+[16:38:30.911] DEBUG [Performance] Avg: 37.1ms (27.0 FPS), Quality: 56.1
+[16:38:30.913] INFO [Recognition] Processed 1 faces in 34.7ms
+[16:38:30.931] DEBUG [Face Detection] Starting detection frame processing
+[16:38:30.938] DEBUG [Image Processing] Processing frame 640x480
+[16:38:30.941] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:30.943] DEBUG [Face Detection] No faces detected in current frame
+[16:38:30.945] DEBUG [Face Detection] Detected 0 faces in frame
+[16:38:30.947] DEBUG [Visualization] Drawing 0 face detection results
+[16:38:30.949] DEBUG [Performance] Avg: 37.1ms (26.9 FPS), Quality: 0.0
+[16:38:30.959] DEBUG [Face Detection] Starting detection frame processing
+[16:38:30.967] DEBUG [Image Processing] Processing frame 640x480
+[16:38:30.972] DEBUG [Enhanced Detection] Starting Enhanced Ultra Quality Enhancement
+[16:38:30.974] DEBUG [Face Detection] Simulating detection of 2 faces
+[16:38:30.976] DEBUG [Face Processing] Face 1: confidence=0.743, GraFIQs=84.1
+[16:38:30.978] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 84.1
+[16:38:30.979] DEBUG [Model Ensemble] Base confidence: 34.1%
+[16:38:30.983] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:30.987] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:30.989] INFO [Quality Bonus] Applied quality bonus! GraFIQs: 84.1 > 70
+[16:38:30.991] DEBUG [Recognition Decision] Final confidence: 44.1%, Threshold: 0.6 (registered_person), Recognized: false
+[16:38:30.993] WARNING [Recognition] Face not recognized (confidence: 44.1% < threshold: 0.6)
+[16:38:30.995] DEBUG [Recognition Result] Face 1: unknown (44.1%)
+[16:38:30.997] DEBUG [Face Processing] Face 2: confidence=0.899, GraFIQs=49.6
+[16:38:30.999] DEBUG [Recognition Processing] Starting enhanced recognition for face with GraFIQs: 49.6
+[16:38:31.001] DEBUG [Model Ensemble] Base confidence: 79.0%
+[16:38:31.003] DEBUG [Model Weights] FaceNet: 40%, AdaFace: 35%, ArcFace: 25%
+[16:38:31.005] DEBUG [Context-Aware] Registered person detected, using threshold: 0.6
+[16:38:31.007] INFO [Context-Aware] Context-aware recognition triggered! Face count: 2, confidence: 79.0%
+[16:38:31.009] DEBUG [Recognition Decision] Final confidence: 79.0%, Threshold: 0.6 (registered_person), Recognized: true
+[16:38:31.011] SUCCESS [Recognition] Face recognized as Boss with 79.0% confidence
+[16:38:31.013] DEBUG [Recognition Result] Face 2: Boss (79.0%)
+[16:38:31.015] DEBUG [Face Detection] Detected 2 faces in frame
+[16:38:31.017] DEBUG [Visualization] Drawing 2 face detection results
+[16:38:31.019] WARNING [Recognition] Face 1: Unknown person (confidence: 44.1%)
+[16:38:31.021] INFO [Context-Aware] Face 2: Boss with context-aware recognition
+[16:38:31.023] DEBUG [Statistics] Updated: 2 detected, 1 recognized, 63.2ms processing
+[16:38:31.025] DEBUG [Performance] Avg: 37.6ms (26.6 FPS), Quality: 66.9
+[16:38:31.027] INFO [Recognition] Processed 2 faces in 63.2ms
+[16:38:31.035] INFO [Camera System] Camera stream stopped
+[16:38:31.041] INFO [UI Status] 📱 กล้องหยุดทำงาน
+[16:38:31.046] INFO [Detection System] Face detection stopped

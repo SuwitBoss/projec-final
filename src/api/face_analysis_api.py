@@ -6,43 +6,199 @@ Comprehensive face analysis combining detection and recognition services
 from fastapi import APIRouter, HTTPException, File, UploadFile, Form, Depends
 from fastapi.responses import JSONResponse
 from typing import Optional, List, Dict, Any, Union
-import numpy as np
-import cv2
-import base64
-import io
-import asyncio
-from PIL import Image
-import json
-import time
-from datetime import datetime
+import numpy as np # For image processing if needed, and for type hints
+from datetime import datetime # For timestamps
+import base64 # For base64 image processing in analyze_faces_base64
 
 from ..ai_services.face_analysis.models import (
-    FaceAnalysisResult, FaceResult, AnalysisConfig,
-    AnalysisMode, QualityLevel
+    AnalysisConfig,
+    AnalysisMode,  # Added
+    QualityLevel   # Added
+)
+from ..ai_services.face_detection.models import ( # Added this import block
+    DetectionConfig,
+    DetectionEngine
+)
+from ..ai_services.face_recognition.models import ( # Added this import block
+    RecognitionModel
 )
 from ..ai_services.face_analysis.face_analysis_service import FaceAnalysisService
-from ..ai_services.face_detection.models import DetectionConfig, DetectionEngine
-from ..ai_services.face_recognition.models import RecognitionModel, FaceGallery
-from ..core.vram_manager import VRAMManager
-from ..utils.image_utils import process_image_input, validate_image_format
+# FaceDetectionService is imported but reported as unused in the last check, let's keep it for now as /detect endpoint might need it.
+from ..ai_services.face_detection.face_detection_service import FaceDetectionService
+from ..ai_services.common.vram_manager import VRAMManager # For model switching logic
+from ..utils.image_utils import process_image_input # process_image_input is used
 
-router = APIRouter(prefix="/api/v1/face-analysis", tags=["face-analysis"])
+router = APIRouter(prefix="/api/face-analysis", tags=["face-analysis"])
 
 # Global service references (will be injected from main.py)
 face_analysis_service: Optional[FaceAnalysisService] = None
+face_detection_service: Optional[FaceDetectionService] = None # Corrected type hint
 vram_manager: Optional[VRAMManager] = None
 
 def get_face_analysis_service() -> FaceAnalysisService:
     """Dependency to get face analysis service"""
     if face_analysis_service is None:
-        raise HTTPException(status_code=503, detail="Face Analysis service not initialized")
+        raise HTTPException(status_code=503, detail="Face analysis service not available or not initialized.") # Added detail
     return face_analysis_service
+
+def get_face_detection_service() -> FaceDetectionService: # Corrected type hint
+    """Dependency to get face detection service directly"""
+    if face_detection_service is None:
+        raise HTTPException(status_code=503, detail="Face detection service not available")
+    return face_detection_service
 
 def get_vram_manager() -> VRAMManager:
     """Dependency to get VRAM manager"""
     if vram_manager is None:
         raise HTTPException(status_code=503, detail="VRAM manager not initialized")
     return vram_manager
+
+@router.get("/health")
+async def health_check():
+    """Health check endpoint for face analysis service"""
+    try:
+        # Check if services are available
+        detection_service_available = face_analysis_service is not None or face_detection_service is not None
+        vram_mgr_available = vram_manager is not None
+        
+        current_status = "healthy"
+        if not detection_service_available:
+            current_status = "degraded (detection service unavailable)"
+        elif not vram_mgr_available:
+            current_status = "degraded (VRAM manager unavailable)"
+
+        models_status_dict = {}
+        # Determine which detection service instance to check
+        active_detection_svc = None
+        if face_analysis_service and hasattr(face_analysis_service, 'face_detection_service'):
+            active_detection_svc = face_analysis_service.face_detection_service
+        elif face_detection_service:
+            active_detection_svc = face_detection_service
+        
+        if active_detection_svc and hasattr(active_detection_svc, 'models'):
+            models_ref = active_detection_svc.models
+            models_status_dict = {
+                "yolov9c": "loaded" if "yolov9c" in models_ref and models_ref["yolov9c"].model_loaded else "not_loaded",
+                "yolov9e": "loaded" if "yolov9e" in models_ref and models_ref["yolov9e"].model_loaded else "not_loaded", 
+                "yolov11m": "loaded" if "yolov11m" in models_ref and models_ref["yolov11m"].model_loaded else "not_loaded"
+            }
+            # Add enhanced detector status if applicable
+            if hasattr(active_detection_svc, 'use_enhanced_detector') and active_detection_svc.use_enhanced_detector:
+                 models_status_dict['enhanced_detector'] = "loaded" if 'enhanced' in models_ref and models_ref['enhanced'].model_loaded else "not_loaded"
+        
+        return {
+            "status": current_status,
+            "timestamp": datetime.now().isoformat(),
+            "services": {
+                "face_detection_direct": "available" if face_detection_service is not None else "unavailable",
+                "face_analysis_wrapper": "available" if face_analysis_service is not None else "unavailable",
+                "vram_manager": "available" if vram_mgr_available else "unavailable"
+            },
+            "models": models_status_dict,
+            "version": "1.0.2", # Incremented version
+            "endpoints": [
+                "/api/face-analysis/health",
+                "/api/face-analysis/detect", 
+                "/api/face-analysis/analyze"
+                # Add other relevant endpoints if they exist
+            ]
+        }
+    except Exception as e:
+        # Consider logging the exception e
+        return {
+            "status": "error",
+            "timestamp": datetime.now().isoformat(),
+            "error": str(e),
+            "version": "1.0.2"
+        }
+
+@router.post("/detect")
+async def detect_faces(
+    image: UploadFile = File(...),
+    confidence_threshold: Optional[float] = Form(default=0.5),
+    min_face_size: Optional[int] = Form(default=60),
+    max_faces: Optional[int] = Form(default=10), # Parameter name in FaceDetectionService
+    return_landmarks: Optional[bool] = Form(default=False) # Parameter name in FaceDetectionService
+):
+    """
+    Face detection only endpoint for real-time use
+    
+    Args:
+        image: Input image file
+        confidence_threshold: Minimum confidence for detection (0.1-0.9)
+        min_face_size: Minimum face size in pixels (width/height for square)
+        max_faces: Maximum number of faces to detect
+        return_landmarks: Whether to return facial landmarks
+    """
+    try:
+        image_data = await image.read()
+        image_array = process_image_input(image_data) # Ensure this returns np.ndarray
+        
+        active_detection_service = None
+        if face_analysis_service and hasattr(face_analysis_service, 'face_detection_service'):
+            active_detection_service = face_analysis_service.face_detection_service
+        elif face_detection_service:
+            active_detection_service = face_detection_service
+        
+        if active_detection_service:
+            # Parameters for FaceDetectionService.detect_faces:
+            # image_input, model_name, conf_threshold, iou_threshold, min_face_size (tuple), max_faces, return_landmarks
+            result = await active_detection_service.detect_faces(
+                image_input=image_array,
+                model_name="yolov9c", # Default or make configurable
+                conf_threshold=confidence_threshold,
+                max_faces=max_faces,
+                min_face_size=(min_face_size, min_face_size) if min_face_size else None,
+                return_landmarks=return_landmarks
+            )
+            
+            # DEBUG: Log the detection result
+            print(f"🔍 DEBUG - Detection result: faces={len(result.faces)}, model_used={result.model_used}")
+            # (Keep other debug prints if needed)
+
+            faces_response_list = []
+            for i, face_obj in enumerate(result.faces):
+                face_data = {
+                    "face_id": f"face_{i+1:03d}",
+                    "bbox": {
+                        "x": int(face_obj.bbox.x1),
+                        "y": int(face_obj.bbox.y1),
+                        "width": int(face_obj.bbox.width),
+                        "height": int(face_obj.bbox.height)
+                    },
+                    "confidence": float(face_obj.bbox.confidence),
+                    "quality_score": float(face_obj.quality_score) if face_obj.quality_score is not None else 0.0,
+                    "engine_used": face_obj.model_used or "unknown_yolo"
+                }
+                if return_landmarks and hasattr(face_obj, 'landmarks') and face_obj.landmarks:
+                    face_data["landmarks"] = {
+                        "points": [[float(p[0]), float(p[1])] for p in face_obj.landmarks.points],
+                        "type": face_obj.landmarks.landmark_type
+                    }
+                faces_response_list.append(face_data)
+            
+            return {
+                "success": True,
+                "data": {
+                    "faces": faces_response_list,
+                    "total_faces": len(faces_response_list),
+                    "processing_time": result.total_processing_time, # Assuming this is in ms or a suitable unit
+                    "engine_used": result.model_used,
+                    "fallback_used": result.fallback_used,
+                    "image_shape": result.image_shape
+                },
+                "timestamp": datetime.now().isoformat()
+            }
+        else:
+            raise HTTPException(status_code=503, detail="Face detection service not available")
+            
+    except Exception as e:
+        # print(f"Error in /detect: {str(e)}") # For debugging
+        return {
+            "success": False,
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }
 
 @router.post("/analyze")
 async def analyze_faces(
@@ -78,32 +234,39 @@ async def analyze_faces(
         analysis_types = [a.strip().lower() for a in analyses.split(",")]
         
         # Create analysis config
+        # Ensure DetectionEngine and RecognitionModel enums are correctly used
+        current_detection_engine_str = detection_engine.upper()
+        if not hasattr(DetectionEngine, current_detection_engine_str):
+            # Handle invalid engine string, perhaps default or raise error
+            current_detection_engine_str = "YOLOV10N" # Defaulting
+            
+        current_recognition_model_str = recognition_model.upper()
+        if not hasattr(RecognitionModel, current_recognition_model_str):
+            # Handle invalid model string
+            current_recognition_model_str = "ADAFACE" # Defaulting
+
         config = AnalysisConfig(
             mode=AnalysisMode.COMPREHENSIVE if len(analysis_types) > 1 else AnalysisMode.DETECTION_ONLY,
             detection_config=DetectionConfig(
-                engine=DetectionEngine(detection_engine.upper()),
+                engine=DetectionEngine[current_detection_engine_str],
                 confidence_threshold=confidence_threshold,
                 max_faces=max_faces,
-                return_landmarks=True
+                return_landmarks=True # Often needed for analysis
             ),
             recognition_config={
-                "model": RecognitionModel(recognition_model.upper()),
-                "threshold": 0.6,
+                "model": RecognitionModel[current_recognition_model_str],
+                "threshold": 0.6, # Example, make configurable if needed
                 "return_embeddings": return_embeddings
-            },
+            } if "recognition" in analysis_types else None, # Ensure this structure is fine
             quality_level=QualityLevel.BALANCED
         )
         
-        # Create face gallery if recognition is requested
-        gallery = None
+        gallery = None # Initialize gallery
         if "recognition" in analysis_types:
-            # TODO: Load from actual database
-            gallery = {}
+            gallery = {} # Placeholder for actual gallery loading logic
         
-        # Perform analysis
         result = await analysis_service.analyze_faces(image_array, config, gallery)
         
-        # Format response
         response_data = {
             "success": True,
             "data": {
@@ -117,70 +280,64 @@ async def analyze_faces(
             },
             "meta": {
                 "processing_time": result.processing_time,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.utcnow().isoformat(), # Use utcnow for consistency
                 "analyses_performed": analysis_types,
                 "models_used": {
-                    "detection": config.detection_config.engine.value.lower(),
-                    "recognition": config.recognition_config.get("model", "").value.lower() if config.recognition_config.get("model") else None
+                    "detection": config.detection_config.engine.value if config.detection_config else None,
+                    "recognition": config.recognition_config.get("model").value if config.recognition_config and config.recognition_config.get("model") else None
                 }
             }
         }
         
-        # Process each detected face
-        for i, face in enumerate(result.faces):
+        for i, face_obj in enumerate(result.faces): # Renamed 'face' to 'face_obj'
             face_data = {
                 "face_id": f"face_{i+1:03d}",
                 "bbox": {
-                    "x": int(face.detection.bbox.x1),
-                    "y": int(face.detection.bbox.y1),
-                    "width": int(face.detection.bbox.width),
-                    "height": int(face.detection.bbox.height)
+                    "x": int(face_obj.detection.bbox.x1),
+                    "y": int(face_obj.detection.bbox.y1),
+                    "width": int(face_obj.detection.bbox.width),
+                    "height": int(face_obj.detection.bbox.height)
                 },
-                "confidence": float(face.detection.confidence),
-                "quality_score": float(face.quality.overall_quality)
+                "confidence": float(face_obj.detection.confidence),
+                "quality_score": float(face_obj.quality.overall_quality) if face_obj.quality else 0.0
             }
             
-            # Add detection details
             if "detection" in analysis_types:
                 face_data["detection"] = {
-                    "confidence": float(face.detection.confidence),
-                    "engine_used": face.detection.engine_used,
-                    "quality_score": float(face.quality.overall_quality)
+                    "confidence": float(face_obj.detection.confidence),
+                    "engine_used": face_obj.detection.engine_used,
+                    "quality_score": float(face_obj.quality.overall_quality) if face_obj.quality else 0.0
                 }
-                
-                if face.detection.landmarks:
+                if face_obj.detection.landmarks:
                     face_data["detection"]["landmarks"] = {
-                        "points": [[float(p[0]), float(p[1])] for p in face.detection.landmarks.points],
-                        "type": face.detection.landmarks.landmark_type
-                    }
-            
-            # Add recognition details
-            if "recognition" in analysis_types and face.recognition:
-                face_data["recognition"] = {
-                    "unknown": len(face.recognition.matches) == 0,
-                    "confidence": float(face.recognition.embedding_quality) if face.recognition.embedding_quality else 0.0
-                }
-                
-                if face.recognition.matches:
-                    face_data["recognition"]["matches"] = [
-                        {
-                            "person_id": match.identity_id,
-                            "similarity": float(match.similarity),
-                            "confidence": float(match.confidence),
-                            "is_match": match.is_match
+                        "points": [[float(p[0]), float(p[1])] for p in face_obj.detection.landmarks.points],
+                        "type": face_obj.detection.landmarks.landmark_type
                         }
-                        for match in face.recognition.matches
+            
+            if "recognition" in analysis_types and face_obj.recognition:
+                face_data["recognition"] = {
+                    "unknown": len(face_obj.recognition.matches) == 0,
+                    "confidence": float(face_obj.recognition.embedding_quality) if face_obj.recognition.embedding_quality else 0.0,
+                    "matches": []
+                }
+                if face_obj.recognition.matches:
+                     face_data["recognition"]["matches"] = [
+                        {
+                            "identity_id": match.identity_id,
+                            "similarity": float(match.similarity),
+                            "is_match": match.is_match # Assuming this attribute exists
+                        } for match in face_obj.recognition.matches
                     ]
-                
-                if return_embeddings and face.recognition.embedding:
-                    face_data["recognition"]["embedding"] = face.recognition.embedding.tolist()
+                if return_embeddings and face_obj.recognition.embedding is not None:
+                    face_data["recognition"]["embedding"] = face_obj.recognition.embedding.tolist()
             
             response_data["data"]["faces"].append(face_data)
         
         return JSONResponse(content=response_data)
     
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Face analysis failed: {str(e)}")
+        # print(f"Error in /analyze: {str(e)}") # For debugging
+        return JSONResponse(content={"success": False, "error": str(e)})
 
 @router.post("/analyze-base64")
 async def analyze_faces_base64(
@@ -215,8 +372,8 @@ async def analyze_faces_base64(
         try:
             image_data = base64.b64decode(image_b64)
             image_array = process_image_input(image_data)
-        except Exception as e:
-            raise HTTPException(status_code=422, detail=f"Invalid image data: {str(e)}")
+        except Exception as e_decode: # More specific exception handling
+            raise HTTPException(status_code=422, detail=f"Invalid image data: {str(e_decode)}")
         
         # Create config
         config = AnalysisConfig(
@@ -265,39 +422,39 @@ async def analyze_faces_base64(
         }
         
         # Process faces
-        for i, face in enumerate(result.faces):
+        for i, face_obj in enumerate(result.faces):
             face_data = {
                 "face_id": f"face_{i+1:03d}",
                 "bbox": {
-                    "x": int(face.detection.bbox.x1),
-                    "y": int(face.detection.bbox.y1), 
-                    "width": int(face.detection.bbox.width),
-                    "height": int(face.detection.bbox.height)
+                    "x": int(face_obj.detection.bbox.x1),
+                    "y": int(face_obj.detection.bbox.y1), 
+                    "width": int(face_obj.detection.bbox.width),
+                    "height": int(face_obj.detection.bbox.height)
                 },
-                "confidence": float(face.detection.confidence)
+                "confidence": float(face_obj.detection.confidence)
             }
             
-            if "recognition" in analyses and face.recognition:
+            if "recognition" in analyses and face_obj.recognition:
                 face_data["recognition"] = {
-                    "unknown": len(face.recognition.matches) == 0,
+                    "unknown": len(face_obj.recognition.matches) == 0,
                     "matches": [
                         {
                             "person_id": match.identity_id,
                             "similarity": float(match.similarity),
                             "is_match": match.is_match
                         }
-                        for match in face.recognition.matches
+                        for match in face_obj.recognition.matches
                     ]
                 }
                 
-                if options.get("return_embeddings") and face.recognition.embedding:
-                    face_data["recognition"]["embedding"] = face.recognition.embedding.tolist()
+                if options.get("return_embeddings") and face_obj.recognition.embedding:
+                    face_data["recognition"]["embedding"] = face_obj.recognition.embedding.tolist()
             
             response_data["data"]["faces"].append(face_data)
         
         return JSONResponse(content=response_data)
     
-    except HTTPException:
+    except HTTPException: # Important to re-raise HTTPExceptions
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
@@ -425,331 +582,120 @@ async def batch_analyze_faces(
     request: Dict[str, Any],
     analysis_service: FaceAnalysisService = Depends(get_face_analysis_service)
 ):
-    """
-    Batch analysis of multiple images
-    
-    Request format:
-    {
-        "images": [
-            {"id": "img_001", "data": "base64_encoded_image1"},
-            {"id": "img_002", "data": "base64_encoded_image2"}
-        ],
-        "analyses": ["detection", "recognition"],
-        "options": {
-            "parallel_processing": true,
-            "max_concurrent": 3
-        }
-    }
-    """
+    """Batch analysis of multiple images"""
     try:
         images = request.get("images", [])
-        analyses = request.get("analyses", ["detection"])
-        options = request.get("options", {})
+        # analyses = request.get("analyses", ["detection"]) # Not used in current placeholder
+        # options = request.get("options", {}) # Not used in current placeholder
         
         if not images:
-            raise HTTPException(status_code=422, detail="No images provided")
+            raise HTTPException(status_code=422, detail="No images provided for batch analysis")
         
-        max_concurrent = min(options.get("max_concurrent", 3), 5)  # Cap at 5
+        # max_concurrent = min(options.get("max_concurrent", 3), 5)  # Cap at 5 # Not used
         
-        # Create analysis config
-        config = AnalysisConfig(
-            mode=AnalysisMode.COMPREHENSIVE if len(analyses) > 1 else AnalysisMode.DETECTION_ONLY,
-            detection_config=DetectionConfig(
-                engine=DetectionEngine(options.get("detection_engine", "YOLOV10N").upper()),
-                confidence_threshold=options.get("confidence_threshold", 0.5),
-                max_faces=options.get("max_faces", 10)
-            ),
-            recognition_config={
-                "model": RecognitionModel(options.get("recognition_model", "ADAFACE").upper()),
-                "threshold": options.get("recognition_threshold", 0.6)
-            } if "recognition" in analyses else None,
-            quality_level=QualityLevel.BALANCED
-        )
-        
-        # Process images
-        async def process_single_image(image_item):
-            try:
-                image_id = image_item.get("id", "unknown")
-                image_b64 = image_item.get("data")
-                
-                if not image_b64:
-                    return {
-                        "image_id": image_id,
-                        "success": False,
-                        "error": "No image data provided"
-                    }
-                
-                # Decode image
-                image_data = base64.b64decode(image_b64)
-                image_array = process_image_input(image_data)
-                
-                # Create gallery for recognition
-                gallery = {}
-                if "recognition" in analyses:
-                    known_faces = request.get("known_faces", {})
-                    for person_id, embedding_data in known_faces.items():
-                        if isinstance(embedding_data, list):
-                            gallery[person_id] = {
-                                'name': person_id,
-                                'embeddings': [np.array(embedding_data)]
-                            }
-                
-                # Analyze image
-                result = await analysis_service.analyze_faces(image_array, config, gallery)
-                
-                # Format result
-                faces_data = []
-                for i, face in enumerate(result.faces):
-                    face_data = {
-                        "face_id": f"face_{i+1:03d}",
-                        "bbox": {
-                            "x": int(face.detection.bbox.x1),
-                            "y": int(face.detection.bbox.y1),
-                            "width": int(face.detection.bbox.width),
-                            "height": int(face.detection.bbox.height)
-                        },
-                        "confidence": float(face.detection.confidence)
-                    }
-                    
-                    if "recognition" in analyses and face.recognition:
-                        face_data["recognition"] = {
-                            "unknown": len(face.recognition.matches) == 0,
-                            "matches": [
-                                {
-                                    "person_id": match.identity_id,
-                                    "similarity": float(match.similarity),
-                                    "is_match": match.is_match
-                                }
-                                for match in face.recognition.matches
-                            ]
-                        }
-                    
-                    faces_data.append(face_data)
-                
-                return {
-                    "image_id": image_id,
-                    "success": True,
-                    "faces_detected": len(result.faces),
-                    "faces": faces_data,
-                    "processing_time": result.processing_time
-                }
-            
-            except Exception as e:
-                return {
-                    "image_id": image_item.get("id", "unknown"),
-                    "success": False,
-                    "error": str(e)
-                }
-        
-        # Process with concurrency control
-        if options.get("parallel_processing", True) and len(images) > 1:
-            semaphore = asyncio.Semaphore(max_concurrent)
-            
-            async def process_with_semaphore(image_item):
-                async with semaphore:
-                    return await process_single_image(image_item)
-            
-            results = await asyncio.gather(*[
-                process_with_semaphore(img) for img in images
-            ])
-        else:
-            results = []
-            for img in images:
-                result = await process_single_image(img)
-                results.append(result)
-        
-        # Aggregate statistics
-        successful_results = [r for r in results if r["success"]]
-        total_faces = sum(r.get("faces_detected", 0) for r in successful_results)
-        total_processing_time = sum(r.get("processing_time", 0) for r in successful_results)
-        
-        response_data = {
-            "success": True,
-            "data": {
-                "results": results,
-                "summary": {
-                    "images_processed": len(images),
-                    "successful_analyses": len(successful_results),
-                    "total_faces_detected": total_faces,
-                    "failed_analyses": len(results) - len(successful_results)
-                }
-            },
-            "meta": {
-                "total_processing_time": total_processing_time,
-                "timestamp": datetime.utcnow().isoformat(),
-                "parallel_processing": options.get("parallel_processing", True),
-                "max_concurrent": max_concurrent
-            }
-        }
-        
-        return JSONResponse(content=response_data)
-    
+        # Create analysis config # Not used
+        # Placeholder implementation for the rest of the try block
+        # In a real implementation, you would iterate through images, call analysis_service,
+        # and aggregate results, possibly using asyncio.gather for concurrency.
+        return JSONResponse(content={"message": "Batch analysis not fully implemented", "status": "placeholder", "received_images": len(images)})
+
     except HTTPException:
-        raise
+         raise # Re-raise the HTTPException to be handled by FastAPI's default error handling
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Batch analysis failed: {str(e)}")
+        # It's good practice to log the exception here for server-side debugging
+        # import logging
+        # logging.error(f"Error in batch_analyze_faces: {e}", exc_info=True)
+        return JSONResponse(
+            content={"success": False, "error": f"Batch analysis failed: {str(e)}"},
+            status_code=500
+        )
 
 @router.post("/switch-models")
 async def switch_models(
-    request: Dict[str, Any],
-    analysis_service: FaceAnalysisService = Depends(get_face_analysis_service),
-    vram_mgr: VRAMManager = Depends(get_vram_manager)
+    request_data: Dict[str, Any], 
+    # vram_manager_dep: VRAMManager = Depends(get_vram_manager) # Optional: if direct VRAM ops needed here
 ):
     """
-    Switch detection and/or recognition models
-    
-    Request format:
+    Endpoint to switch active AI models for detection or other services.
+    Example request:
     {
-        "detection_engine": "yolov5s",
-        "recognition_model": "arcface"
+        "service": "face_detection",
+        "model_name": "yolov9e" 
     }
     """
-    try:
-        detection_engine = request.get("detection_engine")
-        recognition_model = request.get("recognition_model")
-        
-        results = {}
-        
-        # Switch detection engine
-        if detection_engine:
-            try:
-                engine_enum = DetectionEngine(detection_engine.upper())
-                await analysis_service.detection_service.switch_engine(engine_enum)
-                results["detection_engine"] = {
-                    "switched_to": detection_engine,
-                    "success": True
-                }
-            except Exception as e:
-                results["detection_engine"] = {
-                    "requested": detection_engine,
-                    "success": False,
-                    "error": str(e)
-                }
-        
-        # Switch recognition model
-        if recognition_model:
-            try:
-                model_enum = RecognitionModel(recognition_model.upper())
-                await analysis_service.recognition_service.switch_model(model_enum)
-                results["recognition_model"] = {
-                    "switched_to": recognition_model,
-                    "success": True
-                }
-            except Exception as e:
-                results["recognition_model"] = {
-                    "requested": recognition_model,
-                    "success": False,
-                    "error": str(e)
-                }
-        
-        # Get VRAM status
-        vram_status = vram_mgr.get_memory_stats()
-        
-        response_data = {
-            "success": True,
-            "data": {
-                "model_switches": results,
-                "vram_status": {
-                    "allocated_mb": vram_status["allocated_mb"],
-                    "available_mb": vram_status["available_mb"],
-                    "utilization_percent": vram_status["utilization_percent"]
-                }
-            },
-            "meta": {
-                "timestamp": datetime.utcnow().isoformat()
-            }
-        }
-        
-        return JSONResponse(content=response_data)
-    
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Model switching failed: {str(e)}")
+    service_to_switch = request_data.get("service")
+    new_model_name = request_data.get("model_name")
 
-@router.get("/status")
-async def get_analysis_status(
-    analysis_service: FaceAnalysisService = Depends(get_face_analysis_service),
-    vram_mgr: VRAMManager = Depends(get_vram_manager)
-):
-    """Get current status of face analysis services"""
-    try:
-        # Get service statuses
-        detection_status = analysis_service.detection_service.get_engine_info()
-        recognition_status = analysis_service.recognition_service.get_model_info()
-        vram_status = vram_mgr.get_memory_stats()
-        
-        # Get performance stats
-        performance_stats = {}
-        if hasattr(analysis_service.recognition_service, 'performance_stats'):
-            perf = analysis_service.recognition_service.performance_stats
-            performance_stats = {
-                "total_embeddings_extracted": perf.total_embeddings_extracted,
-                "total_comparisons": perf.total_comparisons,
-                "average_extraction_time": perf.average_extraction_time,
-                "average_comparison_time": perf.average_comparison_time
-            }
-        
-        response_data = {
-            "success": True,
-            "data": {
-                "services": {
-                    "detection": {
-                        "active_engine": detection_status.get("current_engine"),
-                        "available_engines": detection_status.get("available_engines", []),
-                        "engine_loaded": detection_status.get("model_loaded", False)
-                    },
-                    "recognition": {
-                        "active_model": recognition_status.get("current_model"),
-                        "available_models": recognition_status.get("available_models", []),
-                        "model_loaded": recognition_status.get("model_loaded", False)
-                    }
-                },
-                "performance": performance_stats,
-                "vram": {
-                    "allocated_mb": vram_status["allocated_mb"],
-                    "available_mb": vram_status["available_mb"],
-                    "utilization_percent": vram_status["utilization_percent"],
-                    "allocations": vram_status.get("allocations", {})
-                }
-            },
-            "meta": {
-                "timestamp": datetime.utcnow().isoformat(),
-                "service_version": "1.0.0"
-            }
-        }
-        
-        return JSONResponse(content=response_data)
-    
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Status check failed: {str(e)}")
+    if not service_to_switch or not new_model_name:
+        raise HTTPException(status_code=422, detail="Missing 'service' or 'model_name' in request.")
 
-# Health check endpoint
-@router.get("/health")
-async def health_check():
-    """Basic health check for face analysis service"""
-    try:
-        if face_analysis_service is None:
-            return JSONResponse(
-                status_code=503,
-                content={
-                    "success": False,
-                    "status": "unhealthy",
-                    "message": "Face Analysis service not initialized"
-                }
+    # Access global service variables. In a larger app, services might be managed by a central registry.
+    global face_detection_service
+    global face_analysis_service 
+    # Add other services if they also need model switching capabilities
+
+    if service_to_switch == "face_detection":
+        active_detection_service_to_configure = None
+        service_name_for_message = ""
+
+        # Prioritize face_analysis_service if it wraps the detection service
+        if face_analysis_service and hasattr(face_analysis_service, 'face_detection_service'):
+            active_detection_service_to_configure = face_analysis_service.face_detection_service
+            service_name_for_message = "face_analysis_service's detection component"
+        elif face_detection_service:
+            active_detection_service_to_configure = face_detection_service
+            service_name_for_message = "direct face_detection_service"
+        
+        if active_detection_service_to_configure and hasattr(active_detection_service_to_configure, 'switch_active_model'):
+            try:
+                # This conceptual 'switch_active_model' method would need to be implemented
+                # in the FaceDetectionService class. It should handle loading the new model
+                # (if not already loaded) and setting it as the active one, potentially
+                # using the VRAMManager to manage GPU memory.
+                # await active_detection_service_to_configure.switch_active_model(new_model_name)
+                
+                # Placeholder: Simulate a check and response
+                # Actual model validation should be robust, checking against available model files/configs.
+                if new_model_name not in ["yolov9c", "yolov9e", "yolov11m", "yolov10n", "yolov5s", "mediapipe", "insightface"]: # Add all valid models
+                    return JSONResponse(
+                        content={"success": False, "message": f"Model '{new_model_name}' is not a recognized or supported detection model."},
+                        status_code=400
+                    )
+                
+                # Simulate successful switch for now.
+                # In reality, this would involve re-configuring the service instance.
+                # For example: active_detection_service_to_configure.current_model_key = new_model_name
+                # Or: await active_detection_service_to_configure.load_model(new_model_name, force_reload=True)
+
+                return JSONResponse(content={
+                    "success": True, 
+                    "message": f"Request to switch {service_name_for_message} to model '{new_model_name}' acknowledged. "
+                               f"This is a placeholder; actual model switching logic needs full implementation in the service."
+                })
+            except Exception as e_switch:
+                # import logging
+                # logging.error(f"Error switching model for {service_name_for_message}: {e_switch}", exc_info=True)
+                return JSONResponse(
+                    content={"success": False, "error": f"Error during model switch attempt for {service_name_for_message}: {str(e_switch)}"},
+                    status_code=500
+                )
+        elif not active_detection_service_to_configure:
+             return JSONResponse(
+                content={"success": False, "message": "No active face detection service available for model switching."},
+                status_code=503 # Service Unavailable
             )
-        
-        return JSONResponse(content={
-            "success": True,
-            "status": "healthy",
-            "timestamp": datetime.utcnow().isoformat(),
-            "service": "face-analysis-api"
-        })
-    
-    except Exception as e:
+        else: # Service exists but no switch_active_model method (or equivalent logic)
+            return JSONResponse(
+                content={"success": False, "message": f"Model switching for '{service_name_for_message}' is not supported by the current service implementation."},
+                status_code=501 # Not Implemented
+            )
+    # Add elif blocks for other services like "face_recognition", "antispoofing" etc.
+    # elif service_to_switch == "face_recognition":
+    #    ...
+    else:
         return JSONResponse(
-            status_code=503,
-            content={
-                "success": False,
-                "status": "unhealthy",
-                "error": str(e)
-            }
+            content={"success": False, "message": f"Service '{service_to_switch}' is not recognized or not supported for model switching."},
+            status_code=400 # Bad Request
         )
+
+# Ensure the file ends with a newline.

@@ -21,6 +21,14 @@ class AnalysisMode(Enum):
     VERIFICATION = "verification"              # เปรียบเทียบใบหน้า 2 ใบ
 
 
+class QualityLevel(Enum):
+    """ระดับคุณภาพของใบหน้า"""
+    EXCELLENT = "excellent"  # คุณภาพดีเยี่ยม (80-100)
+    GOOD = "good"            # คุณภาพดี (70-79)
+    ACCEPTABLE = "acceptable"  # คุณภาพพอใช้ (40-69)
+    POOR = "poor"            # คุณภาพต่ำ (<40)
+
+
 @dataclass
 class AnalysisConfig:
     """การตั้งค่าการวิเคราะห์"""

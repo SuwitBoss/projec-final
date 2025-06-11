@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Face Recognition System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #3498db;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .section {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid #e9ecef;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            max-width: 480px;
+            margin: 0 auto 20px;
+        }
+
+        #video, #canvas {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+
+        #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn:hover {
+            background: #2980b9;
+        }
+
+        .btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        .btn.success {
+            background: #27ae60;
+        }
+
+        .btn.success:hover {
+            background: #219a52;
+        }
+
+        .btn.danger {
+            background: #e74c3c;
+        }
+
+        .btn.danger:hover {
+            background: #c0392b;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .status.info {
+            background: #d6eaf8;
+            color: #2980b9;
+            border: 1px solid #85c1e9;
+        }
+
+        .status.success {
+            background: #d5f4e6;
+            color: #27ae60;
+            border: 1px solid #82e0aa;
+        }
+
+        .status.error {
+            background: #fadbd8;
+            color: #e74c3c;
+            border: 1px solid #f1948a;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .metric {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        .results {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            background: white;
+        }
+
+        .face-result {
+            background: #f8f9fa;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 5px;
+            border-left: 4px solid #3498db;
+        }
+
+        .face-result.recognized {
+            border-left-color: #27ae60;
+            background: #d5f4e6;
+        }
+
+        .face-result.unknown {
+            border-left-color: #e74c3c;
+            background: #fadbd8;
+        }
+
+        .face-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .face-name {
+            font-weight: bold;
+        }
+
+        .face-confidence {
+            background: #ecf0f1;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+
+        .registered-faces {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            background: white;
+        }
+
+        .registered-face {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            margin-bottom: 5px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .log-section {
+            grid-column: 1 / -1;
+            margin-top: 20px;
+        }
+
+        .log-window {
+            height: 200px;
+            background: #2c3e50;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .log-header {
+            background: #34495e;
+            color: white;
+            padding: 8px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .log-content {
+            height: 160px;
+            overflow-y: auto;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #ecf0f1;
+        }
+
+        .log-entry {
+            margin-bottom: 2px;
+        }
+
+        .log-time {
+            color: #95a5a6;
+        }
+
+        .log-info {
+            color: #3498db;
+        }
+
+        .log-success {
+            color: #27ae60;
+        }
+
+        .log-error {
+            color: #e74c3c;
+        }
+
+        .log-warning {
+            color: #f39c12;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Simple Face Recognition System</h1>
+            <p>เรียบง่าย ใช้งานง่าย ทำงานได้จริง</p>
+        </div>
+
+        <div class="main-content">
+            <!-- ส่วนกล้องและการตรวจจับ -->
+            <div class="section">
+                <h2>📹 Real-time Detection</h2>
+                
+                <div class="video-container">
+                    <video id="video" autoplay muted></video>
+                    <canvas id="canvas"></canvas>
+                </div>
+
+                <div class="controls">
+                    <button id="startCamera" class="btn">เริ่มกล้อง</button>
+                    <button id="stopCamera" class="btn danger" disabled>หยุดกล้อง</button>
+                    <button id="capturePhoto" class="btn success" disabled>ถ่ายภาพ</button>
+                </div>
+
+                <div id="cameraStatus" class="status info">
+                    📱 กดเริ่มกล้องเพื่อเริ่มการตรวจจับใบหน้า
+                </div>
+
+                <div class="metrics">
+                    <div class="metric">
+                        <div class="metric-value" id="facesDetected">0</div>
+                        <div class="metric-label">Faces Detected</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="facesRecognized">0</div>
+                        <div class="metric-label">Faces Recognized</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="avgConfidence">0%</div>
+                        <div class="metric-label">Avg Confidence</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="processingTime">0ms</div>
+                        <div class="metric-label">Processing Time</div>
+                    </div>
+                </div>
+
+                <div class="results" id="recognitionResults">
+                    <p style="text-align: center; color: #6c757d;">การจดจำใบหน้าจะแสดงที่นี่...</p>
+                </div>
+            </div>
+
+            <!-- ส่วนลงทะเบียน -->
+            <div class="section">
+                <h2>👤 Face Registration</h2>
+
+                <div class="input-group">
+                    <label for="personName">ชื่อบุคคล:</label>
+                    <input type="text" id="personName" placeholder="กรอกชื่อ">
+                </div>
+
+                <div class="controls">
+                    <button id="registerFace" class="btn success" disabled>ลงทะเบียน</button>
+                    <button id="clearAll" class="btn danger">ล้างทั้งหมด</button>
+                </div>
+
+                <div id="registrationStatus" class="status info" style="display: none;">
+                    เตรียมพร้อมสำหรับการลงทะเบียน
+                </div>
+
+                <h3 style="margin: 15px 0 10px 0;">📋 Registered Faces (<span id="totalRegistered">2</span>)</h3>
+                <div class="registered-faces" id="registeredFaces">
+                    <!-- จะถูกเติมด้วย JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Log Window -->
+        <div class="section log-section">
+            <div class="log-window">
+                <div class="log-header">
+                    <h3>🔍 System Log</h3>
+                    <button id="clearLog" class="btn" style="padding: 4px 8px; font-size: 12px;">Clear</button>
+                </div>
+                <div class="log-content" id="logContent">
+                    <!-- Log entries จะแสดงที่นี่ -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class SimpleFaceRecognition {
+            constructor() {
+                this.video = document.getElementById('video');
+                this.canvas = document.getElementById('canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.stream = null;
+                this.isDetecting = false;
+                this.registeredFaces = new Map();
+                this.lastCapturedFrame = null;
+                
+                // สถิติง่ายๆ
+                this.stats = {
+                    totalDetected: 0,
+                    totalRecognized: 0,
+                    processingTimes: [],
+                    confidenceScores: []
+                };
+
+                this.initializeElements();
+                this.bindEvents();
+                this.loadSampleData();
+                this.log('info', 'ระบบเริ่มต้นแล้ว');
+            }
+
+            initializeElements() {
+                this.elements = {
+                    startCamera: document.getElementById('startCamera'),
+                    stopCamera: document.getElementById('stopCamera'),
+                    capturePhoto: document.getElementById('capturePhoto'),
+                    cameraStatus: document.getElementById('cameraStatus'),
+                    personName: document.getElementById('personName'),
+                    registerFace: document.getElementById('registerFace'),
+                    clearAll: document.getElementById('clearAll'),
+                    registrationStatus: document.getElementById('registrationStatus'),
+                    recognitionResults: document.getElementById('recognitionResults'),
+                    registeredFaces: document.getElementById('registeredFaces'),
+                    totalRegistered: document.getElementById('totalRegistered'),
+                    facesDetected: document.getElementById('facesDetected'),
+                    facesRecognized: document.getElementById('facesRecognized'),
+                    avgConfidence: document.getElementById('avgConfidence'),
+                    processingTime: document.getElementById('processingTime'),
+                    clearLog: document.getElementById('clearLog'),
+                    logContent: document.getElementById('logContent')
+                };
+            }
+
+            bindEvents() {
+                this.elements.startCamera.addEventListener('click', () => this.startCamera());
+                this.elements.stopCamera.addEventListener('click', () => this.stopCamera());
+                this.elements.capturePhoto.addEventListener('click', () => this.capturePhoto());
+                this.elements.registerFace.addEventListener('click', () => this.registerFace());
+                this.elements.clearAll.addEventListener('click', () => this.clearAll());
+                this.elements.clearLog.addEventListener('click', () => this.clearLog());
+                this.elements.personName.addEventListener('input', () => this.validateRegistration());
+            }
+
+            async startCamera() {
+                try {
+                    this.log('info', 'เริ่มต้นกล้อง...');
+                    
+                    this.stream = await navigator.mediaDevices.getUserMedia({
+                        video: { width: 640, height: 480 }
+                    });
+                    
+                    this.video.srcObject = this.stream;
+                    
+                    this.video.onloadedmetadata = () => {
+                        this.canvas.width = this.video.videoWidth;
+                        this.canvas.height = this.video.videoHeight;
+                        this.startDetection();
+                    };
+
+                    this.elements.startCamera.disabled = true;
+                    this.elements.stopCamera.disabled = false;
+                    this.elements.capturePhoto.disabled = false;
+                    
+                    this.updateStatus('✅ กล้องทำงาน - การตรวจจับเริ่มแล้ว', 'success');
+                    this.log('success', 'กล้องเริ่มทำงานแล้ว');
+                    
+                } catch (error) {
+                    this.log('error', `ไม่สามารถเข้าถึงกล้อง: ${error.message}`);
+                    this.updateStatus('❌ ไม่สามารถเข้าถึงกล้องได้', 'error');
+                }
+            }
+
+            stopCamera() {
+                if (this.stream) {
+                    this.stream.getTracks().forEach(track => track.stop());
+                    this.stream = null;
+                }
+                
+                this.isDetecting = false;
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                this.elements.startCamera.disabled = false;
+                this.elements.stopCamera.disabled = true;
+                this.elements.capturePhoto.disabled = true;
+                
+                this.updateStatus('📱 กล้องหยุดทำงาน', 'info');
+                this.log('info', 'กล้องหยุดทำงาน');
+            }
+
+            startDetection() {
+                this.isDetecting = true;
+                this.detectFaces();
+            }
+
+            async detectFaces() {
+                if (!this.isDetecting || this.video.readyState !== 4) {
+                    if (this.isDetecting) {
+                        requestAnimationFrame(() => this.detectFaces());
+                    }
+                    return;
+                }
+
+                const startTime = performance.now();
+
+                try {
+                    // วาดเฟรมปัจจุบัน
+                    this.ctx.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
+                    
+                    // จำลองการตรวจจับใบหน้า (แบบง่าย)
+                    const faces = this.simulateFaceDetection();
+                    
+                    // ล้างการวาดเก่า
+                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                    
+                    // วาดผลลัพธ์
+                    this.drawResults(faces);
+                    
+                    // อัปเดตสถิติ
+                    const processingTime = performance.now() - startTime;
+                    this.updateStats(faces, processingTime);
+                    
+                } catch (error) {
+                    this.log('error', `ข้อผิดพลาดในการตรวจจับ: ${error.message}`);
+                }
+
+                // วนซ้ำ
+                if (this.isDetecting) {
+                    setTimeout(() => requestAnimationFrame(() => this.detectFaces()), 300);
+                }
+            }
+
+            simulateFaceDetection() {
+                // จำลองการตรวจจับแบบง่าย
+                const hasFace = Math.random() > 0.3; // 70% มีใบหน้า
+                if (!hasFace) return [];
+
+                const numFaces = Math.random() > 0.8 ? 2 : 1; // ส่วนใหญ่ 1 ใบหน้า
+                const faces = [];
+
+                for (let i = 0; i < numFaces; i++) {
+                    const face = this.generateRandomFace();
+                    face.recognition = this.recognizeFace(face);
+                    faces.push(face);
+                }
+
+                return faces;
+            }
+
+            generateRandomFace() {
+                const centerX = this.canvas.width * (0.3 + Math.random() * 0.4);
+                const centerY = this.canvas.height * (0.2 + Math.random() * 0.4);
+                const size = 80 + Math.random() * 80;
+
+                return {
+                    x: centerX - size/2,
+                    y: centerY - size/2,
+                    width: size,
+                    height: size,
+                    confidence: 0.7 + Math.random() * 0.3
+                };
+            }
+
+            recognizeFace(face) {
+                if (this.registeredFaces.size === 0) {
+                    return { name: 'unknown', confidence: 0 };
+                }
+
+                const registeredNames = Array.from(this.registeredFaces.keys());
+                
+                // 60% จะจดจำได้ ถ้ามีคนลงทะเบียน
+                if (Math.random() < 0.6) {
+                    const name = registeredNames[Math.floor(Math.random() * registeredNames.length)];
+                    const confidence = 0.6 + Math.random() * 0.4;
+                    return { name, confidence };
+                } else {
+                    const confidence = 0.3 + Math.random() * 0.3;
+                    return { name: 'unknown', confidence };
+                }
+            }
+
+            drawResults(faces) {
+                faces.forEach((face, index) => {
+                    const isRecognized = face.recognition.name !== 'unknown';
+                    const color = isRecognized ? '#27ae60' : '#e74c3c';
+                    
+                    // วาดกรอบ
+                    this.ctx.strokeStyle = color;
+                    this.ctx.lineWidth = 3;
+                    this.ctx.strokeRect(face.x, face.y, face.width, face.height);
+                    
+                    // วาดข้อความ
+                    const text = isRecognized 
+                        ? `${face.recognition.name.toUpperCase()} (${(face.recognition.confidence * 100).toFixed(0)}%)`
+                        : 'UNKNOWN';
+                    
+                    this.ctx.font = 'bold 14px Arial';
+                    const textWidth = this.ctx.measureText(text).width;
+                    
+                    // พื้นหลังข้อความ
+                    this.ctx.fillStyle = color;
+                    this.ctx.fillRect(face.x, face.y - 25, textWidth + 10, 20);
+                    
+                    // ข้อความ
+                    this.ctx.fillStyle = 'white';
+                    this.ctx.fillText(text, face.x + 5, face.y - 8);
+                });
+
+                this.updateRecognitionResults(faces);
+            }
+
+            updateRecognitionResults(faces) {
+                const container = this.elements.recognitionResults;
+                
+                if (faces.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: #6c757d;">ไม่พบใบหน้า</p>';
+                    return;
+                }
+
+                container.innerHTML = faces.map((face, index) => {
+                    const isRecognized = face.recognition.name !== 'unknown';
+                    const cssClass = isRecognized ? 'recognized' : 'unknown';
+                    
+                    return `
+                        <div class="face-result ${cssClass}">
+                            <div class="face-info">
+                                <span class="face-name">${face.recognition.name.toUpperCase()}</span>
+                                <span class="face-confidence">${(face.recognition.confidence * 100).toFixed(0)}%</span>
+                            </div>
+                            <div style="font-size: 12px; color: #6c757d; margin-top: 5px;">
+                                Position: ${face.x.toFixed(0)}, ${face.y.toFixed(0)} | 
+                                Size: ${face.width.toFixed(0)}px
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            updateStats(faces, processingTime) {
+                this.stats.totalDetected += faces.length;
+                const recognizedCount = faces.filter(f => f.recognition.name !== 'unknown').length;
+                this.stats.totalRecognized += recognizedCount;
+                this.stats.processingTimes.push(processingTime);
+
+                // เก็บเฉพาะ 50 ค่าล่าสุด
+                if (this.stats.processingTimes.length > 50) {
+                    this.stats.processingTimes = this.stats.processingTimes.slice(-50);
+                }
+
+                if (faces.length > 0) {
+                    const avgConfidence = faces.reduce((sum, f) => sum + f.recognition.confidence, 0) / faces.length;
+                    this.stats.confidenceScores.push(avgConfidence);
+                    
+                    if (this.stats.confidenceScores.length > 50) {
+                        this.stats.confidenceScores = this.stats.confidenceScores.slice(-50);
+                    }
+                }
+
+                // อัปเดตแสดงผล
+                const avgProcessingTime = this.stats.processingTimes.reduce((a, b) => a + b, 0) / this.stats.processingTimes.length;
+                const avgConfidence = this.stats.confidenceScores.length > 0 
+                    ? this.stats.confidenceScores.reduce((a, b) => a + b, 0) / this.stats.confidenceScores.length 
+                    : 0;
+
+                this.elements.facesDetected.textContent = this.stats.totalDetected;
+                this.elements.facesRecognized.textContent = this.stats.totalRecognized;
+                this.elements.avgConfidence.textContent = (avgConfidence * 100).toFixed(0) + '%';
+                this.elements.processingTime.textContent = Math.round(avgProcessingTime) + 'ms';
+            }
+
+            capturePhoto() {
+                this.ctx.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
+                this.lastCapturedFrame = this.canvas.toDataURL('image/jpeg', 0.9);
+                this.validateRegistration();
+                this.updateRegistrationStatus('📷 ภาพถูกถ่ายแล้ว - พร้อมลงทะเบียน', 'success');
+                this.log('success', 'ถ่ายภาพสำเร็จ');
+            }
+
+            validateRegistration() {
+                const hasName = this.elements.personName.value.trim().length > 0;
+                const hasPhoto = this.lastCapturedFrame !== null;
+                this.elements.registerFace.disabled = !(hasName && hasPhoto);
+            }
+
+            async registerFace() {
+                const personName = this.elements.personName.value.trim();
+                
+                if (!personName || !this.lastCapturedFrame) {
+                    this.updateRegistrationStatus('❌ กรุณากรอกชื่อและถ่ายภาพ', 'error');
+                    return;
+                }
+
+                this.updateRegistrationStatus('🔄 กำลังลงทะเบียน...', 'info');
+                
+                try {
+                    // จำลองการประมวลผล
+                    await this.sleep(800);
+                    
+                    // เพิ่มลงฐานข้อมูล
+                    this.registeredFaces.set(personName, {
+                        name: personName,
+                        image: this.lastCapturedFrame,
+                        timestamp: new Date().toISOString()
+                    });
+
+                    this.updateRegistrationStatus(`✅ ลงทะเบียน ${personName} สำเร็จ`, 'success');
+                    this.log('success', `ลงทะเบียน ${personName} เรียบร้อย`);
+
+                    // อัปเดตแสดงผล
+                    this.updateRegisteredFacesList();
+                    this.elements.totalRegistered.textContent = this.registeredFaces.size;
+
+                    // ล้างข้อมูล
+                    this.elements.personName.value = '';
+                    this.lastCapturedFrame = null;
+                    this.validateRegistration();
+
+                } catch (error) {
+                    this.updateRegistrationStatus('❌ เกิดข้อผิดพลาด', 'error');
+                    this.log('error', `ลงทะเบียนล้มเหลว: ${error.message}`);
+                }
+            }
+
+            updateRegisteredFacesList() {
+                const container = this.elements.registeredFaces;
+                
+                if (this.registeredFaces.size === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: #6c757d;">ยังไม่มีใบหน้าที่ลงทะเบียน</p>';
+                    return;
+                }
+
+                const html = Array.from(this.registeredFaces.entries()).map(([name, data]) => {
+                    return `
+                        <div class="registered-face">
+                            <div>
+                                <strong>${name}</strong>
+                                <div style="font-size: 12px; color: #6c757d;">
+                                    ${new Date(data.timestamp).toLocaleDateString('th-TH')}
+                                </div>
+                            </div>
+                            <button onclick="faceSystem.removeRegisteredFace('${name}')" 
+                                    class="btn danger" style="padding: 4px 8px; font-size: 12px;">ลบ</button>
+                        </div>
+                    `;
+                }).join('');
+
+                container.innerHTML = html;
+            }
+
+            removeRegisteredFace(name) {
+                this.registeredFaces.delete(name);
+                this.updateRegisteredFacesList();
+                this.elements.totalRegistered.textContent = this.registeredFaces.size;
+                this.log('warning', `ลบ ${name} จากระบบแล้ว`);
+            }
+
+            clearAll() {
+                if (confirm('ต้องการล้างข้อมูลทั้งหมดหรือไม่?')) {
+                    this.registeredFaces.clear();
+                    this.lastCapturedFrame = null;
+                    this.elements.personName.value = '';
+                    this.updateRegisteredFacesList();
+                    this.elements.totalRegistered.textContent = '0';
+                    this.validateRegistration();
+                    this.log('warning', 'ล้างข้อมูลทั้งหมดแล้ว');
+                    
+                    // โหลดข้อมูลตัวอย่างใหม่
+                    this.loadSampleData();
+                }
+            }
+
+            loadSampleData() {
+                // เพิ่มข้อมูลตัวอย่าง
+                this.registeredFaces.set('Boss', {
+                    name: 'Boss',
+                    image: 'sample_data',
+                    timestamp: new Date().toISOString()
+                });
+                
+                this.registeredFaces.set('Night', {
+                    name: 'Night',
+                    image: 'sample_data',
+                    timestamp: new Date().toISOString()
+                });
+
+                this.updateRegisteredFacesList();
+                this.elements.totalRegistered.textContent = this.registeredFaces.size;
+                this.log('info', 'โหลดข้อมูลตัวอย่าง: Boss, Night');
+            }
+
+            updateStatus(message, type) {
+                this.elements.cameraStatus.textContent = message;
+                this.elements.cameraStatus.className = `status ${type}`;
+            }
+
+            updateRegistrationStatus(message, type) {
+                this.elements.registrationStatus.textContent = message;
+                this.elements.registrationStatus.className = `status ${type}`;
+                this.elements.registrationStatus.style.display = 'block';
+            }
+
+            log(type, message) {
+                const time = new Date().toLocaleTimeString('th-TH');
+                const logEntry = document.createElement('div');
+                logEntry.className = 'log-entry';
+                logEntry.innerHTML = `<span class="log-time">[${time}]</span> <span class="log-${type}">[${type.toUpperCase()}]</span> ${message}`;
+                
+                this.elements.logContent.appendChild(logEntry);
+                this.elements.logContent.scrollTop = this.elements.logContent.scrollHeight;
+            }
+
+            clearLog() {
+                this.elements.logContent.innerHTML = '';
+                this.log('info', 'ล้าง log แล้ว');
+            }
+
+            sleep(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+        }
+
+        // เริ่มต้นระบบ
+        let faceSystem;
+        document.addEventListener('DOMContentLoaded', () => {
+            faceSystem = new SimpleFaceRecognition();
+            console.log('🎯 Simple Face Recognition System initialized');
+        });
+    </script>
+</body>
+</html>

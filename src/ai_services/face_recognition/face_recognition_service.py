@@ -10,7 +10,6 @@ from dataclasses import dataclass
 import time
 import cv2
 import os
-import asyncio
 
 # Conditional import for ONNX Runtime
 try:
@@ -55,16 +54,23 @@ class FaceRecognitionService:
     
     def __init__(
         self,
-        config: Optional[RecognitionConfig] = None,
-        vram_manager: Optional[VRAMManager] = None
+        vram_manager: Optional[VRAMManager] = None,
+        config: Optional[Dict[str, Any]] = None
     ):
         self.logger = logging.getLogger(__name__)
-        self.config = config or RecognitionConfig()
         self.vram_manager = vram_manager
+        
+        # Parse config - ADD MISSING CONFIG ATTRIBUTE
+        if config is None:
+            config = {}
+        self.config = config  # Store config as instance attribute
+        self.preferred_model = config.get('preferred_model', 'facenet')
+        self.embedding_size = config.get('embedding_size', 512)
+        self.threshold = config.get('threshold', 0.6)
         
         # Model management
         self.current_model = None
-        self.current_model_type = self.config.preferred_model or ModelType.FACENET
+        self.current_model_type = ModelType.FACENET  # Default
         
         # Face database - เข้ากันได้กับระบบเดิม
         self.face_database: Dict[str, List[FaceEmbedding]] = {}

@@ -130,9 +130,13 @@ async def startup_event():
         if not init_success:
             logger.error("ไม่สามารถโหลดโมเดลตรวจจับใบหน้าได้")
         
-        # ตั้งค่าบริการ Face Recognition (config remains the same)
+        # ตั้งค่าบริการ Face Recognition
         face_recognition_config = {
-            "model_path": "model/face-recognition"
+            'preferred_model': 'facenet', # Or another valid RecognitionModel enum member as string
+            'embedding_size': 512,
+            'threshold': 0.6,
+            # Assuming model_path is handled by the service internally or not needed here
+            # if it is needed, it should be: "model_path": "model/face-recognition"
         }
         
         face_recognition_service = FaceRecognitionService(vram_manager, face_recognition_config)
@@ -211,6 +215,17 @@ app.include_router(face_analysis_router)
 
 # เพิ่ม static files
 app.mount("/output", StaticFiles(directory="output"), name="output")
+
+# เพิ่ม HTML files จาก root directory
+try:
+    html_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)))
+    if os.path.exists(html_dir):
+        app.mount("/html", StaticFiles(directory=html_dir), name="html")
+        logger.info(f"HTML directory mounted from: {html_dir}")
+    else:
+        logger.warning(f"HTML directory not found: {html_dir}")
+except Exception as e:
+    logger.warning(f"Cannot mount HTML directory: {e}")
 
 
 @app.get("/")
