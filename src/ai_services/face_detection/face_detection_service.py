@@ -14,6 +14,8 @@ from enum import Enum
 
 from .yolo_models import YOLOv9ONNXDetector, YOLOv11Detector
 from .utils import BoundingBox, FaceDetection, DetectionResult, calculate_face_quality, filter_detection_results
+# Import Enhanced Detector Adapter
+from .enhanced_detector_adapter import EnhancedDetectorAdapter
 
 # ไม่ import VRAMManager แต่สร้าง stub class ขึ้นมาแทน
 class VRAMManager:
@@ -224,6 +226,10 @@ class FaceDetectionService:
         self.models: dict[str, Union[YOLOv9ONNXDetector, YOLOv11Detector]] = {}
         self.model_stats: dict[str, dict[str, Union[float, int]]] = {}
         
+        # ตัวตรวจจับใบหน้าขั้นสูง
+        self.enhanced_detector = None
+        self.use_enhanced_detector = config.get('use_enhanced_detector', False)
+        
         # เกณฑ์การตัดสินใจเลือกโมเดล
         self.decision_criteria = {
             'max_usable_faces_yolov9': int(config.get('max_usable_faces_yolov9', 8)),
@@ -265,7 +271,18 @@ class FaceDetectionService:
             สถานะการโหลดโมเดล
         """
         try:
-            logger.info("กำลังโหลดโมเดลตรวจจับใบหน้าาทั้งหมด...")
+            logger.info("กำลังโหลดโมเดลตรวจจับใบหน้าทั้งหมด...")
+            
+            # โหลดตัวตรวจจับใบหน้าขั้นสูงถ้าเปิดใช้งาน
+            if self.use_enhanced_detector:
+                logger.info("กำลังโหลดตัวตรวจจับใบหน้าาขั้นสูง (Enhanced Face Detector)...")
+                self.enhanced_detector = EnhancedDetectorAdapter(self.vram_manager)
+                enhanced_init_success = await self.enhanced_detector.initialize()
+                if enhanced_init_success:
+                    logger.info("โหลดตัวตรวจจับใบหน้าขั้นสูงสำเร็จ")
+                else:
+                    logger.warning("ไม่สามารถโหลดตัวตรวจจับใบหน้าขั้นสูงได้ จะใช้โมเดลปกติแทน")
+                    self.use_enhanced_detector = False
             
             # ขอจัดสรร VRAM สำหรับโมเดล YOLOv9c
             yolov9c_allocation = await self.vram_manager.request_model_allocation(
@@ -310,22 +327,28 @@ class FaceDetectionService:
                          model_name: Optional[str] = None,
                          conf_threshold: Optional[float] = None,
                          iou_threshold: Optional[float] = None,
-                         enhanced_mode: bool = True) -> DetectionResult:
+                         enhanced_mode: bool = True,
+                         min_face_size: Optional[Tuple[int, int]] = None,
+                         max_faces: Optional[int] = None,
+                         return_landmarks: bool = False) -> DetectionResult:
         """
         ตรวจจับใบหน้าในรูปภาพโดยเลือกโมเดลที่เหมาะสมที่สุดโดยอัตโนมัติ
         
         Args:
             image_input: ชื่อไฟล์รูปภาพหรือ numpy array
-            model_name: ชื่อโมเดลที่ต้องการใช้ ('yolov9c', 'yolov9e', 'yolov11m' หรือ 'auto')
+            model_name: ชื่อโมเดลที่ต้องการใช้ ('yolov9c', 'yolov9e', 'yolov11m', 'enhanced' หรือ 'auto')
             conf_threshold: ระดับความมั่นใจขั้นต่ำ
             iou_threshold: ค่า IoU threshold สำหรับ NMS
             enhanced_mode: ใช้โหมด Enhanced Intelligent Detection หรือไม่
+            min_face_size: ขนาดใบหน้าขั้นต่ำที่จะตรวจจับ (width, height)
+            max_faces: จำนวนใบหน้าสูงสุดที่จะส่งคืน
+            return_landmarks: ต้องการ landmarks หรือไม่
         
         Returns:
             ผลลัพธ์การตรวจจับใบหน้า
         """
         if not self.models_loaded:
-            raise RuntimeError("ยังไม่ได้โหลดโมเดล โปรดเรียก initialize() ก่อน")
+            raise RuntimeError("โมเดลยังไม่ได้ถูกโหลด กรุณาเรียก initialize() ก่อน")
         
         # ตั้งค่าพารามิเตอร์
         conf_threshold = conf_threshold or self.detection_params['conf_threshold']
@@ -342,6 +365,30 @@ class FaceDetectionService:
                 raise ValueError(f"ไม่สามารถอ่านรูปภาพได้: {image_input}")
         else:
             image = image_input
+            
+        # ใช้ Enhanced Detector ถ้าระบุให้ใช้โดยตรง
+        if model_name == 'enhanced' and self.use_enhanced_detector and self.enhanced_detector:
+            logger.info("ใช้ตัวตรวจจับใบหน้าขั้นสูง (Enhanced Face Detector)")
+            return await self.enhanced_detector.detect_faces(
+                image, 
+                conf_threshold=conf_threshold,
+                iou_threshold=iou_threshold,
+                min_face_size=min_face_size,
+                max_faces=max_faces,
+                return_landmarks=return_landmarks
+            )
+        
+        # ถ้าเปิดใช้ Enhanced Detector และไม่ได้ระบุโมเดลเฉพาะ
+        if self.use_enhanced_detector and self.enhanced_detector and model_name is None:
+            logger.info("ใช้ตัวตรวจจับใบหน้าขั้นสูง (Enhanced Face Detector)")
+            return await self.enhanced_detector.detect_faces(
+                image, 
+                conf_threshold=conf_threshold,
+                iou_threshold=iou_threshold,
+                min_face_size=min_face_size,
+                max_faces=max_faces,
+                return_landmarks=return_landmarks
+            )
         
         # ถ้าระบุโมเดลมา ให้ใช้โมเดลนั้น
         if model_name in ['yolov9c', 'yolov9e', 'yolov11m']:
@@ -578,7 +625,7 @@ class FaceDetectionService:
         # แปลง image_shape เป็น Tuple[int, int, int]
         shape = (image_shape[0], image_shape[1], image_shape[2] if len(image_shape) > 2 else 3)
         
-        # กรองและปรับปรุงบounding box ที่ผิดปกติ
+        # กรองและปรับปรุงบbounding box ที่ผิดปกติ
         logger.info(f"🔍 Validating {len(detections)} bounding boxes...")
         filtered_detections = filter_detection_results(detections, (shape[0], shape[1]), min_quality=50.0)
         
@@ -702,6 +749,11 @@ class FaceDetectionService:
             await self.vram_manager.release_model_allocation("yolov9c-face")
             await self.vram_manager.release_model_allocation("yolov9e-face")
             await self.vram_manager.release_model_allocation("yolov11m-face")
+            
+            # ทำความสะอาดตัวตรวจจับใบหน้าขั้นสูง
+            if self.use_enhanced_detector and self.enhanced_detector:
+                await self.enhanced_detector.cleanup()
+                self.enhanced_detector = None
             
             # ล้างข้อมูลโมเดล
             self.models = {}

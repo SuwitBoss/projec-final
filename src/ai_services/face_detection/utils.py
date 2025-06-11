@@ -323,22 +323,21 @@ def validate_bounding_box(bbox, image_shape: Tuple[int, int]) -> bool:
         # 4. ตรวจสอบขนาดขั้นต่ำ (อย่างน้อย 16x16 พิกเซล)
         width = x2 - x1
         height = y2 - y1
-        if width < 16 or height < 16:
+        if width < 12 or height < 12:  # ลดขนาดขั้นต่ำเพื่อรองรับใบหน้าในภาพกลุ่ม
             logger.debug(f"🔍 Bbox too small: {width}x{height}")
             return False
-        
-        # 5. ตรวจสอบไม่ครอบคลุมทั้งภาพ (>90% ของพื้นที่)
+          # 5. ตรวจสอบไม่ครอบคลุมทั้งภาพ (>99% ของพื้นที่)
         bbox_area = width * height
         image_area = img_width * img_height
         area_ratio = bbox_area / image_area
         
-        if area_ratio > 0.9:  # 90% ของภาพ
+        if area_ratio > 0.999:  # 99.9% ของภาพ (เพิ่มจาก 99% เพื่อรองรับภาพที่มีใบหน้าขนาดใหญ่มาก)
             logger.warning(f"⚠️ Bbox covers too much area: {area_ratio:.1%}")
             return False
         
         # 6. ตรวจสอบ aspect ratio สมเหตุสมผล (0.3 - 3.0)
         aspect_ratio = width / height
-        if aspect_ratio < 0.3 or aspect_ratio > 3.0:
+        if aspect_ratio < 0.2 or aspect_ratio > 5.0:  # เพิ่มช่วง aspect ratio (0.2-5.0)
             logger.debug(f"🔍 Unusual aspect ratio: {aspect_ratio:.2f}")
             return False
         

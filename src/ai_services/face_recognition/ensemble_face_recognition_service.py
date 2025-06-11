@@ -1,7 +1,7 @@
 """
-Face Recognition Ensemble Service - COMPLETE FIXED VERSION
+Face Recognition Ensemble Service - COMPLETELY FIXED VERSION
 ระบบจดจำใบหน้าแบบ Ensemble ที่รวม 3 โมเดล: AdaFace, FaceNet, ArcFace
-ตามเอกสาร face-recognition-docs.md
+แก้ไขปัญหา image preprocessing และ model inference
 """
 
 import logging
@@ -12,6 +12,7 @@ import time
 import cv2
 import os
 import asyncio
+import platform # Added for OS detection
 
 # Conditional imports
 try:
@@ -29,11 +30,8 @@ except ImportError:
     PIL_Image = None
 
 from .models import (
-    FaceEmbedding,
     FaceMatch,
     FaceRecognitionResult,
-    FaceComparisonResult,
-    RecognitionModel,
     RecognitionQuality
 )
 
@@ -41,6 +39,7 @@ from .models import (
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
+IS_WINDOWS = platform.system() == "Windows" # Added for OS specific logic
 
 @dataclass
 class EnsembleConfig:
@@ -64,12 +63,13 @@ class EnsembleConfig:
 
 
 class FixedSingleModelProcessor:
-    """ตัวประมวลผลสำหรับโมเดลเดี่ยว - FIXED version"""
+    """ตัวประมวลผลสำหรับโมเดลเดี่ยว - COMPLETELY FIXED version"""
     
-    def __init__(self, model_path: str, model_type: str, input_size: Tuple[int, int]):
+    def __init__(self, model_path: str, model_type: str, input_size: Tuple[int, int], ensemble_config: EnsembleConfig): # Added ensemble_config
         self.model_path = model_path
         self.model_type = model_type
         self.input_size = input_size
+        self.config = ensemble_config # Store config
         self.session = None
         self.model_loaded = False
         self.logger = logging.getLogger(f"{__name__}.{model_type}")
@@ -81,13 +81,13 @@ class FixedSingleModelProcessor:
         
         # Model-specific preprocessing parameters
         self.preprocessing_config = {
-            'adaface': {'mean': 0.5, 'std': 0.5, 'size': (112, 112)},
-            'facenet': {'mean': 0.0, 'std': 1.0, 'size': (160, 160)}, 
-            'arcface': {'mean': 0.5, 'std': 0.5, 'size': (112, 112)}
+            'adaface': {'mean': [0.5, 0.5, 0.5], 'std': [0.5, 0.5, 0.5], 'size': (112, 112)},
+            'facenet': {'mean': [127.5, 127.5, 127.5], 'std': [128.0, 128.0, 128.0], 'size': (160, 160)}, 
+            'arcface': {'mean': [0.5, 0.5, 0.5], 'std': [0.5, 0.5, 0.5], 'size': (112, 112)}
         }
     
     async def load_model(self, device: str = "cuda") -> bool:
-        """โหลดโมเดล ONNX - FIXED version"""
+        """โหลดโมเดล ONNX - COMPLETELY FIXED version - Optimized"""
         try:
             if not ONNX_AVAILABLE:
                 self.logger.error("❌ ONNX Runtime not available")
@@ -97,29 +97,42 @@ class FixedSingleModelProcessor:
                 self.logger.error(f"❌ Model file not found: {self.model_path}")
                 return False
             
-            self.logger.info(f"🔄 Loading {self.model_type} model...")
+            self.logger.info(f"🔄 Loading {self.model_type} model (Optimized)...")
             
-            # FIXED session options
             session_options = ort.SessionOptions()
-            session_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
-            session_options.execution_mode = ort.ExecutionMode.ORT_SEQUENTIAL
-            session_options.inter_op_num_threads = 4
-            session_options.intra_op_num_threads = 4
+            # Use ORT_ENABLE_EXTENDED for more optimizations
+            session_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED
+            session_options.execution_mode = ort.ExecutionMode.ORT_SEQUENTIAL # Keep this for stability
+            session_options.inter_op_num_threads = 2 # Keep this or adjust based on CPU
+            session_options.intra_op_num_threads = 2 # Keep this or adjust based on CPU
             
-            # FIXED providers configuration
             providers = []
-            if device == "cuda" and 'CUDAExecutionProvider' in ort.get_available_providers():
-                self.logger.info(f"🔥 {self.model_type} using CUDA configuration")
-                providers.append(('CUDAExecutionProvider', {
-                    'device_id': 0,
-                    'arena_extend_strategy': 'kNextPowerOfTwo',
-                    'gpu_mem_limit': 2 * 1024 * 1024 * 1024,  # 2GB
-                    'cudnn_conv_algo_search': 'EXHAUSTIVE',
-                    'do_copy_in_default_stream': True,
-                    'enable_cuda_graph': True
-                }))
-            providers.append('CPUExecutionProvider')
             
+            if device == "cuda" and self.config.enable_gpu_optimization: # Check global config
+                try:
+                    import torch
+                    if torch.cuda.is_available():
+                        self.logger.info(f"🔥 {self.model_type} using OPTIMIZED CUDA configuration")
+                        # Simplified and potentially more robust CUDA options from face_recognition_service.py
+                        cuda_options = {
+                            'device_id': 0,
+                            'arena_extend_strategy': 'kSameAsRequested',
+                            # Adjusted GPU memory limit, ensure this is suitable for ensemble
+                            'gpu_mem_limit': int(2 * 1024 * 1024 * 1024), # 2GB per model, adjust as needed
+                            'cudnn_conv_algo_search': 'HEURISTIC',
+                            # 'do_copy_in_default_stream': True, # Removed for simplicity, like in face_recognition_service
+                        }
+                        providers.append(('CUDAExecutionProvider', cuda_options))
+                        self.logger.info(f"🔥 {self.model_type} configured with CUDA options: {cuda_options}")
+                    else:
+                        self.logger.warning(f"⚠️ CUDA not available according to torch, {self.model_type} using CPU.")
+                except ImportError:
+                    self.logger.warning(f"⚠️ PyTorch not found, cannot confirm CUDA availability for {self.model_type}. Assuming CPU.")
+                except Exception as e:
+                    self.logger.warning(f"⚠️ CUDA setup failed for {self.model_type}, using CPU. Error: {e}")
+            
+            providers.append('CPUExecutionProvider') # Always have CPU as a fallback
+
             self.session = ort.InferenceSession(
                 self.model_path,
                 sess_options=session_options,
@@ -127,36 +140,39 @@ class FixedSingleModelProcessor:
             )
             
             self.model_loaded = True
-            device_used = "GPU" if len(providers) > 1 and isinstance(providers[0], tuple) else "CPU"
-            self.logger.info(f"✅ {self.model_type} loaded successfully on {device_used}")
+            actual_providers = self.session.get_providers()
+            device_used = "GPU" if any('CUDAExecutionProvider' in p for p in actual_providers) else "CPU"
+            self.logger.info(f"✅ {self.model_type} loaded successfully on {device_used} with providers: {actual_providers}")
             
-            # Warmup model for better performance
             await self._warmup_model()
             
             return True
             
         except Exception as e:
-            self.logger.error(f"❌ Failed to load {self.model_type}: {e}")
+            self.logger.error(f"❌ Failed to load {self.model_type}: {e}", exc_info=True)
+            self.model_loaded = False
             return False
     
     async def _warmup_model(self) -> None:
-        """Warmup model สำหรับ GPU performance"""
+        """Warmup model สำหรับ GPU performance - Optimized"""
         try:
             if not self.model_loaded or self.session is None:
                 return
                 
-            self.logger.info(f"🔥 Warming up {self.model_type} model...")
+            self.logger.info(f"🔥 Warming up {self.model_type} model (5 iterations)...")
             config = self.preprocessing_config[self.model_type.lower()]
             
-            # Create dummy input
-            dummy_input = np.random.randn(1, 3, *config['size']).astype(np.float32)
+            dummy_input_shape = (1, 3, config['size'][1], config['size'][0]) # NCHW, size is (width, height)
+            dummy_input = np.random.randn(*dummy_input_shape).astype(np.float32)
             input_name = self.session.get_inputs()[0].name
             
-            # Run warmup iterations
             warmup_start = time.time()
-            for i in range(3):
-                result = self.session.run(None, {input_name: dummy_input})
-                self.logger.debug(f"🔥 {self.model_type} warmup iteration {i+1} successful")
+            for i in range(5): # Increased iterations to 5
+                try:
+                    _ = self.session.run(None, {input_name: dummy_input})
+                    self.logger.debug(f"🔥 {self.model_type} warmup iteration {i+1} successful")
+                except Exception as warmup_error:
+                    self.logger.warning(f"⚠️ {self.model_type} warmup iteration {i+1} failed: {warmup_error}")
             
             warmup_time = time.time() - warmup_start
             self.logger.info(f"🔥 {self.model_type} warmed up in {warmup_time:.3f}s")
@@ -165,15 +181,16 @@ class FixedSingleModelProcessor:
             self.logger.warning(f"⚠️ {self.model_type} warmup failed: {e}")
     
     def preprocess_face(self, face_image) -> Optional[np.ndarray]:
-        """เตรียมภาพสำหรับโมเดล - FIXED version"""
+        """เตรียมภาพสำหรับโมเดล - COMPLETELY FIXED version - Optimized"""
         try:
-            # FIXED input validation
+            # STEP 1: Input validation and conversion (largely unchanged)
             if face_image is None:
                 self.logger.error(f"❌ Face image is None for {self.model_type}")
                 return None
             
             # Convert to numpy array if needed
             if not isinstance(face_image, np.ndarray):
+                # ... (conversion logic as before)
                 self.logger.debug(f"🔄 Converting face image from {type(face_image)} to numpy array")
                 try:
                     if hasattr(face_image, 'numpy'):
@@ -188,118 +205,109 @@ class FixedSingleModelProcessor:
                 except Exception as conv_e:
                     self.logger.error(f"❌ Failed to convert face image: {conv_e}")
                     return None
-            
-            # Validate shape
+
             if not hasattr(face_image, 'shape') or len(face_image.shape) < 2:
-                self.logger.error(f"❌ Invalid face image shape for {self.model_type}")
+                self.logger.error(f"❌ Invalid face image shape for {self.model_type}: {getattr(face_image, 'shape', 'no shape')}")
                 return None
             
-            # Ensure contiguous memory layout
             if not face_image.flags['C_CONTIGUOUS']:
                 face_image = np.ascontiguousarray(face_image)
             
-            # Handle grayscale to RGB conversion
-            if len(face_image.shape) == 2:  # Grayscale
-                face_image = cv2.cvtColor(face_image, cv2.COLOR_GRAY2RGB)
-            elif len(face_image.shape) == 3 and face_image.shape[2] == 1:  # Single channel
-                face_image = cv2.cvtColor(face_image, cv2.COLOR_GRAY2RGB)
+            # STEP 2: Color space handling
             
-            # Ensure correct data type
-            if face_image.dtype != np.uint8:
-                if face_image.dtype in [np.float32, np.float64]:
-                    if face_image.max() <= 1.0:
-                        face_image = (face_image * 255).astype(np.uint8)
+            processed_cv_image = face_image
+            if len(processed_cv_image.shape) == 2:
+                processed_cv_image = cv2.cvtColor(processed_cv_image, cv2.COLOR_GRAY2BGR)
+            elif len(processed_cv_image.shape) == 3 and processed_cv_image.shape[2] == 1:
+                processed_cv_image = cv2.cvtColor(processed_cv_image, cv2.COLOR_GRAY2BGR)
+            elif len(processed_cv_image.shape) == 3 and processed_cv_image.shape[2] == 4: # RGBA or BGRA
+                # Assuming input might be BGRA from some sources, convert to BGR
+                processed_cv_image = cv2.cvtColor(processed_cv_image, cv2.COLOR_BGRA2BGR)
+
+
+            # Explicit BGR to RGB conversion (models usually expect RGB)
+            # This should happen after ensuring it's 3-channel BGR
+            if len(processed_cv_image.shape) == 3 and processed_cv_image.shape[2] == 3:
+                 processed_cv_image = cv2.cvtColor(processed_cv_image, cv2.COLOR_BGR2RGB)
+            else:
+                self.logger.error(f"❌ Image is not 3-channel BGR after initial conversion: {processed_cv_image.shape}")
+                return None
+
+            # STEP 3: Data type handling (largely unchanged)
+            if processed_cv_image.dtype != np.uint8:
+                if processed_cv_image.dtype in [np.float32, np.float64]:
+                    if processed_cv_image.max() <= 1.0 and processed_cv_image.min() >=0.0 :
+                        processed_cv_image = (processed_cv_image * 255).astype(np.uint8)
                     else:
-                        face_image = np.clip(face_image, 0, 255).astype(np.uint8)
+                        processed_cv_image = np.clip(processed_cv_image, 0, 255).astype(np.uint8)
                 else:
-                    face_image = face_image.astype(np.uint8)
-            
+                    try:
+                        processed_cv_image = processed_cv_image.astype(np.uint8)
+                    except Exception as dtype_e:
+                        self.logger.error(f"❌ Failed to convert face image to uint8: {dtype_e}")
+                        return None
+
+            # STEP 4: Resize with INTER_LANCZOS4
             config = self.preprocessing_config[self.model_type.lower()]
-            target_size = tuple(config['size'])
+            target_size = tuple(config['size']) # (width, height)
             
-            # FIXED resize with multiple fallback methods
             face_resized = None
+            # self.logger.debug(f"🔧 Resizing {self.model_type}: {processed_cv_image.shape} -> {target_size}")
             
-            # Method 1: Standard OpenCV resize
             try:
-                self.logger.debug(f"🔧 Resizing {self.model_type}: {face_image.shape} -> {target_size}")
-                face_resized = cv2.resize(face_image, target_size, interpolation=cv2.INTER_LINEAR)
-                self.logger.debug(f"✅ Resize successful: {face_resized.shape}")
+                # Use INTER_LANCZOS4 for higher quality resize
+                face_resized = cv2.resize(processed_cv_image, target_size, interpolation=cv2.INTER_LANCZOS4)
+                # self.logger.debug(f"✅ OpenCV resize successful (LANCZOS4): {face_resized.shape}")
             except Exception as resize_e:
-                self.logger.debug(f"❌ OpenCV resize method 1 failed: {resize_e}")
-                
-                # Method 2: Force contiguous array
+                self.logger.warning(f"❌ OpenCV LANCZOS4 resize failed: {resize_e}. Trying INTER_LINEAR...")
                 try:
-                    self.logger.debug("🔄 Trying contiguous array method...")
-                    face_copy = np.ascontiguousarray(face_image.copy())
-                    face_resized = cv2.resize(face_copy, target_size, interpolation=cv2.INTER_LINEAR)
-                    self.logger.debug("✅ Contiguous array method successful")
-                except Exception as resize2_e:
-                    self.logger.debug(f"❌ Contiguous array method failed: {resize2_e}")
-                    
-                    # Method 3: PIL fallback if available
+                    face_resized = cv2.resize(processed_cv_image, target_size, interpolation=cv2.INTER_LINEAR)
+                    # self.logger.debug(f"✅ OpenCV resize successful (LINEAR): {face_resized.shape}")
+                except Exception as linear_resize_e:
+                    self.logger.error(f"❌ OpenCV LINEAR resize also failed: {linear_resize_e}")
+                    # PIL fallback (as before, if needed and available)
                     if PIL_AVAILABLE:
                         try:
-                            self.logger.debug("🔄 Trying PIL fallback method...")
-                            if len(face_image.shape) == 3:
-                                pil_image = PIL_Image.fromarray(face_image)
-                                pil_resized = pil_image.resize(target_size, PIL_Image.LANCZOS)
-                                face_resized = np.array(pil_resized)
-                                self.logger.debug("✅ PIL method successful")
+                            self.logger.debug("🔄 Trying PIL resize...")
+                            pil_image = PIL_Image.fromarray(processed_cv_image) # Assumes RGB now
+                            pil_resized = pil_image.resize(target_size, PIL_Image.LANCZOS)
+                            face_resized = np.array(pil_resized)
+                            self.logger.debug("✅ PIL resize successful")
                         except Exception as pil_e:
-                            self.logger.debug(f"❌ PIL method failed: {pil_e}")
-                    
-                    # Method 4: Manual resize (last resort)
-                    if face_resized is None:
-                        try:
-                            self.logger.debug("🔄 Trying manual resize method...")
-                            h, w = face_image.shape[:2]
-                            target_h, target_w = target_size[1], target_size[0]
-                            
-                            # Simple nearest neighbor resize
-                            indices_h = np.round(np.linspace(0, h-1, target_h)).astype(int)
-                            indices_w = np.round(np.linspace(0, w-1, target_w)).astype(int)
-                            
-                            if len(face_image.shape) == 3:
-                                face_resized = face_image[np.ix_(indices_h, indices_w, range(face_image.shape[2]))]
-                            else:
-                                face_resized = face_image[np.ix_(indices_h, indices_w)]
-                            
-                            self.logger.debug("✅ Manual resize successful")
-                        except Exception as manual_e:
-                            self.logger.error(f"❌ Manual resize failed: {manual_e}")
+                            self.logger.error(f"❌ PIL resize failed: {pil_e}")
             
             if face_resized is None:
-                self.logger.error(f"❌ Failed to resize image for {self.model_type}")
+                self.logger.error(f"❌ All resize methods failed for {self.model_type}")
                 return None
             
-            # Convert BGR to RGB if needed
-            if len(face_resized.shape) == 3 and face_resized.shape[2] == 3:
-                face_resized = cv2.cvtColor(face_resized, cv2.COLOR_BGR2RGB)
+            # STEP 5: Normalization (logic remains similar, applied to RGB image)
+            face_normalized = face_resized.astype(np.float32)
             
-            # Normalize to [0, 1]
-            face_normalized = face_resized.astype(np.float32) / 255.0
+            if self.model_type.lower() == 'facenet':
+                face_normalized = (face_normalized - 127.5) / 128.0
+            else: # AdaFace, ArcFace
+                face_normalized = face_normalized / 255.0
+                face_normalized = (face_normalized - 0.5) / 0.5
             
-            # Apply model-specific normalization
-            if config['mean'] == 0.5:  # AdaFace, ArcFace
-                face_normalized = (face_normalized - config['mean']) / config['std']
-            # FaceNet uses mean=0, std=1 (no additional normalization needed)
-            
-            # Transpose to CHW format and add batch dimension
+            # STEP 6: Transpose and add batch dimension (unchanged)
             if len(face_normalized.shape) == 3:
-                face_normalized = np.transpose(face_normalized, (2, 0, 1))
+                face_normalized = np.transpose(face_normalized, (2, 0, 1)) # HWC to CHW
             face_normalized = np.expand_dims(face_normalized, axis=0)
             
-            self.logger.debug(f"🎯 {self.model_type} preprocessing complete: {face_normalized.shape}")
+            expected_shape = (1, 3, target_size[1], target_size[0]) 
+            if face_normalized.shape != expected_shape:
+                self.logger.error(f"❌ Final shape mismatch for {self.model_type}: {face_normalized.shape} != {expected_shape}")
+                return None 
             
+            # self.logger.debug(f"🎯 {self.model_type} preprocessing complete: {face_normalized.shape}")
             return face_normalized.astype(np.float32)
             
         except Exception as e:
-            self.logger.error(f"❌ Preprocessing failed for {self.model_type}: {e}")
+            self.logger.error(f"❌ Preprocessing failed for {self.model_type}: {e}", exc_info=True)
             return None
     
     async def extract_embedding(self, face_image) -> Optional[np.ndarray]:
-        """สร้าง embedding จากใบหน้า - FIXED version"""
+        """สร้าง embedding จากใบหน้า - COMPLETELY FIXED version"""
         try:
             start_time = time.time()
             self.total_count += 1
@@ -308,18 +316,44 @@ class FixedSingleModelProcessor:
                 self.logger.error(f"❌ {self.model_type} model not loaded")
                 return None
             
-            # FIXED preprocessing
             processed_image = self.preprocess_face(face_image)
             if processed_image is None:
+                self.logger.error(f"❌ Preprocessing failed for {self.model_type}")
                 return None
             
-            # FIXED inference
+            outputs = None
             try:
                 input_name = self.session.get_inputs()[0].name
-                self.logger.debug(f"🔧 Running inference for {self.model_type}")
+                self.logger.debug(f"🔧 Running inference for {self.model_type} with input shape {processed_image.shape}")
                 
-                # Run inference
-                outputs = self.session.run(None, {input_name: processed_image})
+                if not isinstance(processed_image, np.ndarray):
+                    self.logger.error(f"❌ Processed image is not numpy array: {type(processed_image)}")
+                    return None
+                
+                if processed_image.size == 0:
+                    self.logger.error("❌ Processed image is empty")
+                    return None
+
+                # Timeout handling for inference
+                if not IS_WINDOWS:
+                    import signal
+
+                    def timeout_handler(signum, frame):
+                        raise TimeoutError(f"Model inference timeout for {self.model_type}")
+
+                    original_handler = signal.getsignal(signal.SIGALRM)
+                    signal.signal(signal.SIGALRM, timeout_handler)
+                    signal.alarm(10)  # 10 seconds timeout
+                    try:
+                        outputs = self.session.run(None, {input_name: processed_image})
+                    finally:
+                        signal.alarm(0)  # Cancel timeout
+                        signal.signal(signal.SIGALRM, original_handler) # Restore original handler
+                else:
+                    # On Windows, run without signal-based timeout
+                    # For true timeout, would need multiprocessing or threading with wait
+                    self.logger.debug(f"ℹ️ Running {self.model_type} inference on Windows without signal-based timeout.")
+                    outputs = self.session.run(None, {input_name: processed_image})
                 
                 if outputs is None or len(outputs) == 0:
                     self.logger.error(f"❌ No outputs returned from {self.model_type} model")
@@ -330,94 +364,111 @@ class FixedSingleModelProcessor:
                     self.logger.error(f"❌ Null embedding output from {self.model_type}")
                     return None
                 
+            except TimeoutError as te:
+                self.logger.error(f"❌ {self.model_type} inference timeout: {te}")
+                return None
             except Exception as inference_e:
-                self.logger.error(f"❌ Inference failed for {self.model_type}: {inference_e}")
+                self.logger.error(f"❌ Inference failed for {self.model_type}: {inference_e}", exc_info=True)
                 return None
             
-            # FIXED embedding processing
             try:
-                # Handle different output shapes
-                if len(embedding_output.shape) == 0:
-                    self.logger.error(f"❌ Scalar embedding output from {self.model_type}")
-                    return None
-                elif len(embedding_output.shape) == 1:
-                    embedding = embedding_output  # Already 1D
-                elif len(embedding_output.shape) == 2 and embedding_output.shape[0] == 1:
-                    embedding = embedding_output[0]  # Remove batch dimension
-                else:
-                    self.logger.error(f"❌ Unexpected embedding shape from {self.model_type}: {embedding_output.shape}")
+                if isinstance(embedding_output, (list, tuple)):
+                    embedding_output = embedding_output[0] if len(embedding_output) > 0 else None
+                
+                if embedding_output is None:
+                    self.logger.error(f"❌ Empty embedding output from {self.model_type}")
                     return None
                 
-                # Normalize embedding
+                if not isinstance(embedding_output, np.ndarray):
+                    embedding_output = np.array(embedding_output)
+                
+                if embedding_output.size == 0:
+                    self.logger.error(f"❌ Zero-size embedding from {self.model_type}")
+                    return None
+                
+                # Standardize embedding shape to 1D
+                embedding = embedding_output.flatten()
+                
+                if embedding.size == 0: # Should not happen if previous checks passed
+                    self.logger.error(f"❌ Empty embedding after processing for {self.model_type}")
+                    return None
+                
+                if np.any(np.isnan(embedding)) or np.any(np.isinf(embedding)):
+                    self.logger.error(f"❌ Invalid values (NaN/Inf) in embedding for {self.model_type}")
+                    # Optionally, try to clean or return None. Returning None is safer.
+                    return None 
+                
+                # Normalize embedding (L2 normalization)
                 norm = np.linalg.norm(embedding)
-                if norm > 1e-8:
+                if norm > 1e-8: # Avoid division by zero or very small norm
                     embedding = embedding / norm
                 else:
-                    self.logger.warning(f"⚠️ Very small embedding norm for {self.model_type}: {norm}")
-                    return None
-                
+                    self.logger.warning(f"⚠️ Very small embedding norm for {self.model_type}: {norm}. Embedding might be unreliable.")
+                    # Depending on policy, could return None or the (almost) zero vector.
+                    # For now, let it pass but it's a sign of a problem.
+                    # To be stricter: return None
+
                 self.success_count += 1
                 processing_time = time.time() - start_time
                 self.total_time += processing_time
                 
-                self.logger.debug(f"✅ {self.model_type} embedding extracted successfully: shape={embedding.shape}")
+                self.logger.debug(f"✅ {self.model_type} embedding extracted: shape={embedding.shape}, norm={np.linalg.norm(embedding):.6f}, time={processing_time:.4f}s")
                 
                 return embedding
                 
             except Exception as embed_e:
-                self.logger.error(f"❌ Embedding processing failed for {self.model_type}: {embed_e}")
+                self.logger.error(f"❌ Embedding processing failed for {self.model_type}: {embed_e}", exc_info=True)
                 return None
             
         except Exception as e:
-            self.logger.error(f"❌ Embedding extraction failed for {self.model_type}: {e}")
+            self.logger.error(f"❌ Embedding extraction failed for {self.model_type}: {e}", exc_info=True)
             return None
 
 
 class EnsembleFaceRecognitionService:
-    """Face Recognition Ensemble Service - FIXED VERSION"""
+    """Face Recognition Ensemble Service - COMPLETELY FIXED VERSION"""
     
-    def __init__(self, config: Optional[EnsembleConfig] = None, vram_manager=None):
+    def __init__(self, config: Optional[EnsembleConfig] = None, vram_manager=None): # vram_manager not used yet
         self.logger = logging.getLogger(__name__)
-        self.config = config or EnsembleConfig()
-        self.vram_manager = vram_manager
+        self.config = config or EnsembleConfig() # Ensure config is used by FixedSingleModelProcessor
+        self.vram_manager = vram_manager 
         
-        # FIXED weights
         self.weights = {
             'adaface': self.config.adaface_weight,
             'facenet': self.config.facenet_weight,  
             'arcface': self.config.arcface_weight
         }
         
-        # สร้าง processors สำหรับแต่ละโมเดล
         self.models = {
             'adaface': FixedSingleModelProcessor(
-                'model/face-recognition/adaface_ir101.onnx',
+                'model/face-recognition/adaface_ir101.onnx', 
                 'adaface',
-                (112, 112)
+                (112, 112),
+                self.config # Pass ensemble config
             ),
             'facenet': FixedSingleModelProcessor(
                 'model/face-recognition/facenet_vggface2.onnx', 
                 'facenet',
-                (160, 160)
+                (160, 160),
+                self.config # Pass ensemble config
             ),
             'arcface': FixedSingleModelProcessor(
                 'model/face-recognition/arcface_r100.onnx',
                 'arcface', 
-                (112, 112)
+                (112, 112),
+                self.config # Pass ensemble config
             )
         }
         
-        # Face database
         self.face_database: Dict[str, List[Dict[str, Any]]] = {}
         
-        # Performance statistics
         self.stats = {
             'total_extractions': 0,
             'successful_extractions': 0,
             'total_recognitions': 0,
             'successful_recognitions': 0,
             'ensemble_processing_times': [],
-            'model_performance': {
+            'model_performance': { # This structure might be redundant if FixedSingleModelProcessor tracks its own stats
                 'adaface': {'success': 0, 'total': 0, 'avg_time': 0.0},
                 'facenet': {'success': 0, 'total': 0, 'avg_time': 0.0},
                 'arcface': {'success': 0, 'total': 0, 'avg_time': 0.0}
@@ -428,307 +479,360 @@ class EnsembleFaceRecognitionService:
     
     async def initialize(self) -> bool:
         """เริ่มต้นระบบ Ensemble"""
-        try:
-            self.logger.info("🔧 Initializing Face Recognition Ensemble...")
-            
-            # โหลดโมเดลทั้งหมดแบบ sequential
-            loaded_models = 0
-            for model_name, processor in self.models.items():
-                success = await processor.load_model("cuda" if self.config.enable_gpu_optimization else "cpu")
-                if success:
-                    loaded_models += 1
-                    self.logger.info(f"✅ {model_name} loaded successfully")
-                else:
-                    self.logger.error(f"❌ Failed to load {model_name}")
-            
-            if loaded_models == 0:
-                self.logger.error("❌ No models loaded successfully")
-                return False
-            elif loaded_models < 3:
-                self.logger.warning(f"⚠️ Only {loaded_models}/3 models loaded. Ensemble may have reduced accuracy.")
-            
-            self.logger.info(f"✅ Face Recognition Ensemble initialized with {loaded_models}/3 models")
-            return True
-            
-        except Exception as e:
-            self.logger.error(f"❌ Error initializing Ensemble: {e}")
+        self.logger.info("🔧 Initializing EnsembleFaceRecognitionService...")
+        
+        # Load models concurrently
+        load_tasks = [model.load_model(device="cuda" if self.config.enable_gpu_optimization else "cpu") 
+                      for model in self.models.values()]
+        results = await asyncio.gather(*load_tasks)
+        
+        if not all(results):
+            self.logger.error("❌ Failed to initialize one or more models in the ensemble.")
             return False
-    
-    async def extract_ensemble_embedding(self, face_image) -> Optional[FaceEmbedding]:
-        """สร้าง ensemble embedding จากใบหน้า"""
-        try:
-            start_time = time.time()
             
-            # Extract embeddings จากทุกโมเดล
-            valid_embeddings = {}
-            
-            self.logger.debug(f"🔧 Extracting embeddings from {len(self.models)} models")
-            
-            for model_name, processor in self.models.items():
-                if processor.model_loaded:
-                    try:
-                        embedding = await processor.extract_embedding(face_image)
-                        if embedding is not None:
-                            valid_embeddings[model_name] = embedding
-                            self.logger.debug(f"✅ {model_name} embedding extracted successfully")
-                        else:
-                            self.logger.warning(f"⚠️ {model_name} returned invalid embedding")
-                    except Exception as model_e:
-                        self.logger.warning(f"⚠️ {model_name} extraction failed: {model_e}")
-            
-            if not valid_embeddings:
-                self.logger.error("❌ No valid embeddings extracted from any model")
-                return None
-            
-            # สร้าง ensemble embedding ด้วยน้ำหนักที่เหมาะสม
-            ensemble_embedding = self._create_ensemble_embedding(valid_embeddings)
-            if ensemble_embedding is None:
-                return None
-            
-            processing_time = time.time() - start_time
-            self.stats['total_extractions'] += 1
-            self.stats['successful_extractions'] += 1
-            self.stats['ensemble_processing_times'].append(processing_time)
-            
-            # ประเมินคุณภาพ
-            quality_score = self._assess_ensemble_quality(valid_embeddings, ensemble_embedding)
-            
-            self.logger.debug(f"✅ Ensemble embedding created using {len(valid_embeddings)}/{len(self.models)} models in {processing_time:.3f}s")
-            
-            return FaceEmbedding(
-                vector=ensemble_embedding,
-                model_type=RecognitionModel.ADAFACE,
-                quality_score=quality_score,
-                extraction_time=processing_time,
-                metadata={
-                    'ensemble_type': 'weighted_average',
-                    'participating_models': list(valid_embeddings.keys()),
-                    'model_count': len(valid_embeddings),
-                    'weights_used': {k: self.weights[k] for k in valid_embeddings.keys()},
-                    'gpu_optimized': self.config.enable_gpu_optimization
-                }
-            )
-            
-        except Exception as e:
-            self.logger.error(f"❌ Ensemble embedding extraction failed: {e}")
+        self.logger.info("✅ EnsembleFaceRecognitionService initialized successfully.")
+        return True
+
+    async def extract_ensemble_embedding(self, face_image: np.ndarray) -> Optional[Dict[str, Any]]:
+        """สร้าง embedding แบบ ensemble จากใบหน้า"""
+        self.stats['total_extractions'] += 1
+        start_time = time.time()
+        
+        # Extract embeddings from all models concurrently
+        extraction_tasks = {
+            name: model.extract_embedding(face_image)
+            for name, model in self.models.items()
+        }
+        
+        # Use asyncio.gather to run extractions concurrently
+        # Store results in a dictionary to maintain model-embedding association
+        embedding_results = {}
+        results_list = await asyncio.gather(*(extraction_tasks.values()))
+        
+        for i, model_name in enumerate(extraction_tasks.keys()):
+            embedding_results[model_name] = results_list[i]
+
+        # Filter out failed extractions
+        successful_embeddings = {
+            name: emb for name, emb in embedding_results.items() if emb is not None
+        }
+        
+        if not successful_embeddings:
+            self.logger.warning("⚠️ All models failed to extract embedding.")
             return None
-    
-    def _create_ensemble_embedding(self, embeddings: Dict[str, np.ndarray]) -> Optional[np.ndarray]:
-        """สร้าง ensemble embedding ด้วยน้ำหนักที่เหมาะสม"""
-        try:
-            if not embeddings:
-                return None
-                
-            # คำนวณน้ำหนักที่ปรับให้เฉพาะโมเดลที่มี
-            total_weight = sum(self.weights[model] for model in embeddings.keys())
-            if total_weight <= 0:
-                self.logger.error("❌ Total weight is zero or negative")
-                return None
-                
-            normalized_weights = {model: self.weights[model] / total_weight for model in embeddings.keys()}
             
-            # รวม embedding ด้วยน้ำหนัก
-            weighted_embeddings = []
-            for model_name, embedding in embeddings.items():
-                weighted_embedding = embedding * normalized_weights[model_name]
-                weighted_embeddings.append(weighted_embedding)
-            
-            # Sum all weighted embeddings
-            ensemble_embedding = np.sum(weighted_embeddings, axis=0)
-            
-            # Normalize ผลลัพธ์สุดท้าย
-            norm = np.linalg.norm(ensemble_embedding)
-            if norm > 1e-8:
-                ensemble_embedding = ensemble_embedding / norm
-            else:
-                self.logger.error("❌ Ensemble embedding has zero norm")
-                return None
-            
-            return ensemble_embedding
-            
-        except Exception as e:
-            self.logger.error(f"❌ Ensemble creation failed: {e}")
-            # Fallback: ใช้ embedding แรกที่หาได้
-            if embeddings:
-                return list(embeddings.values())[0]
+        # Create ensemble embedding
+        ensemble_embedding, quality_score = self._create_ensemble_embedding(successful_embeddings)
+        
+        if ensemble_embedding is None:
+            self.logger.warning("⚠️ Failed to create ensemble embedding.")
             return None
-    
-    def _assess_ensemble_quality(self, individual_embeddings: Dict[str, np.ndarray], 
-                                ensemble_embedding: np.ndarray) -> float:
-        """ประเมินคุณภาพของ ensemble embedding"""
-        try:
-            if len(individual_embeddings) < 1:
-                return 0.0
-            elif len(individual_embeddings) == 1:
-                return 0.7  # คุณภาพปานกลางถ้ามีโมเดลเดียว
             
-            # ความสอดคล้องระหว่างโมเดล
-            embeddings_array = np.array(list(individual_embeddings.values()))
-            similarity_matrix = np.dot(embeddings_array, embeddings_array.T)
-            
-            # ใช้เฉพาะค่าที่ไม่ใช่ diagonal
-            mask = np.triu(np.ones_like(similarity_matrix, dtype=bool), k=1)
-            similarities = similarity_matrix[mask]
-            
-            consistency_score = np.mean(similarities) if len(similarities) > 0 else 0.5
-            
-            # Bonus สำหรับโมเดลครบ
-            quality_score = consistency_score
-            if len(individual_embeddings) == 3:
-                quality_score *= 1.1  # เพิ่ม 10%
-            
-            return float(np.clip(quality_score, 0.0, 1.0))
-            
-        except Exception as e:
-            self.logger.error(f"❌ Quality assessment failed: {e}")
-            return 0.6  # คะแนนเริ่มต้น
-    
-    async def add_face_to_database(self, person_id: str, face_image, 
-                                 metadata: Optional[Dict[str, Any]] = None) -> bool:
-        """เพิ่มใบหน้าเข้าฐานข้อมูล"""
-        try:
-            # Extract ensemble embedding
-            embedding = await self.extract_ensemble_embedding(face_image)
-            if embedding is None:
-                self.logger.error(f"❌ Failed to extract embedding for person {person_id}")
-                return False
-            
-            # เพิ่มเข้าฐานข้อมูล
-            if person_id not in self.face_database:
-                self.face_database[person_id] = []
-            
-            embedding_data = {
-                'embedding': embedding.vector,
-                'quality': embedding.quality_score,
-                'model_type': embedding.model_type,
-                'processing_time': embedding.extraction_time,
-                'timestamp': time.time(),
-                'metadata': metadata or {},
-                'ensemble_info': embedding.metadata
-            }
-            
-            self.face_database[person_id].append(embedding_data)
-            
-            self.logger.info(f"✅ Added {person_id} to database (Quality: {embedding.quality_score:.3f})")
-            return True
-            
-        except Exception as e:
-            self.logger.error(f"❌ Failed to add {person_id} to database: {e}")
-            return False
-    
-    async def recognize_face(self, face_image) -> Optional[FaceRecognitionResult]:
-        """จดจำใบหน้า"""
-        try:
-            start_time = time.time()
-            self.stats['total_recognitions'] += 1
-            
-            # Extract embedding
-            query_embedding = await self.extract_ensemble_embedding(face_image)
-            if query_embedding is None:
-                return None
-            
-            # หาคนที่ตรงที่สุด
-            best_match = None
-            best_similarity = -1.0
-            
-            for person_id, embeddings_list in self.face_database.items():
-                for embedding_data in embeddings_list:
-                    similarity = np.dot(query_embedding.vector, embedding_data['embedding'])
-                    
-                    if similarity > best_similarity:
-                        best_similarity = similarity
-                        best_match = FaceMatch(
-                            person_id=person_id,
-                            similarity_score=similarity,
-                            confidence_score=similarity,
-                            model_type=RecognitionModel.ADAFACE,
-                            metadata=embedding_data['metadata']
-                        )
-            
-            processing_time = time.time() - start_time
-            
-            if best_match and best_similarity > self.config.ensemble_threshold:
-                self.stats['successful_recognitions'] += 1
-                return FaceRecognitionResult(
-                    match=best_match,
-                    quality=RecognitionQuality.HIGH if best_similarity > 0.8 else RecognitionQuality.MEDIUM,
-                    processing_time=processing_time,
-                    embedding=query_embedding
-                )
-            else:
-                return FaceRecognitionResult(
-                    match=None,
-                    quality=RecognitionQuality.LOW,
-                    processing_time=processing_time,
-                    embedding=query_embedding
-                )
-            
-        except Exception as e:
-            self.logger.error(f"❌ Face recognition failed: {e}")
-            return None
-    
-    def get_statistics(self) -> Dict[str, Any]:
-        """รับสถิติของระบบ"""
-        try:
-            stats = self.stats.copy()
-            
-            # คำนวณ model performance
-            for model_name, processor in self.models.items():
-                if processor.total_count > 0:
-                    stats['model_performance'][model_name].update({
-                        'success_rate': processor.success_count / processor.total_count,
-                        'avg_time': processor.total_time / processor.total_count,
-                        'total_processed': processor.total_count,
-                        'successful': processor.success_count
-                    })
-            
-            # คำนวณ average processing time
-            if self.stats['ensemble_processing_times']:
-                times = self.stats['ensemble_processing_times']
-                stats['average_processing_time'] = np.mean(times)
-                stats['min_processing_time'] = np.min(times)
-                stats['max_processing_time'] = np.max(times)
-            else:
-                stats['average_processing_time'] = 0.0
-                stats['min_processing_time'] = 0.0
-                stats['max_processing_time'] = 0.0
-            
-            # เพิ่มข้อมูลฐานข้อมูล
-            stats['database_size'] = len(self.face_database)
-            stats['total_embeddings'] = sum(len(embeddings) for embeddings in self.face_database.values())
-            
-            # คำนวณ success rates
-            if stats['total_extractions'] > 0:
-                stats['extraction_success_rate'] = stats['successful_extractions'] / stats['total_extractions']
-            else:
-                stats['extraction_success_rate'] = 0.0
-                
-            if stats['total_recognitions'] > 0:
-                stats['recognition_success_rate'] = stats['successful_recognitions'] / stats['total_recognitions']
-            else:
-                stats['recognition_success_rate'] = 0.0
-            
-            return stats
-            
-        except Exception as e:
-            self.logger.error(f"❌ Failed to get statistics: {e}")
-            return {}
-    
-    def clear_database(self):
-        """ล้างฐานข้อมูลใบหน้า"""
-        self.face_database.clear()
-        self.logger.info("🗑️ Face database cleared")
-    
-    def get_database_info(self) -> Dict[str, Any]:
-        """รับข้อมูลฐานข้อมูล"""
+        self.stats['successful_extractions'] += 1
+        processing_time = time.time() - start_time
+        self.stats['ensemble_processing_times'].append(processing_time)
+        
         return {
-            'total_persons': len(self.face_database),
-            'total_embeddings': sum(len(embeddings) for embeddings in self.face_database.values()),
-            'persons': list(self.face_database.keys())
+            'embedding': ensemble_embedding,
+            'quality': quality_score,
+            'individual_embeddings': successful_embeddings, # For analysis
+            'processing_time': processing_time
         }
 
+    def _create_ensemble_embedding(self, embeddings: Dict[str, np.ndarray]) -> Tuple[Optional[np.ndarray], float]:
+        """สร้าง embedding แบบ ensemble จาก embeddings ของแต่ละโมเดล"""
+        if not embeddings:
+            return None, 0.0
 
-# Backward compatibility aliases
-OptimizedEnsembleFaceRecognitionService = EnsembleFaceRecognitionService
-FixedEnsembleFaceRecognitionService = EnsembleFaceRecognitionService
-CompletelyFixedEnsembleFaceRecognitionService = EnsembleFaceRecognitionService
+        # Weighted average of embeddings
+        # Ensure all embeddings are 1D arrays of the same length (or handle appropriately)
+        # For simplicity, assume all models output embeddings that can be meaningfully combined.
+        # This might require padding or truncation if lengths differ, but ONNX models usually have fixed output sizes.
+        
+        # Check for consistent embedding sizes (optional, but good practice)
+        # For now, assume they are compatible or that the first one sets the standard.
+        
+        # Use a list to store valid embeddings for averaging
+        valid_embeddings = []
+        total_weight = 0.0
+        
+        # Collect valid embeddings and their weights
+        for model_name, emb in embeddings.items():
+            if emb is not None and model_name in self.weights:
+                # Ensure embedding is 1D
+                if emb.ndim > 1:
+                    emb = emb.flatten() # Or handle error
+                
+                valid_embeddings.append(emb * self.weights[model_name])
+                total_weight += self.weights[model_name]
+            else:
+                self.logger.warning(f"⚠️ Skipping {model_name} embedding (None or no weight).")
+
+        if not valid_embeddings or total_weight == 0:
+            self.logger.error("❌ No valid embeddings to create ensemble or total_weight is zero.")
+            return None, 0.0
+
+        # Sum weighted embeddings
+        # Need to ensure all embeddings in valid_embeddings have the same shape for direct sum
+        # A more robust approach would be to check shapes or resize/pad, but let's assume compatibility for now.
+        try:
+            # Check if all embeddings have the same shape
+            first_shape = valid_embeddings[0].shape
+            if not all(emb.shape == first_shape for emb in valid_embeddings):
+                self.logger.error(f"❌ Inconsistent embedding shapes for ensemble. First shape: {first_shape}. All shapes: {[e.shape for e in valid_embeddings]}")
+                # Fallback: Use only the embedding from the highest weighted model if shapes differ
+                # This is a simple fallback; more sophisticated strategies could be used.
+                if 'facenet' in embeddings and embeddings['facenet'] is not None: # Assuming FaceNet has highest weight
+                    self.logger.warning("⚠️ Fallback: Using FaceNet embedding due to shape mismatch.")
+                    fallback_emb = embeddings['facenet'].flatten()
+                    norm = np.linalg.norm(fallback_emb)
+                    if norm > 1e-8: 
+                        fallback_emb = fallback_emb / norm
+                    return fallback_emb, self._assess_ensemble_quality(embeddings) # Recalculate quality
+                else: # If even FaceNet is not available or fails
+                    self.logger.error("❌ Fallback failed: FaceNet embedding not available.")
+                    return None, 0.0
+
+            ensemble_embedding_sum = np.sum(valid_embeddings, axis=0)
+            
+            # Normalize by total weight
+            final_ensemble_embedding = ensemble_embedding_sum / total_weight
+            
+            # L2 normalize the final ensemble embedding
+            norm = np.linalg.norm(final_ensemble_embedding)
+            if norm > 1e-8:
+                final_ensemble_embedding /= norm
+            else:
+                self.logger.warning("⚠️ Ensemble embedding has very small norm. May be unreliable.")
+                # Could return None here if this is considered a failure.
+            
+            quality_score = self._assess_ensemble_quality(embeddings) # Assess quality based on original embeddings
+            
+            return final_ensemble_embedding, quality_score
+            
+        except Exception as e:
+            self.logger.error(f"❌ Error creating ensemble embedding: {e}", exc_info=True)
+            # Fallback strategy: if weighted sum fails, try to use the embedding from the highest-weighted model
+            if 'facenet' in embeddings and embeddings['facenet'] is not None: # Assuming FaceNet has highest weight
+                self.logger.warning("⚠️ Fallback: Using FaceNet embedding due to error in weighted sum.")
+                fallback_emb = embeddings['facenet'].flatten()
+                norm = np.linalg.norm(fallback_emb)
+                if norm > 1e-8: 
+                    fallback_emb = fallback_emb / norm
+                return fallback_emb, self._assess_ensemble_quality(embeddings)
+            else:
+                self.logger.error("❌ Fallback failed: FaceNet embedding not available after sum error.")
+                return None, 0.0
+
+    def _assess_ensemble_quality(self, embeddings: Dict[str, np.ndarray]) -> float:
+        """ประเมินคุณภาพของ ensemble embedding (ความสอดคล้องกันของ individual embeddings)"""
+        if len(embeddings) < 2:
+            return 0.5  # Not enough embeddings for comparison, default to medium quality
+
+        # Calculate pairwise cosine similarity between all available embeddings
+        # This gives an idea of how consistent the models are.
+        embedding_list = [emb for emb in embeddings.values() if emb is not None]
+        if len(embedding_list) < 2:
+            return 0.5 # Still not enough after filtering Nones
+
+        # Normalize all embeddings before comparison (should already be done by extract_embedding)
+        # For safety, re-normalize here or ensure it's consistently done.
+        # normalized_embeddings = []
+        # for emb in embedding_list:
+        #     norm = np.linalg.norm(emb)
+        #     if norm > 1e-8:
+        #         normalized_embeddings.append(emb / norm)
+        #     else: # Handle zero/small norm embeddings if they weren't filtered
+        #         # normalized_embeddings.append(emb) # Or skip
+        #         pass # Skip if norm is too small, as it indicates an issue
+
+        # if len(normalized_embeddings) < 2: return 0.5
+
+        # Use already normalized embeddings from extract_embedding
+        
+        similarities = []
+        for i in range(len(embedding_list)):
+            for j in range(i + 1, len(embedding_list)):
+                # Cosine similarity: dot(A, B) / (norm(A) * norm(B))
+                # Since embeddings are L2 normalized, norm(A) = norm(B) = 1
+                # So, similarity = dot(A, B)
+                sim = np.dot(embedding_list[i], embedding_list[j])
+                similarities.append(sim)
+        
+        if not similarities:
+            return 0.0 # Should not happen if len(embedding_list) >= 2
+
+        avg_similarity = np.mean(similarities)
+        
+        # Scale similarity (usually -1 to 1, but for face embeddings, typically 0 to 1)
+        # to a quality score (0 to 1)
+        # Example scaling: (avg_similarity + 1) / 2 if range is -1 to 1
+        # If embeddings are from similar tasks, dot product of normalized vectors is often positive.        # Let's assume similarity is already in a good range (e.g., 0 to 1 for positive correlations)
+        # A simple quality score could be the average similarity itself, if it's well-behaved.
+        # Or, map it: e.g., if avg_similarity < 0.3 -> low, 0.3-0.6 -> medium, >0.6 -> high
+        
+        quality_score = max(0.0, min(1.0, avg_similarity)) # Clamp to [0,1]
+        
+        self.logger.debug(f"📊 Ensemble quality assessment: avg_similarity={avg_similarity:.4f}, quality_score={quality_score:.4f}")
+        return quality_score
+        
+    async def add_face_to_database(self, person_id: str, face_image: np.ndarray, metadata: Optional[Dict[str, Any]] = None) -> bool:
+        """เพิ่มใบหน้าเข้าฐานข้อมูล"""
+        ensemble_result = await self.extract_ensemble_embedding(face_image)
+        
+        if ensemble_result is None or ensemble_result['embedding'] is None:
+            self.logger.error(f"❌ Failed to extract ensemble embedding for {person_id}")
+            return False
+            
+        embedding_data = {
+            'embedding': ensemble_result['embedding'],
+            'quality': ensemble_result['quality'],
+            'model_source': 'ensemble',
+            'timestamp': time.time(),
+            'metadata': metadata or {}
+        }
+        
+        if person_id not in self.face_database:
+            self.face_database[person_id] = []
+        self.face_database[person_id].append(embedding_data)
+        
+        self.logger.info(f"👤 Added face for {person_id} to database. Quality: {ensemble_result['quality']:.3f}")
+        return True
+        
+    async def recognize_face(self, face_image: np.ndarray, top_n: int = 1) -> Optional[FaceRecognitionResult]:
+        """จดจำใบหน้าจากภาพ"""
+        self.stats['total_recognitions'] += 1
+        start_time = time.time()
+        
+        ensemble_result = await self.extract_ensemble_embedding(face_image)
+        
+        if ensemble_result is None or ensemble_result['embedding'] is None:
+            self.logger.warning("⚠️ Recognition failed: Could not extract ensemble embedding.")
+            return FaceRecognitionResult(
+                matches=[],
+                best_match=None,
+                confidence=0.0,
+                processing_time=time.time() - start_time,
+                error="Failed to extract ensemble embedding.",
+                embedding_quality=RecognitionQuality.UNKNOWN
+            )
+            
+        query_embedding = ensemble_result['embedding']
+        quality_score = ensemble_result['quality']
+        
+        if quality_score < self.config.quality_threshold:
+            self.logger.warning(f"⚠️ Low quality ensemble embedding ({quality_score:.3f} < {self.config.quality_threshold}). Recognition might be unreliable.")
+            # Proceed with recognition but flag low quality.
+            # Or, could return early if policy dictates.
+
+        matches: List[FaceMatch] = []
+        
+        for person_id, embeddings_data in self.face_database.items():
+            best_person_similarity = -1.0
+            
+            for db_entry in embeddings_data:
+                db_embedding = db_entry['embedding']
+                # Cosine similarity for L2 normalized embeddings
+                similarity = np.dot(query_embedding, db_embedding)
+                if similarity > best_person_similarity:
+                    best_person_similarity = similarity
+
+            if best_person_similarity > -1.0: # If any embedding was compared for this person
+                  if similarity > best_person_similarity:
+                    best_person_similarity = similarity
+            
+            if best_person_similarity > -1.0: # If any embedding was compared for this person
+                matches.append(FaceMatch(
+                    person_id=person_id,
+                    confidence=float(best_person_similarity), # Ensure float
+                    embedding=None # We don't need to pass the embedding here
+                ))
+                
+        # Sort matches by confidence (descending)
+        matches.sort(key=lambda m: m.confidence, reverse=True)
+        
+        best_match: Optional[FaceMatch] = None
+        final_confidence = 0.0
+        
+        if matches:
+            # Apply ensemble threshold
+            if matches[0].confidence >= self.config.ensemble_threshold:
+                best_match = matches[0]
+                final_confidence = matches[0].confidence
+                self.stats['successful_recognitions'] += 1
+                self.logger.info(f"✅ Recognized: {best_match.person_id} with confidence {best_match.confidence:.4f}")
+            else:
+                self.logger.info(f"ℹ️ No match above ensemble threshold {self.config.ensemble_threshold}. Best was {matches[0].person_id} at {matches[0].confidence:.4f}")
+                # If below unknown_threshold, consider it unknown
+                if matches[0].confidence < self.config.unknown_threshold: # Check against unknown_threshold
+                    self.logger.info(f"ℹ️ Best match confidence {matches[0].confidence:.4f} is below unknown_threshold {self.config.unknown_threshold}. Considered Unknown.")
+                    # best_match remains None, or set to an "Unknown" FaceMatch if desired by API
+                else:
+                    # Between ensemble_threshold and unknown_threshold - low confidence match
+                    # Depending on policy, this could still be a tentative match or unknown.
+                    # For now, if it didn't pass ensemble_threshold, it's not a confident match.
+                    best_match = None # Explicitly not a confident match
+                    final_confidence = matches[0].confidence # Report the highest confidence found
+
+        else: # No entries in database or no matches at all
+            self.logger.info("ℹ️ No matches found (database might be empty or no similarity calculated).")
+
+        processing_time = time.time() - start_time
+          # Using embedding_quality to store quality_score as per FaceRecognitionResult definition
+        # Convert quality_score to RecognitionQuality enum
+        quality_enum = RecognitionQuality.UNKNOWN
+        if quality_score >= 0.8:
+            quality_enum = RecognitionQuality.HIGH
+        elif quality_score >= 0.5:
+            quality_enum = RecognitionQuality.MEDIUM
+        elif quality_score > 0:
+            quality_enum = RecognitionQuality.LOW
+            
+        return FaceRecognitionResult(
+            matches=matches[:top_n], # Return top_n matches
+            best_match=best_match,
+            confidence=float(final_confidence), # Ensure float
+            processing_time=processing_time,
+            embedding_quality=quality_enum # Use the proper field for quality
+        )
+
+    def get_statistics(self) -> Dict[str, Any]:
+        """ดึงสถิติการทำงานของ Ensemble System"""
+        # Consolidate stats from individual model processors
+        model_perf = {}
+        for name, model_proc in self.models.items():
+            avg_time = (model_proc.total_time / model_proc.total_count) if model_proc.total_count > 0 else 0
+            success_rate = (model_proc.success_count / model_proc.total_count) if model_proc.total_count > 0 else 0
+            model_perf[name] = {
+                'total_extractions': model_proc.total_count,
+                'successful_extractions': model_proc.success_count,
+                'average_extraction_time_ms': avg_time * 1000,
+                'success_rate': success_rate
+            }
+            
+        # Update self.stats with the latest from individual models
+        # This overwrites the placeholder structure in self.stats['model_performance']
+        self.stats['model_performance'] = model_perf 
+        
+        # Calculate average ensemble processing time
+        if self.stats['ensemble_processing_times']:
+            avg_ensemble_time_ms = np.mean(self.stats['ensemble_processing_times']) * 1000
+        else:
+            avg_ensemble_time_ms = 0
+            
+        self.stats['average_ensemble_processing_time_ms'] = avg_ensemble_time_ms
+        
+        return self.stats
+
+    def clear_database(self) -> None:
+        """ล้างฐานข้อมูลใบหน้า"""
+        self.face_database.clear()
+        self.logger.info("🗑️ Face database cleared.")
+
+    def get_database_info(self) -> Dict[str, Any]:
+        """ดึงข้อมูลเกี่ยวกับฐานข้อมูล"""
+        return {
+            "total_identities": len(self.face_database),
+            "total_embeddings": sum(len(embeddings) for embeddings in self.face_database.values()),
+            "identities": list(self.face_database.keys())
+        }
